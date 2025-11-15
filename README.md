@@ -21,3 +21,11 @@ SQLite databáza
 základné seedovacie dáta (rozne zbrane..)
 
 oddelenie vrstiev na spôsob Clean Architecture 
+
+Na zaklade nasho rozhovoru toto budem doplnovat nasledujuce tyzdne - 
+evidencia zákazníkov
+
+objednávky a faktúry
+možnosť generovať PDF účtenky
+e-mailové zasielanie objednávok
+rozšírená kontrola kategórií zbraní podľa CZ legislatívy 
