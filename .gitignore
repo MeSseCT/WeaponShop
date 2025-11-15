@@ -1,0 +1,19 @@
+# .NET build files
+bin/
+obj/
+
+# SQLite DB files
+*.db
+*.db-shm
+*.db-wal
+
+# User-specific stuff
+*.user
+*.suo
+.vscode/
+
+# Logs
+*.log
+
+# EF Core Migrations cache
+Migrations/obj/

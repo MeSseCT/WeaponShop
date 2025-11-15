@@ -1,0 +1,37 @@
+@page "/weapons/create"
+
+@inject WeaponShop.Application.Services.IWeaponService WeaponService
+@inject NavigationManager Navigation
+
+<h3>Create Weapon</h3>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+
+<WeaponForm Weapon="Weapon" Title="Create Weapon" SubmitButtonText="Create" OnValidSubmit="HandleValidSubmit" OnCancel="HandleCancel" />
+
+@code {
+    private WeaponShop.Domain.Weapon Weapon = new();
+    private string? ErrorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            await WeaponService.AddAsync(Weapon);
+            Navigation.NavigateTo("/weapons");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error creating weapon: {ex.Message}";
+        }
+    }
+
+    private void HandleCancel()
+    {
+        Navigation.NavigateTo("/weapons");
+    }
+}
+

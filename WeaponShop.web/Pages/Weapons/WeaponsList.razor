@@ -1,0 +1,100 @@
+@page "/weapons"
+
+@inject WeaponShop.Application.Services.IWeaponService WeaponService
+@inject NavigationManager Navigation
+
+<h3>Weapons</h3>
+
+<button class="btn btn-primary mb-3" @onclick="CreateWeapon">
+    Create Weapon
+</button>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+else if (Weapons is null)
+{
+    <p><em>Loading weapons...</em></p>
+}
+else if (Weapons.Count == 0)
+{
+    <p>No weapons found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Manufacturer</th>
+            <th class="text-end">Price</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var weapon in Weapons)
+        {
+            <tr>
+                <td>@weapon.Name</td>
+                <td>@weapon.Category</td>
+                <td>@weapon.Manufacturer</td>
+                <td class="text-end">@weapon.Price.ToString("C")</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-secondary me-1" @onclick="() => EditWeapon(weapon.Id)">Edit</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteWeapon(weapon.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<WeaponShop.Domain.Weapon>? Weapons;
+    private string? ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWeaponsAsync();
+    }
+
+    private async Task LoadWeaponsAsync()
+    {
+        try
+        {
+            ErrorMessage = null;
+            Weapons = await WeaponService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            // In a real app you would log this as well.
+            ErrorMessage = $"Error loading weapons: {ex.Message}";
+        }
+    }
+
+    private void CreateWeapon()
+    {
+        Navigation.NavigateTo("/weapons/create");
+    }
+
+    private void EditWeapon(int id)
+    {
+        Navigation.NavigateTo($"/weapons/edit/{id}");
+    }
+
+    private async Task DeleteWeapon(int id)
+    {
+        try
+        {
+            await WeaponService.DeleteAsync(id);
+            await LoadWeaponsAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error deleting weapon: {ex.Message}";
+        }
+    }
+}
+
