@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeaponShop</title>
+    <link rel="stylesheet" href="~/css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-wrap">
+            <a class="brand-mark" asp-area="" asp-controller="Home" asp-action="Index">Weapon<span>Shop</span></a>
+            <nav class="main-nav">
+                <a class="nav-pill" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                <a class="nav-pill" asp-area="" asp-controller="Weapons" asp-action="Index">Products</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="nav-pill" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Admin</a>
+                }
+            </nav>
+            <nav class="auth-nav">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="auth-user">@User.Identity.Name</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="logout-btn">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="nav-pill" asp-controller="Account" asp-action="Login">Login</a>
+                    <a class="btn-modern" asp-controller="Account" asp-action="Register">Register</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main">
+        <div class="site-wrap reveal">
+            @RenderBody()
+        </div>
+    </main>
+
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: false)
+    }
+    
+</body>
+</html>

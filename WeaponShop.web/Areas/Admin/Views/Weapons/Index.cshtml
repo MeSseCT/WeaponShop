@@ -1,0 +1,49 @@
+@model IReadOnlyList<Weapon>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Admin - Product management</h2>
+            <p class="panel-subtitle">Protected CRUD area for managing product catalog records.</p>
+        </div>
+        <a class="btn-modern" asp-action="Create">Create weapon</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="data-empty">No weapons found.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Manufacturer</th>
+                        <th class="text-end">Price</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var weapon in Model)
+                    {
+                        <tr>
+                            <td>@weapon.Name</td>
+                            <td><span class="badge-cat">@weapon.Category</span></td>
+                            <td>@weapon.Manufacturer</td>
+                            <td class="text-end">@weapon.Price.ToString("C")</td>
+                            <td class="text-end">
+                                <div class="btn-row">
+                                    <a class="btn-inline" asp-action="Edit" asp-route-id="@weapon.Id">Edit</a>
+                                    <a class="btn-inline btn-inline-danger" asp-action="Delete" asp-route-id="@weapon.Id">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

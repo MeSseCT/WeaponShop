@@ -1,10 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace WeaponShop.Domain;
+namespace WeaponShop.Web.ViewModels.Weapons;
 
-/// <summary>
-/// </summary>
-public class Weapon
+public class WeaponInputModel
 {
     public int Id { get; set; }
 
@@ -12,11 +10,8 @@ public class Weapon
     [StringLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Weapon category (A/B/C/D/E based on local legislation).
-    /// </summary>
     [Required]
-    [RegularExpression("^[ABCDE]$", ErrorMessage = "Category must be one of: A, B, C, D, E.")]
+    [RegularExpression("^[ABCDE]$")]
     public string Category { get; set; } = string.Empty;
 
     [StringLength(1000)]
@@ -29,4 +24,3 @@ public class Weapon
     [StringLength(100)]
     public string Manufacturer { get; set; } = string.Empty;
 }
-

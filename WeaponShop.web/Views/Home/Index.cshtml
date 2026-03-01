@@ -1,0 +1,34 @@
+<section class="hero">
+    <p class="hero-kicker">Czech E-Commerce Platform</p>
+    <h1>Modern gun store stack on .NET 8, MVC, Identity and PostgreSQL.</h1>
+    <p>
+        This baseline is now ready for the bachelor thesis flow: authentication, role-based access,
+        product listing and protected admin management.
+    </p>
+    <div class="hero-actions">
+        <a class="btn-modern" asp-controller="Weapons" asp-action="Index">Browse products</a>
+        @if (User.IsInRole("Admin"))
+        {
+            <a class="btn-soft" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Open admin console</a>
+        }
+        else
+        {
+            <a class="btn-soft" asp-controller="Account" asp-action="Register">Create account</a>
+        }
+    </div>
+</section>
+
+<section class="feature-grid">
+    <article class="feature-card">
+        <h3>Security baseline</h3>
+        <p>Identity authentication, role checks and anti-forgery protection on all write operations.</p>
+    </article>
+    <article class="feature-card">
+        <h3>Layered backend</h3>
+        <p>Web uses Application services, while data access stays in Infrastructure through EF Core.</p>
+    </article>
+    <article class="feature-card">
+        <h3>PostgreSQL runtime</h3>
+        <p>Dockerized database with migrations ready for repeatable local development.</p>
+    </article>
+</section>
