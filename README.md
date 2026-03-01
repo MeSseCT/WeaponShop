@@ -1,31 +1,40 @@
-Zaklád bakalárskej práce 
+# WeaponShop
 
-Zatiaľ oužité technológie 
+Základ bakalárskej práce postavený na princípoch Clean Architecture.
 
-.NET 9
-ASP.NET Core (Blazor Server)
-Entity Framework Core 9
-SQLite
-C#
+## Použité technológie
 
-Štruktura projektu
-WeaponShop.Domain – doménové entity (napr. Weapon)
-WeaponShop.Application – aplikačná logika, služby
-WeaponShop.Infrastructure – databáza, EF Core kontext, repozitáre
-WeaponShop.Web – Blazor Server webová vrstva
+- .NET 8
+- ASP.NET Core MVC
+- Entity Framework Core 8
+- PostgreSQL
+- ASP.NET Core Identity
+- C#
 
-Funkcie (aktuálny stav)
-evidencia zbraní
-jednoduché CRUD operácie
-SQLite databáza
-základné seedovacie dáta (rozne zbrane..)
+## Štruktúra projektu
 
-oddelenie vrstiev na spôsob Clean Architecture 
+- `WeaponShop.Domain` – doménové entity a enumy (napr. `Weapon`, `Order`, `OrderItem`, `OrderStatus`)
+- `WeaponShop.Application` – aplikačná logika a služby
+- `WeaponShop.Infrastructure` – EF Core, `AppDbContext`, migrácie, repozitáre
+- `WeaponShop.Web` – MVC webová vrstva (Controllers, Views)
 
-Na zaklade nasho rozhovoru toto budem doplnovat nasledujuce tyzdne - 
-evidencia zákazníkov
+## Aktuálny stav
 
-objednávky a faktúry
-možnosť generovať PDF účtenky
-e-mailové zasielanie objednávok
-rozšírená kontrola kategórií zbraní podľa CZ legislatívy 
+- evidencia zbraní
+- CRUD operácie pre zbrane
+- autentifikácia/autorizácia cez ASP.NET Core Identity
+- prístup podľa rolí (`Admin`, `Customer`)
+- seed základných dát (role, admin používateľ, ukážkové zbrane)
+- objednávkové jadro (entity `Order` a `OrderItem`)
+- stavy objednávky (`OrderStatus`)
+- výpočet `TotalPrice`
+- databázové väzby a unikátne obmedzenie `UNIQUE(OrderId, WeaponId)`
+- oddelenie vrstiev podľa Clean Architecture
+
+## Plánované rozšírenia
+
+- evidencia zákazníkov
+- objednávky a faktúry (rozšírenie procesov)
+- generovanie PDF účteniek/faktúr
+- e-mailové zasielanie objednávok
+- rozšírená kontrola kategórií zbraní podľa CZ legislatívy
