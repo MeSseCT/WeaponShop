@@ -2,10 +2,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WeaponShop.Application.Services;
+using WeaponShop.Web.ViewModels.Cart;
 
 namespace WeaponShop.Web.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Customer")]
 public class CartController : Controller
 {
     private readonly IOrderService _orderService;
@@ -24,8 +25,13 @@ public class CartController : Controller
             return Challenge();
         }
 
-        var order = await _orderService.GetCurrentOrderAsync(userId, cancellationToken);
-        return View(order);
+        var model = new CartIndexViewModel
+        {
+            CurrentOrder = await _orderService.GetCurrentOrderAsync(userId, cancellationToken),
+            SubmittedOrders = await _orderService.GetSubmittedOrdersAsync(userId, cancellationToken)
+        };
+
+        return View(model);
     }
 
     [ValidateAntiForgeryToken]

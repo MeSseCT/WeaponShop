@@ -30,6 +30,7 @@ public class OrderService : IOrderService
         };
 
         await _orderRepository.AddAsync(order, cancellationToken);
+        await _orderRepository.SaveChangesAsync(cancellationToken);
         return order;
     }
 
@@ -41,6 +42,24 @@ public class OrderService : IOrderService
         }
 
         return await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken);
+    }
+
+    public async Task<List<Order>> GetSubmittedOrdersAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("User ID is required.", nameof(userId));
+        }
+
+        var allUserOrders = await _orderRepository.GetByUserIdAsync(userId, cancellationToken);
+        return allUserOrders
+            .Where(order => order.Status != OrderStatus.Created)
+            .ToList();
+    }
+
+    public Task<List<Order>> GetAwaitingApprovalOrdersAsync(CancellationToken cancellationToken = default)
+    {
+        return _orderRepository.GetAwaitingApprovalAsync(cancellationToken);
     }
 
     public async Task<Order> AddItemAsync(int orderId, int weaponId, int quantity, CancellationToken cancellationToken = default)
@@ -151,6 +170,16 @@ public class OrderService : IOrderService
         return currentOrder;
     }
 
+    public Task<Order> ApproveOrderAsync(int orderId, CancellationToken cancellationToken = default)
+    {
+        return ChangeStatusAsync(orderId, OrderStatus.Approved, cancellationToken);
+    }
+
+    public Task<Order> RejectOrderAsync(int orderId, CancellationToken cancellationToken = default)
+    {
+        return ChangeStatusAsync(orderId, OrderStatus.Rejected, cancellationToken);
+    }
+
     public async Task<Order> RecalculateTotalPriceAsync(int orderId, CancellationToken cancellationToken = default)
     {
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
@@ -170,6 +199,12 @@ public class OrderService : IOrderService
         if (order is null)
         {
             throw new KeyNotFoundException($"Order with ID {orderId} was not found.");
+        }
+
+        if (status is OrderStatus.Approved or OrderStatus.Rejected
+            && order.Status != OrderStatus.AwaitingApproval)
+        {
+            throw new InvalidOperationException("Only orders awaiting approval can be approved or rejected.");
         }
 
         order.Status = status;

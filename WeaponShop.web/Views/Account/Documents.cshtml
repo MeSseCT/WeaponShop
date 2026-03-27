@@ -1,0 +1,39 @@
+@model WeaponShop.Web.ViewModels.Account.DocumentsViewModel
+
+<section class="form-shell">
+    <h2>Verification documents</h2>
+    <p class="auth-sub">Upload your ID card and gun license for manual admin verification.</p>
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="data-empty">@statusMessage</div>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="panel" style="margin-bottom: 1rem;">
+        <p class="panel-subtitle">ID card uploaded: @(Model.HasIdCard ? "Yes" : "No")</p>
+        <p class="panel-subtitle">Gun license uploaded: @(Model.HasGunLicense ? "Yes" : "No")</p>
+        @if (Model.DocumentsUpdatedAt.HasValue)
+        {
+            <p class="panel-subtitle">Last update: @Model.DocumentsUpdatedAt.Value.ToLocalTime().ToString("g")</p>
+        }
+    </div>
+
+    <form asp-action="Documents" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label asp-for="IdCardFile" class="field-label">ID card (PDF/JPG/PNG, max 5 MB)</label>
+            <input asp-for="IdCardFile" type="file" class="form-control" />
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="GunLicenseFile" class="field-label">Gun license (PDF/JPG/PNG, max 5 MB)</label>
+            <input asp-for="GunLicenseFile" type="file" class="form-control" />
+        </div>
+
+        <div class="hero-actions">
+            <button class="btn-modern" type="submit">Upload documents</button>
+            <a class="btn-soft" asp-controller="Home" asp-action="Index">Back</a>
+        </div>
+    </form>
+</section>

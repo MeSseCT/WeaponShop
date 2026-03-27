@@ -17,3 +17,6 @@ obj/
 
 # EF Core Migrations cache
 Migrations/obj/
+
+# Uploaded verification documents
+UserDocuments/

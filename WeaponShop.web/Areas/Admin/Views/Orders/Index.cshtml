@@ -1,0 +1,91 @@
+@model IReadOnlyList<Order>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Admin - Order approvals</h2>
+            <p class="panel-subtitle">Orders waiting for manual verification and approval.</p>
+        </div>
+        <a class="btn-soft" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Manage products</a>
+    </div>
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="data-empty">@statusMessage</div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="data-empty">@errorMessage</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="data-empty">No orders awaiting approval.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Documents</th>
+                        <th class="text-end">Items</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div>#@order.Id</div>
+                                <div class="panel-subtitle">@order.CreatedAt.ToLocalTime().ToString("g")</div>
+                            </td>
+                            <td>
+                                <div>@order.User?.FirstName @order.User?.LastName</div>
+                                <div class="panel-subtitle">@order.User?.Email</div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(order.User?.IdCardFileName))
+                                {
+                                    <a class="btn-inline" asp-area="" asp-controller="Account" asp-action="DownloadDocument" asp-route-userId="@order.UserId" asp-route-type="idcard">ID card</a>
+                                }
+                                else
+                                {
+                                    <span class="panel-subtitle">ID card missing</span>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(order.User?.GunLicenseFileName))
+                                {
+                                    <a class="btn-inline" asp-area="" asp-controller="Account" asp-action="DownloadDocument" asp-route-userId="@order.UserId" asp-route-type="gunlicense">Gun license</a>
+                                }
+                                else
+                                {
+                                    <span class="panel-subtitle">Gun license missing</span>
+                                }
+                            </td>
+                            <td class="text-end">@order.Items.Count</td>
+                            <td class="text-end">@order.TotalPrice.ToString("C")</td>
+                            <td class="text-end">
+                                <div class="btn-row">
+                                    <form asp-action="Approve" method="post">
+                                        <input type="hidden" name="id" value="@order.Id" />
+                                        <button type="submit" class="btn-inline">Approve</button>
+                                    </form>
+                                    <form asp-action="Reject" method="post">
+                                        <input type="hidden" name="id" value="@order.Id" />
+                                        <button type="submit" class="btn-inline btn-inline-danger">Reject</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

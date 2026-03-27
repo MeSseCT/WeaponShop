@@ -22,7 +22,7 @@
                         <th>Category</th>
                         <th>Manufacturer</th>
                         <th class="text-end">Price</th>
-                        @if (User.Identity?.IsAuthenticated == true)
+                        @if (User.IsInRole("Customer"))
                         {
                             <th class="text-end">Action</th>
                         }
@@ -36,7 +36,7 @@
                             <td><span class="badge-cat">@weapon.Category</span></td>
                             <td>@weapon.Manufacturer</td>
                             <td class="text-end">@weapon.Price.ToString("C")</td>
-                            @if (User.Identity?.IsAuthenticated == true)
+                            @if (User.IsInRole("Customer"))
                             {
                                 <td class="text-end">
                                     <form asp-controller="Cart" asp-action="Add" method="post">

@@ -9,7 +9,7 @@
         <a class="btn-modern" asp-controller="Weapons" asp-action="Index">Browse products</a>
         @if (User.IsInRole("Admin"))
         {
-            <a class="btn-soft" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Open admin console</a>
+            <a class="btn-soft" asp-area="Admin" asp-controller="Orders" asp-action="Index">Open approvals</a>
         }
         else
         {

@@ -1,4 +1,4 @@
-@model Order?
+@model WeaponShop.Web.ViewModels.Cart.CartIndexViewModel
 
 <section class="panel">
     <div class="panel-head">
@@ -19,7 +19,7 @@
         <div class="data-empty">@errorMessage</div>
     }
 
-    @if (Model is null || Model.Items.Count == 0)
+    @if (Model.CurrentOrder is null || Model.CurrentOrder.Items.Count == 0)
     {
         <div class="data-empty">Your cart is empty.</div>
     }
@@ -38,7 +38,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model.Items)
+                    @foreach (var item in Model.CurrentOrder.Items)
                     {
                         <tr>
                             <td>@item.Weapon?.Name</td>
@@ -60,11 +60,53 @@
 
         <div class="panel-head" style="margin-top: 1rem;">
             <p class="panel-subtitle">
-                Total: <strong>@Model.TotalPrice.ToString("C")</strong>
+                Total: <strong>@Model.CurrentOrder.TotalPrice.ToString("C")</strong>
             </p>
             <form asp-controller="Cart" asp-action="Checkout" method="post">
                 <button class="btn-modern" type="submit">Checkout</button>
             </form>
+        </div>
+    }
+</section>
+
+<section class="panel" style="margin-top: 1rem;">
+    <div class="panel-head">
+        <div>
+            <h2>Your Requests</h2>
+            <p class="panel-subtitle">Submitted purchase requests and their current status.</p>
+        </div>
+    </div>
+
+    @if (Model.SubmittedOrders.Count == 0)
+    {
+        <div class="data-empty">No submitted requests yet.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th class="text-end">Items</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.SubmittedOrders)
+                    {
+                        <tr>
+                            <td>#@order.Id</td>
+                            <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td><span class="badge-cat">@order.Status</span></td>
+                            <td class="text-end">@order.Items.Count</td>
+                            <td class="text-end">@order.TotalPrice.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     }
 </section>
