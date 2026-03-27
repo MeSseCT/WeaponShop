@@ -14,6 +14,10 @@
             <nav class="main-nav">
                 <a class="nav-pill" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                 <a class="nav-pill" asp-area="" asp-controller="Weapons" asp-action="Index">Products</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="nav-pill" asp-area="" asp-controller="Cart" asp-action="Index">Cart</a>
+                }
                 @if (User.IsInRole("Admin"))
                 {
                     <a class="nav-pill" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Admin</a>

@@ -17,7 +17,18 @@ public class OrderRepository : IOrderRepository
     {
         return await _context.Orders
             .Include(order => order.Items)
+            .ThenInclude(item => item.Weapon)
             .SingleOrDefaultAsync(order => order.Id == orderId, cancellationToken);
+    }
+
+    public async Task<Order?> GetCurrentByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Orders
+            .Include(order => order.Items)
+            .ThenInclude(item => item.Weapon)
+            .Where(order => order.UserId == userId && order.Status == OrderStatus.Created)
+            .OrderByDescending(order => order.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task AddAsync(Order order, CancellationToken cancellationToken = default)

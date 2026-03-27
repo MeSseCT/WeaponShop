@@ -22,6 +22,10 @@
                         <th>Category</th>
                         <th>Manufacturer</th>
                         <th class="text-end">Price</th>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <th class="text-end">Action</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -32,6 +36,16 @@
                             <td><span class="badge-cat">@weapon.Category</span></td>
                             <td>@weapon.Manufacturer</td>
                             <td class="text-end">@weapon.Price.ToString("C")</td>
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <td class="text-end">
+                                    <form asp-controller="Cart" asp-action="Add" method="post">
+                                        <input type="hidden" name="weaponId" value="@weapon.Id" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <button type="submit" class="btn-soft">Add to cart</button>
+                                    </form>
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>

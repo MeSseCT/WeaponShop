@@ -33,6 +33,16 @@ public class OrderService : IOrderService
         return order;
     }
 
+    public async Task<Order?> GetCurrentOrderAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("User ID is required.", nameof(userId));
+        }
+
+        return await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken);
+    }
+
     public async Task<Order> AddItemAsync(int orderId, int weaponId, int quantity, CancellationToken cancellationToken = default)
     {
         if (quantity <= 0)
@@ -71,6 +81,74 @@ public class OrderService : IOrderService
         RecalculateTotalPrice(order);
         await _orderRepository.SaveChangesAsync(cancellationToken);
         return order;
+    }
+
+    public async Task<Order> AddItemToCurrentOrderAsync(
+        string userId,
+        int weaponId,
+        int quantity,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("User ID is required.", nameof(userId));
+        }
+
+        var currentOrder = await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken)
+            ?? await CreateOrderAsync(userId, cancellationToken);
+
+        return await AddItemAsync(currentOrder.Id, weaponId, quantity, cancellationToken);
+    }
+
+    public async Task<Order> RemoveItemFromCurrentOrderAsync(
+        string userId,
+        int weaponId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("User ID is required.", nameof(userId));
+        }
+
+        var currentOrder = await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken);
+        if (currentOrder is null)
+        {
+            throw new InvalidOperationException("Current order was not found.");
+        }
+
+        var existingItem = currentOrder.Items.SingleOrDefault(item => item.WeaponId == weaponId);
+        if (existingItem is null)
+        {
+            return currentOrder;
+        }
+
+        currentOrder.Items.Remove(existingItem);
+        RecalculateTotalPrice(currentOrder);
+        await _orderRepository.SaveChangesAsync(cancellationToken);
+        return currentOrder;
+    }
+
+    public async Task<Order> CheckoutCurrentOrderAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("User ID is required.", nameof(userId));
+        }
+
+        var currentOrder = await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken);
+        if (currentOrder is null)
+        {
+            throw new InvalidOperationException("Current order was not found.");
+        }
+
+        if (currentOrder.Items.Count == 0)
+        {
+            throw new InvalidOperationException("Cannot checkout an empty order.");
+        }
+
+        currentOrder.Status = OrderStatus.AwaitingApproval;
+        await _orderRepository.SaveChangesAsync(cancellationToken);
+        return currentOrder;
     }
 
     public async Task<Order> RecalculateTotalPriceAsync(int orderId, CancellationToken cancellationToken = default)

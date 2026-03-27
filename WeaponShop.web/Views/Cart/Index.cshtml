@@ -1,0 +1,70 @@
+@model Order?
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Cart</h2>
+            <p class="panel-subtitle">Draft order for your current session.</p>
+        </div>
+        <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Continue shopping</a>
+    </div>
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="data-empty">@statusMessage</div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="data-empty">@errorMessage</div>
+    }
+
+    @if (Model is null || Model.Items.Count == 0)
+    {
+        <div class="data-empty">Your cart is empty.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th class="text-end">Unit price</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Line total</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.Weapon?.Name</td>
+                            <td><span class="badge-cat">@item.Weapon?.Category</span></td>
+                            <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                            <td class="text-end">@item.Quantity</td>
+                            <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                            <td class="text-end">
+                                <form asp-controller="Cart" asp-action="Remove" method="post">
+                                    <input type="hidden" name="weaponId" value="@item.WeaponId" />
+                                    <button class="btn-danger-soft" type="submit">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel-head" style="margin-top: 1rem;">
+            <p class="panel-subtitle">
+                Total: <strong>@Model.TotalPrice.ToString("C")</strong>
+            </p>
+            <form asp-controller="Cart" asp-action="Checkout" method="post">
+                <button class="btn-modern" type="submit">Checkout</button>
+            </form>
+        </div>
+    }
+</section>
