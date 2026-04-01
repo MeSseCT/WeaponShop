@@ -11,6 +11,10 @@
         <dd class="col-sm-9">@Model.Manufacturer</dd>
         <dt class="col-sm-3">Price</dt>
         <dd class="col-sm-9">@Model.Price.ToString("C")</dd>
+        <dt class="col-sm-3">Stock</dt>
+        <dd class="col-sm-9">@Model.StockQuantity</dd>
+        <dt class="col-sm-3">Availability</dt>
+        <dd class="col-sm-9">@(Model.IsAvailable ? "Available" : "Hidden")</dd>
     </dl>
 
     <form asp-action="Delete" method="post" class="hero-actions">

@@ -12,8 +12,8 @@ using WeaponShop.Infrastructure;
 namespace WeaponShop.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260327142625_AddUserVerificationDocuments")]
-    partial class AddUserVerificationDocuments
+    [Migration("20260327163831_AddUserDocumentsAndBirthDate")]
+    partial class AddUserDocumentsAndBirthDate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -169,8 +169,14 @@ namespace WeaponShop.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date");
+
                     b.Property<DateTimeOffset?>("DocumentsUpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DriverLicenseFileName")
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -181,9 +187,6 @@ namespace WeaponShop.Infrastructure.Migrations
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("GunLicenseFileName")
                         .HasColumnType("text");
 
                     b.Property<string>("IdCardFileName")

@@ -1,0 +1,39 @@
+@model IReadOnlyList<WeaponShop.Domain.Notification>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Notifications</h2>
+            <p class="panel-subtitle">Updates about your orders.</p>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="data-empty">No notifications yet.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Message</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var notification in Model)
+                    {
+                        <tr>
+                            <td>@notification.Title</td>
+                            <td>@notification.Message</td>
+                            <td>@notification.CreatedAtUtc.ToLocalTime().ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

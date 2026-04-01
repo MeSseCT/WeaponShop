@@ -1,0 +1,113 @@
+@model Order
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Order #@Model.Id</h2>
+            <p class="panel-subtitle">Gunsmith view of full order audit.</p>
+        </div>
+        <div class="btn-row">
+            <a class="btn-soft" asp-action="Index">Back to orders</a>
+            <a class="btn-soft" asp-action="History">My audit history</a>
+            <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Word</a>
+        </div>
+    </div>
+
+    <div class="table-wrap" style="margin-bottom: 1.5rem;">
+        <table class="data-grid">
+            <tbody>
+                <tr>
+                    <th>Status</th>
+                    <td><span class="badge-cat">@Model.Status</span></td>
+                    <th>Created</th>
+                    <td>@Model.CreatedAt.ToLocalTime().ToString("g")</td>
+                </tr>
+                <tr>
+                    <th>Customer</th>
+                    <td>
+                        <div>@Model.User?.FirstName @Model.User?.LastName</div>
+                        <div class="panel-subtitle">@Model.User?.Email</div>
+                    </td>
+                    <th>Total</th>
+                    <td>@Model.TotalPrice.ToString("C")</td>
+                </tr>
+                <tr>
+                    <th>Admin approved</th>
+                    <td>@(Model.ApprovedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                    <th>Warehouse check</th>
+                    <td>@(Model.WarehouseCheckedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                </tr>
+                <tr>
+                    <th>Gunsmith check</th>
+                    <td>@(Model.GunsmithCheckedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                    <th>Prepared by warehouse</th>
+                    <td>@(Model.WarehousePreparedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                </tr>
+                <tr>
+                    <th>Shipped</th>
+                    <td>@(Model.ShippedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                    <th>Ready for pickup</th>
+                    <td>@(Model.ReadyForPickupAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                </tr>
+                <tr>
+                    <th>Pickup handed over</th>
+                    <td>@(Model.PickupHandedOverAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                    <th>Rejected</th>
+                    <td>@(Model.RejectedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-wrap" style="margin-bottom: 1.5rem;">
+        <table class="data-grid">
+            <thead>
+                <tr>
+                    <th>Items</th>
+                    <th class="text-end">Qty</th>
+                    <th class="text-end">Unit price</th>
+                    <th class="text-end">Line total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Weapon?.Name</td>
+                        <td class="text-end">@item.Quantity</td>
+                        <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                        <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="audit-list">
+        @if (Model.Audits.Count == 0)
+        {
+            <div class="data-empty">No audit records yet.</div>
+        }
+        else
+        {
+            @foreach (var audit in Model.Audits.OrderByDescending(a => a.OccurredAtUtc))
+            {
+                <div class="audit-card">
+                    <div class="audit-card-head">
+                        <div class="audit-card-title">@audit.Action</div>
+                        <span class="badge-cat">@audit.ToStatus</span>
+                    </div>
+                    <div class="audit-card-meta">
+                        @audit.OccurredAtUtc.ToLocalTime().ToString("g")
+                        • @audit.ActorRole @audit.ActorName
+                        • @audit.FromStatus → @audit.ToStatus
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(audit.Notes))
+                    {
+                        <div class="audit-card-notes">Notes: @audit.Notes</div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>

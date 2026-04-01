@@ -1,0 +1,48 @@
+@model IReadOnlyList<Order>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>My orders</h2>
+            <p class="panel-subtitle">All submitted orders and their current status.</p>
+        </div>
+        <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Continue shopping</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="data-empty">No submitted orders yet.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th class="text-end">Items</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td>#@order.Id</td>
+                            <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td><span class="badge-cat">@order.Status</span></td>
+                            <td class="text-end">@order.Items.Count</td>
+                            <td class="text-end">@order.TotalPrice.ToString("C")</td>
+                            <td class="text-end">
+                                <a class="btn-inline" asp-action="Details" asp-route-id="@order.Id">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

@@ -6,7 +6,10 @@
             <h2>Admin - Order approvals</h2>
             <p class="panel-subtitle">Orders waiting for manual verification and approval.</p>
         </div>
-        <a class="btn-soft" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Manage products</a>
+        <div class="btn-row">
+            <a class="btn-soft" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Manage products</a>
+            <a class="btn-soft" asp-area="Admin" asp-action="All">All orders</a>
+        </div>
     </div>
 
     @if (TempData["StatusMessage"] is string statusMessage)
@@ -32,6 +35,7 @@
                         <th>Order</th>
                         <th>Customer</th>
                         <th>Documents</th>
+                        <th>Audit</th>
                         <th class="text-end">Items</th>
                         <th class="text-end">Total</th>
                         <th class="text-end">Actions</th>
@@ -48,30 +52,70 @@
                             <td>
                                 <div>@order.User?.FirstName @order.User?.LastName</div>
                                 <div class="panel-subtitle">@order.User?.Email</div>
+                                <div>
+                                    <a class="btn-inline" asp-area="Admin" asp-controller="Orders" asp-action="History" asp-route-userId="@order.UserId">History</a>
+                                </div>
                             </td>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(order.User?.IdCardFileName))
                                 {
-                                    <a class="btn-inline" asp-area="" asp-controller="Account" asp-action="DownloadDocument" asp-route-userId="@order.UserId" asp-route-type="idcard">ID card</a>
+                                    var idCardIsPdf = order.User?.IdCardFileName?.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ?? false;
+                                    var idCardViewUrl = Url.Action("ViewDocument", "Account", new { area = "", userId = order.UserId, type = "idcard" });
+                                    var idCardDownloadUrl = Url.Action("DownloadDocument", "Account", new { area = "", userId = order.UserId, type = "idcard" });
+                                    <button type="button"
+                                            class="btn-inline doc-open"
+                                            data-doc-title="ID card"
+                                            data-doc-kind="@(idCardIsPdf ? "pdf" : "image")"
+                                            data-doc-url="@idCardViewUrl"
+                                            data-doc-download="@idCardDownloadUrl">
+                                        View ID card
+                                    </button>
                                 }
                                 else
                                 {
                                     <span class="panel-subtitle">ID card missing</span>
                                 }
 
-                                @if (!string.IsNullOrWhiteSpace(order.User?.GunLicenseFileName))
+                                @if (!string.IsNullOrWhiteSpace(order.User?.DriverLicenseFileName))
                                 {
-                                    <a class="btn-inline" asp-area="" asp-controller="Account" asp-action="DownloadDocument" asp-route-userId="@order.UserId" asp-route-type="gunlicense">Gun license</a>
+                                    var driverLicenseIsPdf = order.User?.DriverLicenseFileName?.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ?? false;
+                                    var driverLicenseViewUrl = Url.Action("ViewDocument", "Account", new { area = "", userId = order.UserId, type = "driverlicense" });
+                                    var driverLicenseDownloadUrl = Url.Action("DownloadDocument", "Account", new { area = "", userId = order.UserId, type = "driverlicense" });
+                                    <button type="button"
+                                            class="btn-inline doc-open"
+                                            data-doc-title="Driver license"
+                                            data-doc-kind="@(driverLicenseIsPdf ? "pdf" : "image")"
+                                            data-doc-url="@driverLicenseViewUrl"
+                                            data-doc-download="@driverLicenseDownloadUrl">
+                                        View license
+                                    </button>
                                 }
                                 else
                                 {
-                                    <span class="panel-subtitle">Gun license missing</span>
+                                    <span class="panel-subtitle">Driver license missing</span>
+                                }
+                            </td>
+                            <td>
+                                @if (order.Audits.Count == 0)
+                                {
+                                    <span class="panel-subtitle">No audit yet</span>
+                                }
+                                else
+                                {
+                                    foreach (var audit in order.Audits.OrderByDescending(a => a.OccurredAtUtc))
+                                    {
+                                        <div class="panel-subtitle">
+                                            @audit.OccurredAtUtc.ToLocalTime().ToString("g") -
+                                            @audit.ActorRole @audit.ActorName: @audit.Action
+                                        </div>
+                                    }
                                 }
                             </td>
                             <td class="text-end">@order.Items.Count</td>
                             <td class="text-end">@order.TotalPrice.ToString("C")</td>
                             <td class="text-end">
                                 <div class="btn-row">
+                                    <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Details</a>
                                     <form asp-action="Approve" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
                                         <button type="submit" class="btn-inline">Approve</button>
@@ -89,3 +133,93 @@
         </div>
     }
 </section>
+
+<div class="doc-modal" id="docModal" aria-hidden="true">
+    <div class="doc-modal-backdrop" data-doc-close="true"></div>
+    <div class="doc-modal-card" role="dialog" aria-modal="true" aria-labelledby="docModalTitle">
+        <div class="doc-modal-head">
+            <div class="doc-modal-title" id="docModalTitle">Document</div>
+            <div class="doc-modal-actions">
+                <a class="btn-soft" data-doc-download href="#" rel="noopener">Download</a>
+                <button type="button" class="btn-inline doc-modal-close" data-doc-close="true" aria-label="Close">×</button>
+            </div>
+        </div>
+        <div class="doc-modal-body">
+            <img class="doc-modal-image" data-doc-image alt="Document preview" />
+            <iframe class="doc-modal-frame" data-doc-frame title="Document preview"></iframe>
+            <div class="doc-modal-fallback" data-doc-fallback>
+                Preview is not available. Use download instead.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const modal = document.getElementById("docModal");
+        if (!modal) {
+            return;
+        }
+
+        const title = modal.querySelector("[data-doc-title]") || modal.querySelector("#docModalTitle");
+        const image = modal.querySelector("[data-doc-image]");
+        const frame = modal.querySelector("[data-doc-frame]");
+        const fallback = modal.querySelector("[data-doc-fallback]");
+        const download = modal.querySelector("[data-doc-download]");
+
+        const openModal = (button) => {
+            const url = button.dataset.docUrl;
+            const kind = button.dataset.docKind;
+            const docTitle = button.dataset.docTitle || "Document";
+            const downloadUrl = button.dataset.docDownload || url;
+
+            if (title) {
+                title.textContent = docTitle;
+            }
+
+            if (download) {
+                download.setAttribute("href", downloadUrl);
+            }
+
+            image.style.display = "none";
+            frame.style.display = "none";
+            fallback.style.display = "none";
+
+            if (!url) {
+                fallback.style.display = "block";
+            } else if (kind === "pdf") {
+                frame.src = url;
+                frame.style.display = "block";
+            } else {
+                image.src = url;
+                image.style.display = "block";
+            }
+
+            modal.classList.add("is-open");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+        };
+
+        const closeModal = () => {
+            modal.classList.remove("is-open");
+            modal.setAttribute("aria-hidden", "true");
+            image.src = "";
+            frame.src = "";
+            document.body.style.overflow = "";
+        };
+
+        document.querySelectorAll(".doc-open").forEach((button) => {
+            button.addEventListener("click", () => openModal(button));
+        });
+
+        modal.querySelectorAll("[data-doc-close]").forEach((button) => {
+            button.addEventListener("click", closeModal);
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && modal.classList.contains("is-open")) {
+                closeModal();
+            }
+        });
+    })();
+</script>

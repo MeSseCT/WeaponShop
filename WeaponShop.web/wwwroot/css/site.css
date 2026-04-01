@@ -361,6 +361,18 @@ a {
     max-width: 52rem;
 }
 
+.grid-two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 900px) {
+    .grid-two {
+        grid-template-columns: 1fr;
+    }
+}
+
 .field-label {
     margin-bottom: 0.3rem;
     font-size: 0.84rem;
@@ -391,6 +403,73 @@ textarea.form-control:focus {
     box-shadow: 0 0 0 0.15rem rgba(75, 197, 212, 0.16);
 }
 
+.audit-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.audit-list.compact {
+    gap: 0.45rem;
+}
+
+.audit-chip {
+    border: 1px solid rgba(236, 143, 30, 0.25);
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    color: #f5d6aa;
+    background: rgba(236, 143, 30, 0.08);
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.audit-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: rgba(9, 16, 24, 0.55);
+    padding: 0.95rem 1.05rem;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+.audit-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.audit-card-title {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.audit-card-meta {
+    margin-top: 0.4rem;
+    color: var(--ink-soft);
+    font-size: 0.86rem;
+}
+
+.audit-card-body {
+    margin-top: 0.6rem;
+    display: grid;
+    gap: 0.2rem;
+}
+
+.audit-card-notes {
+    margin-top: 0.6rem;
+    color: #f1caa5;
+    font-size: 0.86rem;
+}
+
+.audit-card-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
 .text-danger {
     color: #ff9ea6 !important;
 }
@@ -410,6 +489,99 @@ textarea.form-control:focus {
 
 .reveal {
     animation: riseIn 0.55s ease both;
+}
+
+.doc-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    min-height: 100vh;
+    z-index: 120;
+}
+
+.doc-modal.is-open {
+    display: flex;
+}
+
+.doc-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 9, 12, 0.78);
+    backdrop-filter: blur(2px);
+}
+
+.doc-modal-card {
+    position: relative;
+    width: min(960px, 94vw);
+    max-height: 90vh;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-deep);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.doc-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--line);
+    background: rgba(12, 18, 24, 0.92);
+}
+
+.doc-modal-title {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.doc-modal-actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.doc-modal-close {
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.doc-modal-body {
+    padding: 1rem;
+    background: #0c1217;
+    overflow: auto;
+}
+
+.doc-modal-body img,
+.doc-modal-body iframe {
+    width: 100%;
+    height: min(70vh, 720px);
+    border: none;
+    border-radius: var(--radius-md);
+    background: #0a0f14;
+}
+
+.doc-modal-body img {
+    object-fit: contain;
+}
+
+.doc-modal-fallback {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--line);
+    color: var(--ink-soft);
 }
 
 @keyframes riseIn {

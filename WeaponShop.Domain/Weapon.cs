@@ -25,8 +25,12 @@ public class Weapon
     [Range(0, 100000)]
     public decimal Price { get; set; }
 
+    [Range(0, 10)]
+    public int StockQuantity { get; set; }
+
+    public bool IsAvailable { get; set; } = true;
+
     [Required]
     [StringLength(100)]
     public string Manufacturer { get; set; } = string.Empty;
 }
-

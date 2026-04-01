@@ -2,7 +2,7 @@
 
 <section class="form-shell">
     <h2>Verification documents</h2>
-    <p class="auth-sub">Upload your ID card and gun license for manual admin verification.</p>
+    <p class="auth-sub">Upload your ID card or driver license for manual admin verification.</p>
 
     @if (TempData["StatusMessage"] is string statusMessage)
     {
@@ -13,7 +13,7 @@
 
     <div class="panel" style="margin-bottom: 1rem;">
         <p class="panel-subtitle">ID card uploaded: @(Model.HasIdCard ? "Yes" : "No")</p>
-        <p class="panel-subtitle">Gun license uploaded: @(Model.HasGunLicense ? "Yes" : "No")</p>
+        <p class="panel-subtitle">Driver license uploaded: @(Model.HasDriverLicense ? "Yes" : "No")</p>
         @if (Model.DocumentsUpdatedAt.HasValue)
         {
             <p class="panel-subtitle">Last update: @Model.DocumentsUpdatedAt.Value.ToLocalTime().ToString("g")</p>
@@ -27,8 +27,8 @@
         </div>
 
         <div class="mb-4">
-            <label asp-for="GunLicenseFile" class="field-label">Gun license (PDF/JPG/PNG, max 5 MB)</label>
-            <input asp-for="GunLicenseFile" type="file" class="form-control" />
+            <label asp-for="DriverLicenseFile" class="field-label">Driver license (PDF/JPG/PNG, max 5 MB)</label>
+            <input asp-for="DriverLicenseFile" type="file" class="form-control" />
         </div>
 
         <div class="hero-actions">

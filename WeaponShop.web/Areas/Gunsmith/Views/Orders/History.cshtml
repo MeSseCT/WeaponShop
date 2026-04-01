@@ -1,0 +1,47 @@
+@model IReadOnlyList<OrderAudit>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Gunsmith audit history</h2>
+            <p class="panel-subtitle">All actions you confirmed or rejected.</p>
+        </div>
+        <a class="btn-soft" asp-action="Index">Back to orders</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="data-empty">No audit records yet.</div>
+    }
+    else
+    {
+        <div class="audit-list">
+            @foreach (var audit in Model)
+            {
+                <div class="audit-card">
+                    <div class="audit-card-head">
+                        <div class="audit-card-title">Order #@audit.OrderId - @audit.Action</div>
+                        <span class="badge-cat">@audit.ToStatus</span>
+                    </div>
+                    <div class="audit-card-meta">
+                        @audit.OccurredAtUtc.ToLocalTime().ToString("g")
+                        • @audit.FromStatus → @audit.ToStatus
+                    </div>
+                    <div class="audit-card-body">
+                        <div>@audit.Order?.User?.FirstName @audit.Order?.User?.LastName</div>
+                        <div class="panel-subtitle">@audit.Order?.User?.Email</div>
+                        <div class="panel-subtitle">@audit.ActorRole @audit.ActorName</div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(audit.Notes))
+                    {
+                        <div class="audit-card-notes">Notes: @audit.Notes</div>
+                    }
+                    <div class="audit-card-actions">
+                        <a class="btn-inline" asp-action="Details" asp-route-id="@audit.OrderId">Details</a>
+                        <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@audit.OrderId">Word</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

@@ -1,31 +1,74 @@
 @model WeaponInputModel
+@{
+    var isCreate = (ViewData["FormMode"] as string) == "Create";
+    var isSkladnikOnly = User.IsInRole("Skladnik") && !User.IsInRole("Admin");
+    var showCatalogFields = !isSkladnikOnly || isCreate;
+    var showInventoryFields = isSkladnikOnly;
+}
 
-<div class="mb-3">
-    <label asp-for="Name" class="field-label"></label>
-    <input asp-for="Name" class="form-control" />
-    <span asp-validation-for="Name" class="text-danger"></span>
-</div>
+@if (showCatalogFields)
+{
+    <div class="mb-3">
+        <label asp-for="Name" class="field-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
 
-<div class="mb-3">
-    <label asp-for="Category" class="field-label"></label>
-    <input asp-for="Category" class="form-control" />
-    <span asp-validation-for="Category" class="text-danger"></span>
-</div>
+    <div class="mb-3">
+        <label asp-for="Category" class="field-label"></label>
+        <input asp-for="Category" class="form-control" />
+        <span asp-validation-for="Category" class="text-danger"></span>
+    </div>
 
-<div class="mb-3">
-    <label asp-for="Manufacturer" class="field-label"></label>
-    <input asp-for="Manufacturer" class="form-control" />
-    <span asp-validation-for="Manufacturer" class="text-danger"></span>
-</div>
+    <div class="mb-3">
+        <label asp-for="Manufacturer" class="field-label"></label>
+        <input asp-for="Manufacturer" class="form-control" />
+        <span asp-validation-for="Manufacturer" class="text-danger"></span>
+    </div>
 
-<div class="mb-3">
-    <label asp-for="Price" class="field-label"></label>
-    <input asp-for="Price" class="form-control" />
-    <span asp-validation-for="Price" class="text-danger"></span>
-</div>
+    <div class="mb-3">
+        <label asp-for="Price" class="field-label"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
 
-<div class="mb-4">
-    <label asp-for="Description" class="field-label"></label>
-    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-    <span asp-validation-for="Description" class="text-danger"></span>
-</div>
+    <div class="mb-4">
+        <label asp-for="Description" class="field-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+}
+else
+{
+    <input type="hidden" asp-for="Name" />
+    <input type="hidden" asp-for="Category" />
+    <input type="hidden" asp-for="Manufacturer" />
+    <input type="hidden" asp-for="Price" />
+    <input type="hidden" asp-for="Description" />
+}
+
+@if (showInventoryFields)
+{
+    <div class="mb-3">
+        <label asp-for="StockQuantity" class="field-label">Stock quantity (0-10)</label>
+        <input asp-for="StockQuantity" type="number" min="0" max="10" class="form-control" />
+        <span asp-validation-for="StockQuantity" class="text-danger"></span>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="IsAvailable" class="field-label">Visible for customers</label>
+        <div class="form-check">
+            <input asp-for="IsAvailable" class="form-check-input" />
+            <label asp-for="IsAvailable" class="form-check-label">Yes, show in catalog</label>
+        </div>
+        <span asp-validation-for="IsAvailable" class="text-danger"></span>
+    </div>
+}
+else if (!isCreate)
+{
+    <div class="mb-4">
+        <label class="field-label">Inventory</label>
+        <div class="panel-subtitle">Stock: @Model.StockQuantity</div>
+        <div class="panel-subtitle">Availability: @(Model.IsAvailable ? "Available" : "Hidden")</div>
+    </div>
+}

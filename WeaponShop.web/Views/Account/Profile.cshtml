@@ -1,0 +1,62 @@
+@model WeaponShop.Web.ViewModels.Account.ProfileViewModel
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Profile</h2>
+            <p class="panel-subtitle">Update your date of birth to match your ID or driver license.</p>
+        </div>
+    </div>
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="data-empty">@statusMessage</div>
+    }
+
+    <form asp-action="Profile" method="post" class="form-shell">
+        @Html.AntiForgeryToken()
+        <div class="form-group">
+            <label asp-for="DateOfBirth" class="field-label"></label>
+            <input asp-for="DateOfBirth" type="date" class="form-control" />
+            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+        </div>
+        <button class="btn-modern" type="submit">Save changes</button>
+    </form>
+</section>
+
+<section class="panel" style="margin-top: 1.2rem;">
+    <div class="panel-head">
+        <div>
+            <h2>Verification documents</h2>
+            <p class="panel-subtitle">Upload your ID card or driver license for manual admin verification.</p>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 1rem;">
+        <p class="panel-subtitle">ID card uploaded: @(Model.HasIdCard ? "Yes" : "No")</p>
+        <p class="panel-subtitle">Driver license uploaded: @(Model.HasDriverLicense ? "Yes" : "No")</p>
+        @if (Model.DocumentsUpdatedAt.HasValue)
+        {
+            <p class="panel-subtitle">Last update: @Model.DocumentsUpdatedAt.Value.ToLocalTime().ToString("g")</p>
+        }
+    </div>
+
+    <form asp-action="Documents" method="post" enctype="multipart/form-data" class="form-shell form-shell-wide">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="IdCardFile" class="field-label">ID card (PDF/JPG/PNG, max 5 MB)</label>
+            <input asp-for="IdCardFile" type="file" class="form-control" />
+            <span asp-validation-for="IdCardFile" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="DriverLicenseFile" class="field-label">Driver license (PDF/JPG/PNG, max 5 MB)</label>
+            <input asp-for="DriverLicenseFile" type="file" class="form-control" />
+            <span asp-validation-for="DriverLicenseFile" class="text-danger"></span>
+        </div>
+
+        <button class="btn-modern" type="submit">Upload documents</button>
+    </form>
+</section>

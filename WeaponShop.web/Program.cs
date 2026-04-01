@@ -20,6 +20,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+var httpsPort = builder.Configuration.GetValue<int?>("HttpsPort")
+    ?? builder.Configuration.GetValue<int?>("ASPNETCORE_HTTPS_PORT");
+if (httpsPort.HasValue)
+{
+    builder.Services.AddHttpsRedirection(options => options.HttpsPort = httpsPort.Value);
+}
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -35,7 +42,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (httpsPort.HasValue)
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();

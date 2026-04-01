@@ -7,7 +7,7 @@ using WeaponShop.Web.ViewModels.Weapons;
 namespace WeaponShop.Web.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Skladnik")]
 public class WeaponsController : Controller
 {
     private readonly IWeaponService _weaponService;
@@ -27,6 +27,7 @@ public class WeaponsController : Controller
     [HttpGet]
     public IActionResult Create()
     {
+        ViewData["FormMode"] = "Create";
         return View(new WeaponInputModel());
     }
 
@@ -34,12 +35,19 @@ public class WeaponsController : Controller
     [HttpPost]
     public async Task<IActionResult> Create(WeaponInputModel model, CancellationToken cancellationToken)
     {
+        ViewData["FormMode"] = "Create";
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
         var weapon = MapToEntity(model);
+        if (IsAdminOnly())
+        {
+            weapon.StockQuantity = 0;
+            weapon.IsAvailable = false;
+        }
+
         await _weaponService.AddAsync(weapon, cancellationToken);
         return RedirectToAction(nameof(Index));
     }
@@ -53,6 +61,7 @@ public class WeaponsController : Controller
             return NotFound();
         }
 
+        ViewData["FormMode"] = "Edit";
         return View(MapToInputModel(weapon));
     }
 
@@ -60,6 +69,7 @@ public class WeaponsController : Controller
     [HttpPost]
     public async Task<IActionResult> Edit(int id, WeaponInputModel model, CancellationToken cancellationToken)
     {
+        ViewData["FormMode"] = "Edit";
         if (id != model.Id)
         {
             return BadRequest();
@@ -70,12 +80,32 @@ public class WeaponsController : Controller
             return View(model);
         }
 
-        var weapon = MapToEntity(model);
-        await _weaponService.UpdateAsync(weapon, cancellationToken);
+        var existing = await _weaponService.GetByIdAsync(id, cancellationToken);
+        if (existing is null)
+        {
+            return NotFound();
+        }
+
+        if (IsSkladnikOnly())
+        {
+            existing.StockQuantity = model.StockQuantity;
+            existing.IsAvailable = model.IsAvailable;
+        }
+        else
+        {
+            existing.Name = model.Name;
+            existing.Category = model.Category;
+            existing.Description = model.Description;
+            existing.Price = model.Price;
+            existing.Manufacturer = model.Manufacturer;
+        }
+
+        await _weaponService.UpdateAsync(existing, cancellationToken);
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var weapon = await _weaponService.GetByIdAsync(id, cancellationToken);
@@ -89,10 +119,21 @@ public class WeaponsController : Controller
 
     [ValidateAntiForgeryToken]
     [HttpPost, ActionName("Delete")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
     {
         await _weaponService.DeleteAsync(id, cancellationToken);
         return RedirectToAction(nameof(Index));
+    }
+
+    private bool IsSkladnikOnly()
+    {
+        return User.IsInRole("Skladnik") && !User.IsInRole("Admin");
+    }
+
+    private bool IsAdminOnly()
+    {
+        return User.IsInRole("Admin") && !User.IsInRole("Skladnik");
     }
 
     private static WeaponInputModel MapToInputModel(Weapon weapon)
@@ -104,7 +145,9 @@ public class WeaponsController : Controller
             Category = weapon.Category,
             Description = weapon.Description,
             Price = weapon.Price,
-            Manufacturer = weapon.Manufacturer
+            Manufacturer = weapon.Manufacturer,
+            StockQuantity = weapon.StockQuantity,
+            IsAvailable = weapon.IsAvailable
         };
     }
 
@@ -117,7 +160,9 @@ public class WeaponsController : Controller
             Category = model.Category,
             Description = model.Description,
             Price = model.Price,
-            Manufacturer = model.Manufacturer
+            Manufacturer = model.Manufacturer,
+            StockQuantity = model.StockQuantity,
+            IsAvailable = model.IsAvailable
         };
     }
 }

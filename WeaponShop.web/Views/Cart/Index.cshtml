@@ -92,6 +92,7 @@
                         <th>Status</th>
                         <th class="text-end">Items</th>
                         <th class="text-end">Total</th>
+                        <th class="text-end">Details</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,6 +104,9 @@
                             <td><span class="badge-cat">@order.Status</span></td>
                             <td class="text-end">@order.Items.Count</td>
                             <td class="text-end">@order.TotalPrice.ToString("C")</td>
+                            <td class="text-end">
+                                <a class="btn-inline" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">View</a>
+                            </td>
                         </tr>
                     }
                 </tbody>

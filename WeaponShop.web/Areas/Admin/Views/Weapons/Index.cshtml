@@ -3,8 +3,8 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Admin - Product management</h2>
-            <p class="panel-subtitle">Protected CRUD area for managing product catalog records.</p>
+            <h2>Inventory - Product management</h2>
+            <p class="panel-subtitle">Manage weapons, stock counts, and availability.</p>
         </div>
         <a class="btn-modern" asp-action="Create">Create weapon</a>
     </div>
@@ -23,6 +23,8 @@
                         <th>Category</th>
                         <th>Manufacturer</th>
                         <th class="text-end">Price</th>
+                        <th class="text-end">Stock</th>
+                        <th>Availability</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -34,10 +36,17 @@
                             <td><span class="badge-cat">@weapon.Category</span></td>
                             <td>@weapon.Manufacturer</td>
                             <td class="text-end">@weapon.Price.ToString("C")</td>
+                            <td class="text-end">@weapon.StockQuantity</td>
+                            <td>@(weapon.IsAvailable ? "Available" : "Hidden")</td>
                             <td class="text-end">
                                 <div class="btn-row">
-                                    <a class="btn-inline" asp-action="Edit" asp-route-id="@weapon.Id">Edit</a>
-                                    <a class="btn-inline btn-inline-danger" asp-action="Delete" asp-route-id="@weapon.Id">Delete</a>
+                                    <a class="btn-inline" asp-action="Edit" asp-route-id="@weapon.Id">
+                                        @(User.IsInRole("Skladnik") && !User.IsInRole("Admin") ? "Adjust stock" : "Edit")
+                                    </a>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <a class="btn-inline btn-inline-danger" asp-action="Delete" asp-route-id="@weapon.Id">Delete</a>
+                                    }
                                 </div>
                             </td>
                         </tr>

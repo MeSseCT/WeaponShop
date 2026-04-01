@@ -1,0 +1,82 @@
+@model Order
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Order #@Model.Id</h2>
+            <p class="panel-subtitle">Status updates for this order.</p>
+        </div>
+        <a class="btn-soft" asp-action="Index">Back to orders</a>
+    </div>
+
+    <div class="table-wrap" style="margin-bottom: 1.5rem;">
+        <table class="data-grid">
+            <tbody>
+                <tr>
+                    <th>Status</th>
+                    <td><span class="badge-cat">@Model.Status</span></td>
+                    <th>Created</th>
+                    <td>@Model.CreatedAt.ToLocalTime().ToString("g")</td>
+                </tr>
+                <tr>
+                    <th>Total</th>
+                    <td>@Model.TotalPrice.ToString("C")</td>
+                    <th>Items</th>
+                    <td>@Model.Items.Count</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-wrap" style="margin-bottom: 1.5rem;">
+        <table class="data-grid">
+            <thead>
+                <tr>
+                    <th>Items</th>
+                    <th class="text-end">Qty</th>
+                    <th class="text-end">Unit price</th>
+                    <th class="text-end">Line total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Weapon?.Name</td>
+                        <td class="text-end">@item.Quantity</td>
+                        <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                        <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel-head">
+        <div>
+            <h3 style="margin:0;">Order updates</h3>
+            <p class="panel-subtitle">Notifications tied to this order.</p>
+        </div>
+    </div>
+
+    <div class="audit-list">
+        @if (Model.Notifications.Count == 0)
+        {
+            <div class="data-empty">No updates yet.</div>
+        }
+        else
+        {
+            @foreach (var notification in Model.Notifications.OrderByDescending(n => n.CreatedAtUtc))
+            {
+                <div class="audit-card">
+                    <div class="audit-card-head">
+                        <div class="audit-card-title">@notification.Title</div>
+                        <span class="badge-cat">@Model.Status</span>
+                    </div>
+                    <div class="audit-card-meta">@notification.CreatedAtUtc.ToLocalTime().ToString("g")</div>
+                    <div class="audit-card-body">@notification.Message</div>
+                </div>
+            }
+        }
+    </div>
+</section>

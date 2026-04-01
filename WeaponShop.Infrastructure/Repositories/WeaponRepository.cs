@@ -32,6 +32,15 @@ public class WeaponRepository : IWeaponRepository
             .SingleOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
 
+    public async Task<List<Weapon>> GetByIdsForUpdateAsync(
+        IReadOnlyCollection<int> ids,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Weapons
+            .Where(w => ids.Contains(w.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Weapon weapon, CancellationToken cancellationToken = default)
     {
         await _context.Weapons.AddAsync(weapon, cancellationToken);
@@ -56,4 +65,3 @@ public class WeaponRepository : IWeaponRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 }
-

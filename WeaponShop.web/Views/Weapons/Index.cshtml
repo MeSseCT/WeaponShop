@@ -22,6 +22,8 @@
                         <th>Category</th>
                         <th>Manufacturer</th>
                         <th class="text-end">Price</th>
+                        <th class="text-end">Stock</th>
+                        <th>Availability</th>
                         @if (User.IsInRole("Customer"))
                         {
                             <th class="text-end">Action</th>
@@ -36,14 +38,23 @@
                             <td><span class="badge-cat">@weapon.Category</span></td>
                             <td>@weapon.Manufacturer</td>
                             <td class="text-end">@weapon.Price.ToString("C")</td>
+                            <td class="text-end">@weapon.StockQuantity</td>
+                            <td>@(weapon.IsAvailable ? "Available" : "Unavailable")</td>
                             @if (User.IsInRole("Customer"))
                             {
                                 <td class="text-end">
-                                    <form asp-controller="Cart" asp-action="Add" method="post">
-                                        <input type="hidden" name="weaponId" value="@weapon.Id" />
-                                        <input type="hidden" name="quantity" value="1" />
-                                        <button type="submit" class="btn-soft">Add to cart</button>
-                                    </form>
+                                    @if (weapon.IsAvailable && weapon.StockQuantity > 0)
+                                    {
+                                        <form asp-controller="Cart" asp-action="Add" method="post">
+                                            <input type="hidden" name="weaponId" value="@weapon.Id" />
+                                            <input type="hidden" name="quantity" value="1" />
+                                            <button type="submit" class="btn-soft">Add to cart</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="panel-subtitle">Out of stock</span>
+                                    }
                                 </td>
                             }
                         </tr>

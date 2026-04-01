@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using WeaponShop.Application.Interfaces;
 using WeaponShop.Domain.Identity;
 using WeaponShop.Web.ViewModels.Account;
 
@@ -11,23 +15,31 @@ namespace WeaponShop.Web.Controllers;
 public class AccountController : Controller
 {
     private const long MaxDocumentSizeBytes = 5 * 1024 * 1024;
+    private const int MaxDocumentUploadsPerDay = 3;
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".pdf", ".jpg", ".jpeg", ".png"
     };
+    private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
 
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserClaimsPrincipalFactory<ApplicationUser> _claimsPrincipalFactory;
     private readonly IWebHostEnvironment _environment;
+    private readonly IDataProtector _documentProtector;
+    private readonly INotificationRepository _notificationRepository;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         IUserClaimsPrincipalFactory<ApplicationUser> claimsPrincipalFactory,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        IDataProtectionProvider dataProtectionProvider,
+        INotificationRepository notificationRepository)
     {
         _userManager = userManager;
         _claimsPrincipalFactory = claimsPrincipalFactory;
         _environment = environment;
+        _documentProtector = dataProtectionProvider.CreateProtector("UserDocuments.v1");
+        _notificationRepository = notificationRepository;
     }
 
     [AllowAnonymous]
@@ -90,12 +102,19 @@ public class AccountController : Controller
             return View(model);
         }
 
+        if (!model.DateOfBirth.HasValue || !IsAdult(model.DateOfBirth.Value))
+        {
+            ModelState.AddModelError(nameof(model.DateOfBirth), "You must be at least 18 years old.");
+            return View(model);
+        }
+
         var user = new ApplicationUser
         {
             UserName = model.Email,
             Email = model.Email,
             FirstName = model.FirstName,
             LastName = model.LastName,
+            DateOfBirth = model.DateOfBirth.Value,
             EmailConfirmed = true
         };
 
@@ -136,7 +155,14 @@ public class AccountController : Controller
 
     [Authorize(Roles = "Customer")]
     [HttpGet]
-    public async Task<IActionResult> Documents()
+    public IActionResult Documents()
+    {
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [Authorize(Roles = "Customer")]
+    [HttpGet]
+    public async Task<IActionResult> Profile()
     {
         var user = await _userManager.GetUserAsync(User);
         if (user is null)
@@ -144,14 +170,55 @@ public class AccountController : Controller
             return Challenge();
         }
 
-        var model = new DocumentsViewModel
-        {
-            HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName),
-            HasGunLicense = !string.IsNullOrWhiteSpace(user.GunLicenseFileName),
-            DocumentsUpdatedAt = user.DocumentsUpdatedAt
-        };
+        return View(BuildProfileViewModel(user));
+    }
 
-        return View(model);
+    [Authorize(Roles = "Customer")]
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> Profile(ProfileViewModel model)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Challenge();
+        }
+
+        var dateOfBirth = model.DateOfBirth;
+        if (!dateOfBirth.HasValue)
+        {
+            ModelState.AddModelError(nameof(model.DateOfBirth), "Date of birth is required.");
+        }
+        else if (!IsAdult(dateOfBirth.Value))
+        {
+            ModelState.AddModelError(nameof(model.DateOfBirth), "You must be at least 18 years old.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
+            model.HasDriverLicense = !string.IsNullOrWhiteSpace(user.DriverLicenseFileName);
+            model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
+            return View(model);
+        }
+
+        user.DateOfBirth = dateOfBirth ?? throw new InvalidOperationException("Date of birth is required.");
+        var updateResult = await _userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            foreach (var error in updateResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
+            model.HasDriverLicense = !string.IsNullOrWhiteSpace(user.DriverLicenseFileName);
+            model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
+            return View(model);
+        }
+
+        TempData["StatusMessage"] = "Profile was updated.";
+        return RedirectToAction(nameof(Profile));
     }
 
     [Authorize(Roles = "Customer")]
@@ -165,43 +232,42 @@ public class AccountController : Controller
             return Challenge();
         }
 
-        if (model.IdCardFile is null && model.GunLicenseFile is null)
+        if (model.IdCardFile is null && model.DriverLicenseFile is null)
         {
             ModelState.AddModelError(string.Empty, "Upload at least one document.");
+        }
+
+        if (model.IdCardFile is not null || model.DriverLicenseFile is not null)
+        {
+            if (!await TryConsumeDocumentUploadSlotAsync(user))
+            {
+                return View("Profile", BuildProfileViewModel(user));
+            }
         }
 
         if (model.IdCardFile is not null)
         {
             if (!TryValidateDocument(model.IdCardFile))
             {
-                model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
-                model.HasGunLicense = !string.IsNullOrWhiteSpace(user.GunLicenseFileName);
-                model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
-                return View(model);
+                return View("Profile", BuildProfileViewModel(user));
             }
 
             user.IdCardFileName = await SaveDocumentAsync(user.Id, model.IdCardFile, "idcard", cancellationToken);
         }
 
-        if (model.GunLicenseFile is not null)
+        if (model.DriverLicenseFile is not null)
         {
-            if (!TryValidateDocument(model.GunLicenseFile))
+            if (!TryValidateDocument(model.DriverLicenseFile))
             {
-                model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
-                model.HasGunLicense = !string.IsNullOrWhiteSpace(user.GunLicenseFileName);
-                model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
-                return View(model);
+                return View("Profile", BuildProfileViewModel(user));
             }
 
-            user.GunLicenseFileName = await SaveDocumentAsync(user.Id, model.GunLicenseFile, "gunlicense", cancellationToken);
+            user.DriverLicenseFileName = await SaveDocumentAsync(user.Id, model.DriverLicenseFile, "driverlicense", cancellationToken);
         }
 
         if (!ModelState.IsValid)
         {
-            model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
-            model.HasGunLicense = !string.IsNullOrWhiteSpace(user.GunLicenseFileName);
-            model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
-            return View(model);
+            return View("Profile", BuildProfileViewModel(user));
         }
 
         user.DocumentsUpdatedAt = DateTimeOffset.UtcNow;
@@ -213,14 +279,22 @@ public class AccountController : Controller
                 ModelState.AddModelError(string.Empty, error.Description);
             }
 
-            model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
-            model.HasGunLicense = !string.IsNullOrWhiteSpace(user.GunLicenseFileName);
-            model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
-            return View(model);
+            return View("Profile", BuildProfileViewModel(user));
         }
 
         TempData["StatusMessage"] = "Documents were uploaded successfully.";
-        return RedirectToAction(nameof(Documents));
+        return RedirectToAction(nameof(Profile));
+    }
+
+    private static ProfileViewModel BuildProfileViewModel(ApplicationUser user)
+    {
+        return new ProfileViewModel
+        {
+            DateOfBirth = user.DateOfBirth,
+            HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName),
+            HasDriverLicense = !string.IsNullOrWhiteSpace(user.DriverLicenseFileName),
+            DocumentsUpdatedAt = user.DocumentsUpdatedAt
+        };
     }
 
     [Authorize]
@@ -238,32 +312,48 @@ public class AccountController : Controller
             return Forbid();
         }
 
-        var targetUser = await _userManager.FindByIdAsync(userId);
-        if (targetUser is null)
+        var document = await TryLoadDocumentAsync(userId, type, cancellationToken);
+        if (document is null)
         {
             return NotFound();
         }
 
-        var fileName = type.ToLowerInvariant() switch
-        {
-            "idcard" => targetUser.IdCardFileName,
-            "gunlicense" => targetUser.GunLicenseFileName,
-            _ => null
-        };
+        var (bytes, fileName, downloadName) = document.Value;
+        var contentType = ResolveContentType(fileName);
+        return File(bytes, contentType, downloadName);
+    }
 
-        if (string.IsNullOrWhiteSpace(fileName))
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> ViewDocument(string userId, string type, CancellationToken cancellationToken)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(currentUserId))
+        {
+            return Challenge();
+        }
+
+        if (!User.IsInRole("Admin") && !string.Equals(currentUserId, userId, StringComparison.Ordinal))
+        {
+            return Forbid();
+        }
+
+        var document = await TryLoadDocumentAsync(userId, type, cancellationToken);
+        if (document is null)
         {
             return NotFound();
         }
 
-        var filePath = Path.Combine(GetUserDocumentsDirectory(targetUser.Id), fileName);
-        if (!System.IO.File.Exists(filePath))
-        {
-            return NotFound();
-        }
+        var (bytes, fileName, _) = document.Value;
+        var contentType = ResolveContentType(fileName);
+        return File(bytes, contentType);
+    }
 
-        var downloadName = $"{type}-{targetUser.Id}{Path.GetExtension(fileName)}";
-        return PhysicalFile(filePath, "application/octet-stream", downloadName);
+    [Authorize(Roles = "Customer")]
+    [HttpGet]
+    public IActionResult Notifications()
+    {
+        return RedirectToAction("Index", "Orders");
     }
 
     private bool TryValidateDocument(IFormFile file)
@@ -303,8 +393,12 @@ public class AccountController : Controller
         Directory.CreateDirectory(directory);
         var filePath = Path.Combine(directory, fileName);
 
-        await using var stream = System.IO.File.Create(filePath);
-        await file.CopyToAsync(stream, cancellationToken);
+        await using var input = file.OpenReadStream();
+        using var buffer = new MemoryStream();
+        await input.CopyToAsync(buffer, cancellationToken);
+
+        var protectedBytes = _documentProtector.Protect(buffer.ToArray());
+        await System.IO.File.WriteAllBytesAsync(filePath, protectedBytes, cancellationToken);
 
         return fileName;
     }
@@ -312,5 +406,153 @@ public class AccountController : Controller
     private string GetUserDocumentsDirectory(string userId)
     {
         return Path.Combine(_environment.ContentRootPath, "UserDocuments", userId);
+    }
+
+    private async Task<(byte[] Bytes, string FileName, string DownloadName)?> TryLoadDocumentAsync(
+        string userId,
+        string type,
+        CancellationToken cancellationToken)
+    {
+        var targetUser = await _userManager.FindByIdAsync(userId);
+        if (targetUser is null)
+        {
+            return null;
+        }
+
+        var fileName = type.ToLowerInvariant() switch
+        {
+            "idcard" => targetUser.IdCardFileName,
+            "driverlicense" => targetUser.DriverLicenseFileName,
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return null;
+        }
+
+        var filePath = Path.Combine(GetUserDocumentsDirectory(targetUser.Id), fileName);
+        if (!System.IO.File.Exists(filePath))
+        {
+            return null;
+        }
+
+        var decryptedBytes = await TryDecryptDocumentAsync(filePath, fileName, cancellationToken);
+        if (decryptedBytes is null)
+        {
+            return null;
+        }
+
+        var downloadName = $"{type}-{targetUser.Id}{Path.GetExtension(fileName)}";
+        return (decryptedBytes, fileName, downloadName);
+    }
+
+    private async Task<byte[]?> TryDecryptDocumentAsync(
+        string filePath,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        var encryptedBytes = await System.IO.File.ReadAllBytesAsync(filePath, cancellationToken);
+        try
+        {
+            return _documentProtector.Unprotect(encryptedBytes);
+        }
+        catch (CryptographicException)
+        {
+            if (!LooksLikePlainDocument(encryptedBytes, fileName))
+            {
+                return null;
+            }
+
+            var upgradedBytes = _documentProtector.Protect(encryptedBytes);
+            await System.IO.File.WriteAllBytesAsync(filePath, upgradedBytes, cancellationToken);
+            return encryptedBytes;
+        }
+    }
+
+    private static string ResolveContentType(string fileName)
+    {
+        return ContentTypeProvider.TryGetContentType(fileName, out var contentType)
+            ? contentType
+            : "application/octet-stream";
+    }
+
+    private static bool LooksLikePlainDocument(byte[] bytes, string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        if (extension == ".pdf")
+        {
+            return bytes.Length > 4 &&
+                   bytes[0] == 0x25 &&
+                   bytes[1] == 0x50 &&
+                   bytes[2] == 0x44 &&
+                   bytes[3] == 0x46;
+        }
+
+        if (extension is ".jpg" or ".jpeg")
+        {
+            return bytes.Length > 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF;
+        }
+
+        if (extension == ".png")
+        {
+            return bytes.Length > 8 &&
+                   bytes[0] == 0x89 &&
+                   bytes[1] == 0x50 &&
+                   bytes[2] == 0x4E &&
+                   bytes[3] == 0x47 &&
+                   bytes[4] == 0x0D &&
+                   bytes[5] == 0x0A &&
+                   bytes[6] == 0x1A &&
+                   bytes[7] == 0x0A;
+        }
+
+        return false;
+    }
+
+    private static bool IsAdult(DateOnly dateOfBirth)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var age = today.Year - dateOfBirth.Year;
+
+        if (today < dateOfBirth.AddYears(age))
+        {
+            age--;
+        }
+
+        return age >= 18;
+    }
+
+    private async Task<bool> TryConsumeDocumentUploadSlotAsync(ApplicationUser user)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        var windowStart = user.DocumentsUploadWindowStartedAtUtc;
+
+        if (!windowStart.HasValue || DateOnly.FromDateTime(windowStart.Value.UtcDateTime) != today)
+        {
+            user.DocumentsUploadWindowStartedAtUtc = now;
+            user.DocumentsUploadCount = 0;
+        }
+
+        if (user.DocumentsUploadCount >= MaxDocumentUploadsPerDay)
+        {
+            ModelState.AddModelError(string.Empty, "Document upload limit reached. Try again tomorrow.");
+            return false;
+        }
+
+        user.DocumentsUploadCount += 1;
+        var updateResult = await _userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            foreach (var error in updateResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return false;
+        }
+
+        return true;
     }
 }

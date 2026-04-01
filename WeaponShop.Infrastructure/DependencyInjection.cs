@@ -20,7 +20,9 @@ public static class DependencyInjection
                                ?? "Host=localhost;Port=5432;Database=weaponshop;Username=weaponshop;Password=weaponshop_dev_password;Include Error Detail=true";
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        {
+            options.UseNpgsql(connectionString);
+        });
 
         services
             .AddIdentityCore<ApplicationUser>(options =>
@@ -37,6 +39,9 @@ public static class DependencyInjection
 
         services.AddScoped<IWeaponRepository, WeaponRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IEmailSender, Services.SmtpEmailSender>();
 
         return services;
     }

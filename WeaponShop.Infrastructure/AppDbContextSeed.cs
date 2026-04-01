@@ -20,6 +20,8 @@ public static class AppDbContextSeed
 
         await SeedRolesAsync(roleManager);
         await SeedAdminUserAsync(userManager, configuration);
+        await SeedStaffUserAsync(userManager, configuration, "Skladnik", "warehouse@weaponshop.local", "Warehouse123!", "Warehouse", "Staff", "SeedWarehouse");
+        await SeedStaffUserAsync(userManager, configuration, "Zbrojir", "gunsmith@weaponshop.local", "Gunsmith123!", "Gunsmith", "Staff", "SeedGunsmith");
 
         // Only seed weapons when there are no records yet.
         if (await context.Weapons.AnyAsync(cancellationToken))
@@ -35,7 +37,9 @@ public static class AppDbContextSeed
                 Category = "B",
                 Description = "Popular 9x19mm semi-automatic pistol.",
                 Price = 650m,
-                Manufacturer = "Glock"
+                Manufacturer = "Glock",
+                StockQuantity = 5,
+                IsAvailable = true
             },
             new Weapon
             {
@@ -43,7 +47,9 @@ public static class AppDbContextSeed
                 Category = "B",
                 Description = "Modern polymer-framed striker-fired pistol.",
                 Price = 700m,
-                Manufacturer = "Česká zbrojovka"
+                Manufacturer = "Česká zbrojovka",
+                StockQuantity = 6,
+                IsAvailable = true
             },
             new Weapon
             {
@@ -51,7 +57,9 @@ public static class AppDbContextSeed
                 Category = "B",
                 Description = "Classic Czech 7.62×39mm assault rifle (civilian semi-auto version).",
                 Price = 1200m,
-                Manufacturer = "Česká zbrojovka"
+                Manufacturer = "Česká zbrojovka",
+                StockQuantity = 4,
+                IsAvailable = true
             }
         };
 
@@ -61,7 +69,7 @@ public static class AppDbContextSeed
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
     {
-        var roles = new[] { "Admin", "Customer" };
+        var roles = new[] { "Admin", "Customer", "Skladnik", "Zbrojir" };
         foreach (var role in roles)
         {
             if (await roleManager.RoleExistsAsync(role))
@@ -113,6 +121,52 @@ public static class AppDbContextSeed
             {
                 throw new InvalidOperationException(
                     $"Failed to assign role 'Admin' to '{adminEmail}': {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+    }
+
+    private static async Task SeedStaffUserAsync(
+        UserManager<ApplicationUser> userManager,
+        IConfiguration? configuration,
+        string roleName,
+        string fallbackEmail,
+        string fallbackPassword,
+        string fallbackFirstName,
+        string fallbackLastName,
+        string configSection)
+    {
+        var email = configuration?[$"{configSection}:Email"] ?? fallbackEmail;
+        var password = configuration?[$"{configSection}:Password"] ?? fallbackPassword;
+        var firstName = configuration?[$"{configSection}:FirstName"] ?? fallbackFirstName;
+        var lastName = configuration?[$"{configSection}:LastName"] ?? fallbackLastName;
+
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                FirstName = firstName,
+                LastName = lastName
+            };
+
+            var createResult = await userManager.CreateAsync(user, password);
+            if (!createResult.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to create default {roleName} user '{email}': {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        if (!await userManager.IsInRoleAsync(user, roleName))
+        {
+            var roleResult = await userManager.AddToRoleAsync(user, roleName);
+            if (!roleResult.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to assign role '{roleName}' to '{email}': {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
             }
         }
     }
