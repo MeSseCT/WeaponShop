@@ -16,8 +16,10 @@ public interface IOrderService
     Task<List<Order>> GetGunsmithOrdersAsync(CancellationToken cancellationToken = default);
     Task<Order> AddItemAsync(int orderId, int weaponId, int quantity, CancellationToken cancellationToken = default);
     Task<Order> AddItemToCurrentOrderAsync(string userId, int weaponId, int quantity, CancellationToken cancellationToken = default);
+    Task<Order> AddAccessoryItemToCurrentOrderAsync(string userId, int accessoryId, int quantity, CancellationToken cancellationToken = default);
     Task<Order> RemoveItemFromCurrentOrderAsync(string userId, int weaponId, CancellationToken cancellationToken = default);
-    Task<Order> CheckoutCurrentOrderAsync(string userId, CancellationToken cancellationToken = default);
+    Task<Order> RemoveAccessoryItemFromCurrentOrderAsync(string userId, int accessoryId, CancellationToken cancellationToken = default);
+    Task<Order> CheckoutCurrentOrderAsync(string userId, CheckoutDetails checkoutDetails, CancellationToken cancellationToken = default);
     Task<Order> ApproveOrderAsync(int orderId, string actorUserId, string? actorName, string? actorRole, CancellationToken cancellationToken = default);
     Task<Order> RejectOrderAsync(int orderId, string actorUserId, string? actorName, string? actorRole, string? reason, CancellationToken cancellationToken = default);
     Task<Order> MarkWarehouseCheckedAsync(int orderId, string actorUserId, string? actorName, string? actorRole, CancellationToken cancellationToken = default);

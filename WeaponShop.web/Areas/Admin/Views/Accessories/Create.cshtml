@@ -1,0 +1,15 @@
+@model WeaponShop.Web.ViewModels.Accessories.AccessoryInputModel
+
+<section class="form-shell form-shell-wide">
+    <h2>Přidat doplněk</h2>
+    <p class="auth-sub">Nová veřejná položka katalogu dostupná bez ověření zákazníka.</p>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <partial name="_AccessoryForm" model="Model" />
+        <div class="hero-actions">
+            <button class="btn-modern" type="submit">Vytvořit</button>
+            <a class="btn-soft" asp-action="Index">Zrušit</a>
+        </div>
+    </form>
+</section>

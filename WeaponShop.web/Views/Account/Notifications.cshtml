@@ -3,14 +3,14 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Notifications</h2>
-            <p class="panel-subtitle">Updates about your orders.</p>
+            <h2>Notifikace</h2>
+            <p class="panel-subtitle">Přehled všech aktualizací týkajících se vašich objednávek.</p>
         </div>
     </div>
 
     @if (Model.Count == 0)
     {
-        <div class="data-empty">No notifications yet.</div>
+        <div class="data-empty">Zatím nemáte žádné notifikace.</div>
     }
     else
     {
@@ -18,9 +18,9 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Title</th>
-                        <th>Message</th>
-                        <th>Date</th>
+                        <th>Nadpis</th>
+                        <th>Zpráva</th>
+                        <th>Datum</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -3,12 +3,12 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Admin - Order approvals</h2>
-            <p class="panel-subtitle">Orders waiting for manual verification and approval.</p>
+            <h2>Administrace schvalování</h2>
+            <p class="panel-subtitle">Objednávky čekající na ruční ověření dokladů a schválení.</p>
         </div>
         <div class="btn-row">
-            <a class="btn-soft" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Manage products</a>
-            <a class="btn-soft" asp-area="Admin" asp-action="All">All orders</a>
+            <a class="btn-soft" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Správa produktů</a>
+            <a class="btn-soft" asp-area="Admin" asp-action="All">Všechny objednávky</a>
         </div>
     </div>
 
@@ -24,7 +24,7 @@
 
     @if (Model.Count == 0)
     {
-        <div class="data-empty">No orders awaiting approval.</div>
+        <div class="data-empty">Žádné objednávky momentálně nečekají na schválení.</div>
     }
     else
     {
@@ -32,13 +32,13 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Order</th>
-                        <th>Customer</th>
-                        <th>Documents</th>
+                        <th>Objednávka</th>
+                        <th>Zákazník</th>
+                        <th>Doklady</th>
                         <th>Audit</th>
-                        <th class="text-end">Items</th>
-                        <th class="text-end">Total</th>
-                        <th class="text-end">Actions</th>
+                        <th class="text-end">Položky</th>
+                        <th class="text-end">Celkem</th>
+                        <th class="text-end">Akce</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,7 +53,7 @@
                                 <div>@order.User?.FirstName @order.User?.LastName</div>
                                 <div class="panel-subtitle">@order.User?.Email</div>
                                 <div>
-                                    <a class="btn-inline" asp-area="Admin" asp-controller="Orders" asp-action="History" asp-route-userId="@order.UserId">History</a>
+                                    <a class="btn-inline" asp-area="Admin" asp-controller="Orders" asp-action="History" asp-route-userId="@order.UserId">Historie</a>
                                 </div>
                             </td>
                             <td>
@@ -64,16 +64,16 @@
                                     var idCardDownloadUrl = Url.Action("DownloadDocument", "Account", new { area = "", userId = order.UserId, type = "idcard" });
                                     <button type="button"
                                             class="btn-inline doc-open"
-                                            data-doc-title="ID card"
+                                            data-doc-title="Občanský průkaz"
                                             data-doc-kind="@(idCardIsPdf ? "pdf" : "image")"
                                             data-doc-url="@idCardViewUrl"
                                             data-doc-download="@idCardDownloadUrl">
-                                        View ID card
+                                        Zobrazit OP
                                     </button>
                                 }
                                 else
                                 {
-                                    <span class="panel-subtitle">ID card missing</span>
+                                    <span class="panel-subtitle">Občanský průkaz chybí</span>
                                 }
 
                                 @if (!string.IsNullOrWhiteSpace(order.User?.DriverLicenseFileName))
@@ -83,22 +83,22 @@
                                     var driverLicenseDownloadUrl = Url.Action("DownloadDocument", "Account", new { area = "", userId = order.UserId, type = "driverlicense" });
                                     <button type="button"
                                             class="btn-inline doc-open"
-                                            data-doc-title="Driver license"
+                                            data-doc-title="Řidičský průkaz"
                                             data-doc-kind="@(driverLicenseIsPdf ? "pdf" : "image")"
                                             data-doc-url="@driverLicenseViewUrl"
                                             data-doc-download="@driverLicenseDownloadUrl">
-                                        View license
+                                        Zobrazit ŘP
                                     </button>
                                 }
                                 else
                                 {
-                                    <span class="panel-subtitle">Driver license missing</span>
+                                    <span class="panel-subtitle">Řidičský průkaz chybí</span>
                                 }
                             </td>
                             <td>
                                 @if (order.Audits.Count == 0)
                                 {
-                                    <span class="panel-subtitle">No audit yet</span>
+                                    <span class="panel-subtitle">Zatím bez auditu</span>
                                 }
                                 else
                                 {
@@ -115,14 +115,14 @@
                             <td class="text-end">@order.TotalPrice.ToString("C")</td>
                             <td class="text-end">
                                 <div class="btn-row">
-                                    <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Details</a>
+                                    <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Detail</a>
                                     <form asp-action="Approve" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
-                                        <button type="submit" class="btn-inline">Approve</button>
+                                        <button type="submit" class="btn-inline">Schválit</button>
                                     </form>
                                     <form asp-action="Reject" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
-                                        <button type="submit" class="btn-inline btn-inline-danger">Reject</button>
+                                        <button type="submit" class="btn-inline btn-inline-danger">Zamítnout</button>
                                     </form>
                                 </div>
                             </td>
@@ -138,17 +138,17 @@
     <div class="doc-modal-backdrop" data-doc-close="true"></div>
     <div class="doc-modal-card" role="dialog" aria-modal="true" aria-labelledby="docModalTitle">
         <div class="doc-modal-head">
-            <div class="doc-modal-title" id="docModalTitle">Document</div>
+            <div class="doc-modal-title" id="docModalTitle">Dokument</div>
             <div class="doc-modal-actions">
-                <a class="btn-soft" data-doc-download href="#" rel="noopener">Download</a>
-                <button type="button" class="btn-inline doc-modal-close" data-doc-close="true" aria-label="Close">×</button>
+                <a class="btn-soft" data-doc-download href="#" rel="noopener">Stáhnout</a>
+                <button type="button" class="btn-inline doc-modal-close" data-doc-close="true" aria-label="Zavřít">×</button>
             </div>
         </div>
         <div class="doc-modal-body">
-            <img class="doc-modal-image" data-doc-image alt="Document preview" />
-            <iframe class="doc-modal-frame" data-doc-frame title="Document preview"></iframe>
+            <img class="doc-modal-image" data-doc-image alt="Náhled dokumentu" />
+            <iframe class="doc-modal-frame" data-doc-frame title="Náhled dokumentu"></iframe>
             <div class="doc-modal-fallback" data-doc-fallback>
-                Preview is not available. Use download instead.
+                Náhled není dostupný. Použijte stažení dokumentu.
             </div>
         </div>
     </div>
@@ -170,7 +170,7 @@
         const openModal = (button) => {
             const url = button.dataset.docUrl;
             const kind = button.dataset.docKind;
-            const docTitle = button.dataset.docTitle || "Document";
+            const docTitle = button.dataset.docTitle || "Dokument";
             const downloadUrl = button.dataset.docDownload || url;
 
             if (title) {

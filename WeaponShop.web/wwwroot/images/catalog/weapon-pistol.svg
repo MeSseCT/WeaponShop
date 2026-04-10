@@ -1,0 +1,10 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="48" fill="#0E151A"/>
+  <path d="M164 486H654L734 404H908L982 444V498L924 520H720L680 576H572L532 514H372L314 612H212L246 514H164V486Z" fill="#29363F"/>
+  <path d="M622 420H826L874 446H622V420Z" fill="#4A5E6B"/>
+  <path d="M556 514L620 622H518L456 514H556Z" fill="#1E2830"/>
+  <path d="M274 514L240 576H326L364 514H274Z" fill="#4A5E6B"/>
+  <rect x="116" y="110" width="320" height="38" rx="19" fill="#C78A2D"/>
+  <text x="150" y="136" fill="#10161B" font-size="24" font-family="Arial, sans-serif" font-weight="700">HANDGUN PROFILE</text>
+  <text x="116" y="698" fill="#98A9B5" font-size="30" font-family="Arial, sans-serif">Restricted catalog visual</text>
+</svg>

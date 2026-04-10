@@ -78,7 +78,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.MarkGunsmithCheckedAsync(id, actorUserId, actorName, actorRole, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was checked and returned to warehouse.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla zkontrolována a vrácena na sklad.";
         }
         catch (Exception exception)
         {
@@ -100,7 +100,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.RejectOrderAsync(id, actorUserId, actorName, actorRole, reason, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was rejected.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla zamítnuta.";
         }
         catch (Exception exception)
         {
@@ -113,7 +113,7 @@ public class OrdersController : Controller
     private bool TryGetActor(out string userId, out string actorName, out string actorRole)
     {
         userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        actorName = User.Identity?.Name ?? "unknown";
+        actorName = User.Identity?.Name ?? "neznámý uživatel";
         actorRole = User.IsInRole("Zbrojir") ? "Zbrojir" : "Unknown";
         return !string.IsNullOrWhiteSpace(userId);
     }

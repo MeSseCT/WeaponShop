@@ -38,6 +38,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddScoped<IWeaponRepository, WeaponRepository>();
+        services.AddScoped<IAccessoryRepository, AccessoryRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();

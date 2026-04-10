@@ -1,0 +1,88 @@
+@model WeaponShop.Web.ViewModels.Accessories.AccessoryInputModel
+@{
+    var isCreate = (ViewData["FormMode"] as string) == "Create";
+    var isSkladnikOnly = User.IsInRole("Skladnik") && !User.IsInRole("Admin");
+    var showCatalogFields = !isSkladnikOnly || isCreate;
+    var showInventoryFields = isSkladnikOnly || !isCreate;
+}
+
+@if (showCatalogFields)
+{
+    <div class="mb-3">
+        <label asp-for="Name" class="field-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Category" class="field-label"></label>
+        <input asp-for="Category" class="form-control" />
+        <span asp-validation-for="Category" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Manufacturer" class="field-label"></label>
+        <input asp-for="Manufacturer" class="form-control" />
+        <span asp-validation-for="Manufacturer" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Price" class="field-label"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="Description" class="field-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ImageFile" class="field-label">Obrázek produktu</label>
+        <input asp-for="ImageFile" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+        <span asp-validation-for="ImageFile" class="text-danger"></span>
+    </div>
+
+    @if (Model.HasImage && !string.IsNullOrWhiteSpace(Model.CurrentImagePath))
+    {
+        <div class="image-admin-preview mb-3">
+            <img src="@Model.CurrentImagePath" alt="@Model.Name" />
+        </div>
+
+        <div class="mb-4">
+            <div class="form-check">
+                <input asp-for="RemoveImage" class="form-check-input" />
+                <label asp-for="RemoveImage" class="form-check-label">Odstranit aktuální obrázek</label>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <input type="hidden" asp-for="Name" />
+    <input type="hidden" asp-for="Category" />
+    <input type="hidden" asp-for="Manufacturer" />
+    <input type="hidden" asp-for="Price" />
+    <input type="hidden" asp-for="Description" />
+    <input type="hidden" asp-for="CurrentImagePath" />
+    <input type="hidden" asp-for="HasImage" />
+}
+
+@if (showInventoryFields)
+{
+    <div class="mb-3">
+        <label asp-for="StockQuantity" class="field-label">Skladové množství</label>
+        <input asp-for="StockQuantity" type="number" min="0" max="500" class="form-control" />
+        <span asp-validation-for="StockQuantity" class="text-danger"></span>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="IsAvailable" class="field-label">Viditelnost pro zákazníky</label>
+        <div class="form-check">
+            <input asp-for="IsAvailable" class="form-check-input" />
+            <label asp-for="IsAvailable" class="form-check-label">Ano, zobrazit v katalogu</label>
+        </div>
+        <span asp-validation-for="IsAvailable" class="text-danger"></span>
+    </div>
+}

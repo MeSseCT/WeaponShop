@@ -5,9 +5,9 @@ namespace WeaponShop.Web.ViewModels.Account;
 
 public class ProfileViewModel
 {
-    [Required(ErrorMessage = "Date of birth is required.")]
+    [Required(ErrorMessage = "Datum narození je povinné.")]
     [DataType(DataType.Date)]
-    [Display(Name = "Date of birth")]
+    [Display(Name = "Datum narození")]
     public DateOnly? DateOfBirth { get; set; }
 
     public bool HasIdCard { get; set; }

@@ -18,6 +18,19 @@ public class Order
     public DateTime? ReadyForPickupAtUtc { get; set; }
     public DateTime? PickupHandedOverAtUtc { get; set; }
     public DateTime? StockReservedAtUtc { get; set; }
+    public string ContactEmail { get; set; } = string.Empty;
+    public string ContactPhone { get; set; } = string.Empty;
+    public string DeliveryMethod { get; set; } = string.Empty;
+    public string PaymentMethod { get; set; } = string.Empty;
+    public string ShippingName { get; set; } = string.Empty;
+    public string ShippingStreet { get; set; } = string.Empty;
+    public string ShippingCity { get; set; } = string.Empty;
+    public string ShippingPostalCode { get; set; } = string.Empty;
+    public string BillingName { get; set; } = string.Empty;
+    public string BillingStreet { get; set; } = string.Empty;
+    public string BillingCity { get; set; } = string.Empty;
+    public string BillingPostalCode { get; set; } = string.Empty;
+    public string CustomerNote { get; set; } = string.Empty;
     public decimal TotalPrice { get; set; }
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     public ICollection<OrderAudit> Audits { get; set; } = new List<OrderAudit>();

@@ -1,0 +1,117 @@
+@model WeaponShop.Web.ViewModels.Weapons.WeaponDetailsViewModel
+
+@{
+    ViewData["Title"] = Model.Weapon.Name;
+}
+
+<nav class="breadcrumb-bar">
+    <a asp-controller="Home" asp-action="Index">Domů</a>
+    <span>/</span>
+    <a asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+    <span>/</span>
+    <span>@Model.Weapon.Name</span>
+</nav>
+
+<section class="store-layout">
+    <aside class="store-aside">
+        <partial name="_StoreSidebar" />
+    </aside>
+
+    <div class="store-main">
+<section class="detail-shell detail-shell-classic">
+    <div class="detail-media panel detail-media-classic">
+        <div class="product-visual product-visual-xl">
+            <img src="@Model.ImagePath" alt="@Model.Weapon.Name" />
+        </div>
+    </div>
+
+    <div class="detail-summary panel detail-summary-classic">
+        <h1 class="detail-title">@Model.Weapon.Name</h1>
+        <p class="detail-subtitle">@Model.Weapon.Manufacturer</p>
+
+        <div class="detail-price-row">
+            <div class="detail-price">@Model.Weapon.Price.ToString("C")</div>
+        </div>
+        <div class="detail-status-line">
+            <span>Prodej na zbrojní průkaz</span>
+            <span>Pouze po ověření účtu</span>
+            <strong class="stock-classic @(Model.Weapon.IsAvailable && Model.Weapon.StockQuantity > 0 ? "stock-classic-in" : "stock-classic-out")">
+                @(Model.Weapon.IsAvailable && Model.Weapon.StockQuantity > 0 ? "zboží je skladem" : "momentálně nedostupné")
+            </strong>
+        </div>
+
+        <div class="detail-actions">
+            @if (Model.CanAddToCart)
+            {
+                <form asp-controller="Cart" asp-action="Add" method="post">
+                    <input type="hidden" name="weaponId" value="@Model.Weapon.Id" />
+                    <input type="hidden" name="quantity" value="1" />
+                    <button type="submit" class="btn-modern">Přidat do košíku</button>
+                </form>
+            }
+            <a class="btn-soft" asp-action="Index" asp-route-access="restricted">Zpět do katalogu</a>
+        </div>
+
+        <div class="detail-facts">
+            <div><span>SKU:</span><strong>ZBR-@Model.Weapon.Id</strong></div>
+            <div><span>Kategorie:</span><strong>@CatalogPresentation.GetWeaponCategoryLabel(Model.Weapon.Category)</strong></div>
+            <div><span>Výrobce:</span><strong>@Model.Weapon.Manufacturer</strong></div>
+        </div>
+    </div>
+</section>
+
+<section class="panel detail-description-panel" style="margin-top: 1.2rem;">
+    <div class="detail-tab-label">Popis</div>
+    <div class="detail-description-content">
+        <h2>Popis</h2>
+        <p>
+            @(string.IsNullOrWhiteSpace(Model.Weapon.Description)
+                ? "Detail produktu pro kontrolovaný nákupní proces. Předání zboží dál prochází schválením, skladem a zbrojířem."
+                : Model.Weapon.Description)
+        </p>
+    </div>
+</section>
+
+<section class="panel" style="margin-top: 1.2rem;">
+    <div class="panel-head">
+        <div>
+            <h2>Související produkty</h2>
+            <p class="panel-subtitle">Podobné položky ze stejné kategorie zbraní.</p>
+        </div>
+    </div>
+
+    @if (Model.RelatedProducts.Count == 0)
+    {
+        <div class="data-empty">V této kategorii zatím nejsou další související produkty.</div>
+    }
+    else
+    {
+        <div class="catalog-grid compact-grid">
+            @foreach (var product in Model.RelatedProducts)
+            {
+                <article class="product-card @product.AccentClass">
+                    <a class="product-media" asp-action="Details" asp-route-id="@product.WeaponId">
+                        <div class="product-visual">
+                            <img src="@product.ImagePath" alt="@product.Name" />
+                        </div>
+                    </a>
+
+                    <div class="product-body">
+                        <div class="product-badges">
+                            <span class="badge-chip badge-chip-restricted">@product.CategoryDisplay</span>
+                        </div>
+                        <h3 class="product-title">@product.Name</h3>
+                        <p class="product-meta">@product.Manufacturer</p>
+                        <div class="product-price-row">
+                            <strong>@product.Price.ToString("C")</strong>
+                            <span>@(product.StockQuantity ?? 0) ks</span>
+                        </div>
+                        <a class="btn-soft full-width" asp-action="Details" asp-route-id="@product.WeaponId">Zobrazit detail</a>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+    </div>
+</section>

@@ -4,8 +4,8 @@
 }
 
 <section class="form-shell">
-    <h2>Sign in</h2>
-    <p class="auth-sub">Access customer profile or admin console.</p>
+    <h2>Přihlášení</h2>
+    <p class="auth-sub">Přístup do zákaznického účtu i interních rolí systému.</p>
 
     <form asp-action="Login" method="post">
         <input type="hidden" name="returnUrl" value="@returnUrl" />
@@ -29,8 +29,8 @@
         </div>
 
         <div class="hero-actions">
-            <button class="btn-modern" type="submit">Login</button>
-            <a class="btn-soft" asp-action="Register">Create account</a>
+            <button class="btn-modern" type="submit">Přihlásit se</button>
+            <a class="btn-soft" asp-action="Register">Vytvořit účet</a>
         </div>
     </form>
 </section>

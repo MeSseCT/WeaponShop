@@ -305,6 +305,84 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("stock_reserved_at_utc");
 
+                    b.Property<string>("BillingCity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("billing_city");
+
+                    b.Property<string>("BillingName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("billing_name");
+
+                    b.Property<string>("BillingPostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("billing_postal_code");
+
+                    b.Property<string>("BillingStreet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("billing_street");
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("contact_email");
+
+                    b.Property<string>("ContactPhone")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("contact_phone");
+
+                    b.Property<string>("CustomerNote")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("customer_note");
+
+                    b.Property<string>("DeliveryMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("delivery_method");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("payment_method");
+
+                    b.Property<string>("ShippingCity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("shipping_city");
+
+                    b.Property<string>("ShippingName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("shipping_name");
+
+                    b.Property<string>("ShippingPostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("shipping_postal_code");
+
+                    b.Property<string>("ShippingStreet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("shipping_street");
+
                     b.Property<decimal>("TotalPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
@@ -394,6 +472,10 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("request_id");
 
+                    b.Property<int?>("AccessoryId")
+                        .HasColumnType("integer")
+                        .HasColumnName("accessory_id");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("integer")
                         .HasColumnName("quantity");
@@ -403,15 +485,20 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("unit_price");
 
-                    b.Property<int>("WeaponId")
+                    b.Property<int?>("WeaponId")
                         .HasColumnType("integer")
                         .HasColumnName("weapon_id");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccessoryId");
+
                     b.HasIndex("WeaponId");
 
                     b.HasIndex("OrderId", "WeaponId")
+                        .IsUnique();
+
+                    b.HasIndex("OrderId", "AccessoryId")
                         .IsUnique();
 
                     b.ToTable("purchase_request_items", (string)null);
@@ -464,6 +551,61 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.ToTable("user_notifications", (string)null);
                 });
 
+            modelBuilder.Entity("WeaponShop.Domain.Accessory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("accessory_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("catalog_category");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("accessory_description");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("manufacturer_name");
+
+                    b.Property<string>("ImageFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)")
+                        .HasColumnName("image_file_name");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_available");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("accessory_name");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric")
+                        .HasColumnName("price_amount");
+
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("stock_quantity");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("catalog_accessories", (string)null);
+                });
+
             modelBuilder.Entity("WeaponShop.Domain.Weapon", b =>
                 {
                     b.Property<int>("Id")
@@ -489,6 +631,11 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("manufacturer_name");
+
+                    b.Property<string>("ImageFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)")
+                        .HasColumnName("image_file_name");
 
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("boolean")
@@ -594,11 +741,17 @@ namespace WeaponShop.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("WeaponShop.Domain.Accessory", "Accessory")
+                        .WithMany()
+                        .HasForeignKey("AccessoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WeaponShop.Domain.Weapon", "Weapon")
                         .WithMany()
                         .HasForeignKey("WeaponId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Accessory");
 
                     b.Navigation("Order");
 

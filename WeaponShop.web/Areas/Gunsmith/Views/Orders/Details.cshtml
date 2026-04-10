@@ -3,12 +3,12 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Order #@Model.Id</h2>
-            <p class="panel-subtitle">Gunsmith view of full order audit.</p>
+            <h2>Objednávka č. @Model.Id</h2>
+            <p class="panel-subtitle">Pohled zbrojíře na kompletní audit a detail objednávky.</p>
         </div>
         <div class="btn-row">
-            <a class="btn-soft" asp-action="Index">Back to orders</a>
-            <a class="btn-soft" asp-action="History">My audit history</a>
+            <a class="btn-soft" asp-action="Index">Zpět na objednávky</a>
+            <a class="btn-soft" asp-action="History">Moje auditní historie</a>
             <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Word</a>
         </div>
     </div>
@@ -17,43 +17,49 @@
         <table class="data-grid">
             <tbody>
                 <tr>
-                    <th>Status</th>
-                    <td><span class="badge-cat">@Model.Status</span></td>
-                    <th>Created</th>
+                    <th>Stav</th>
+                    <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(Model.Status)</span></td>
+                    <th>Vytvořeno</th>
                     <td>@Model.CreatedAt.ToLocalTime().ToString("g")</td>
                 </tr>
                 <tr>
-                    <th>Customer</th>
+                    <th>Zákazník</th>
                     <td>
                         <div>@Model.User?.FirstName @Model.User?.LastName</div>
                         <div class="panel-subtitle">@Model.User?.Email</div>
                     </td>
-                    <th>Total</th>
+                    <th>Celkem</th>
                     <td>@Model.TotalPrice.ToString("C")</td>
                 </tr>
                 <tr>
-                    <th>Admin approved</th>
+                    <th>Schváleno adminem</th>
                     <td>@(Model.ApprovedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
-                    <th>Warehouse check</th>
+                    <th>Kontrola skladu</th>
                     <td>@(Model.WarehouseCheckedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
                 </tr>
                 <tr>
-                    <th>Gunsmith check</th>
+                    <th>Kontrola zbrojíře</th>
                     <td>@(Model.GunsmithCheckedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
-                    <th>Prepared by warehouse</th>
+                    <th>Připraveno skladem</th>
                     <td>@(Model.WarehousePreparedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
                 </tr>
                 <tr>
-                    <th>Shipped</th>
+                    <th>Odesláno</th>
                     <td>@(Model.ShippedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
-                    <th>Ready for pickup</th>
+                    <th>Připraveno k vyzvednutí</th>
                     <td>@(Model.ReadyForPickupAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
                 </tr>
                 <tr>
-                    <th>Pickup handed over</th>
+                    <th>Předáno zákazníkovi</th>
                     <td>@(Model.PickupHandedOverAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
-                    <th>Rejected</th>
+                    <th>Zamítnuto</th>
                     <td>@(Model.RejectedAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                </tr>
+                <tr>
+                    <th>Doručení</th>
+                    <td>@(Model.DeliveryMethod == "shipping" ? "Doručení na adresu" : "Osobní odběr")</td>
+                    <th>Platba</th>
+                    <td>@(Model.PaymentMethod == "cash-on-delivery" ? "Dobírka" : Model.PaymentMethod == "cash-on-pickup" ? "Platba při převzetí" : "Bankovní převod")</td>
                 </tr>
             </tbody>
         </table>
@@ -63,17 +69,17 @@
         <table class="data-grid">
             <thead>
                 <tr>
-                    <th>Items</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Unit price</th>
-                    <th class="text-end">Line total</th>
+                    <th>Položky</th>
+                    <th class="text-end">Množství</th>
+                    <th class="text-end">Cena za kus</th>
+                    <th class="text-end">Cena celkem</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in Model.Items)
                 {
                     <tr>
-                        <td>@item.Weapon?.Name</td>
+                        <td>@item.GetDisplayName()</td>
                         <td class="text-end">@item.Quantity</td>
                         <td class="text-end">@item.UnitPrice.ToString("C")</td>
                         <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
@@ -86,7 +92,7 @@
     <div class="audit-list">
         @if (Model.Audits.Count == 0)
         {
-            <div class="data-empty">No audit records yet.</div>
+            <div class="data-empty">Zatím nejsou k dispozici žádné auditní záznamy.</div>
         }
         else
         {
@@ -95,16 +101,16 @@
                 <div class="audit-card">
                     <div class="audit-card-head">
                         <div class="audit-card-title">@audit.Action</div>
-                        <span class="badge-cat">@audit.ToStatus</span>
+                        <span class="badge-cat">@CatalogPresentation.GetStatusLabel(audit.ToStatus)</span>
                     </div>
                     <div class="audit-card-meta">
                         @audit.OccurredAtUtc.ToLocalTime().ToString("g")
                         • @audit.ActorRole @audit.ActorName
-                        • @audit.FromStatus → @audit.ToStatus
+                        • @CatalogPresentation.GetStatusLabel(audit.FromStatus) → @CatalogPresentation.GetStatusLabel(audit.ToStatus)
                     </div>
                     @if (!string.IsNullOrWhiteSpace(audit.Notes))
                     {
-                        <div class="audit-card-notes">Notes: @audit.Notes</div>
+                        <div class="audit-card-notes">Poznámka: @audit.Notes</div>
                     }
                 </div>
             }

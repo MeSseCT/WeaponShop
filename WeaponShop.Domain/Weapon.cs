@@ -33,4 +33,7 @@ public class Weapon
     [Required]
     [StringLength(100)]
     public string Manufacturer { get; set; } = string.Empty;
+
+    [StringLength(260)]
+    public string? ImageFileName { get; set; }
 }

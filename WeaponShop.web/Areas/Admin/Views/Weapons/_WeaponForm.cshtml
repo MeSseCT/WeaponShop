@@ -37,6 +37,26 @@
         <textarea asp-for="Description" class="form-control" rows="4"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
+
+    <div class="mb-3">
+        <label asp-for="ImageFile" class="field-label">Obrázek produktu</label>
+        <input asp-for="ImageFile" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+        <span asp-validation-for="ImageFile" class="text-danger"></span>
+    </div>
+
+    @if (Model.HasImage && !string.IsNullOrWhiteSpace(Model.CurrentImagePath))
+    {
+        <div class="image-admin-preview mb-3">
+            <img src="@Model.CurrentImagePath" alt="@Model.Name" />
+        </div>
+
+        <div class="mb-4">
+            <div class="form-check">
+                <input asp-for="RemoveImage" class="form-check-input" />
+                <label asp-for="RemoveImage" class="form-check-label">Odstranit aktuální obrázek</label>
+            </div>
+        </div>
+    }
 }
 else
 {
@@ -45,21 +65,23 @@ else
     <input type="hidden" asp-for="Manufacturer" />
     <input type="hidden" asp-for="Price" />
     <input type="hidden" asp-for="Description" />
+    <input type="hidden" asp-for="CurrentImagePath" />
+    <input type="hidden" asp-for="HasImage" />
 }
 
 @if (showInventoryFields)
 {
     <div class="mb-3">
-        <label asp-for="StockQuantity" class="field-label">Stock quantity (0-10)</label>
+        <label asp-for="StockQuantity" class="field-label">Skladové množství (0-10)</label>
         <input asp-for="StockQuantity" type="number" min="0" max="10" class="form-control" />
         <span asp-validation-for="StockQuantity" class="text-danger"></span>
     </div>
 
     <div class="mb-4">
-        <label asp-for="IsAvailable" class="field-label">Visible for customers</label>
+        <label asp-for="IsAvailable" class="field-label">Viditelnost pro zákazníky</label>
         <div class="form-check">
             <input asp-for="IsAvailable" class="form-check-input" />
-            <label asp-for="IsAvailable" class="form-check-label">Yes, show in catalog</label>
+            <label asp-for="IsAvailable" class="form-check-label">Ano, zobrazit v katalogu</label>
         </div>
         <span asp-validation-for="IsAvailable" class="text-danger"></span>
     </div>
@@ -67,8 +89,8 @@ else
 else if (!isCreate)
 {
     <div class="mb-4">
-        <label class="field-label">Inventory</label>
-        <div class="panel-subtitle">Stock: @Model.StockQuantity</div>
-        <div class="panel-subtitle">Availability: @(Model.IsAvailable ? "Available" : "Hidden")</div>
+        <label class="field-label">Sklad</label>
+        <div class="panel-subtitle">Počet kusů: @Model.StockQuantity</div>
+        <div class="panel-subtitle">Dostupnost: @(Model.IsAvailable ? "Dostupné" : "Skryté")</div>
     </div>
 }

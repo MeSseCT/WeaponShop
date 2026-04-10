@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WeaponShop.Application.Services;
 using WeaponShop.Domain;
+using WeaponShop.Web.Helpers;
 using WeaponShop.Web.ViewModels.Weapons;
 
 namespace WeaponShop.Web.Areas.Admin.Controllers;
@@ -11,10 +12,12 @@ namespace WeaponShop.Web.Areas.Admin.Controllers;
 public class WeaponsController : Controller
 {
     private readonly IWeaponService _weaponService;
+    private readonly IWebHostEnvironment _environment;
 
-    public WeaponsController(IWeaponService weaponService)
+    public WeaponsController(IWeaponService weaponService, IWebHostEnvironment environment)
     {
         _weaponService = weaponService;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -36,6 +39,11 @@ public class WeaponsController : Controller
     public async Task<IActionResult> Create(WeaponInputModel model, CancellationToken cancellationToken)
     {
         ViewData["FormMode"] = "Create";
+        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
+        {
+            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
+        }
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -46,6 +54,11 @@ public class WeaponsController : Controller
         {
             weapon.StockQuantity = 0;
             weapon.IsAvailable = false;
+        }
+
+        if (model.ImageFile is not null)
+        {
+            weapon.ImageFileName = await CatalogImageStorage.SaveAsync(_environment, model.ImageFile, "weapon", cancellationToken);
         }
 
         await _weaponService.AddAsync(weapon, cancellationToken);
@@ -75,15 +88,21 @@ public class WeaponsController : Controller
             return BadRequest();
         }
 
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
         var existing = await _weaponService.GetByIdAsync(id, cancellationToken);
         if (existing is null)
         {
             return NotFound();
+        }
+
+        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
+        {
+            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ApplyImageState(model, existing);
+            return View(model);
         }
 
         if (IsSkladnikOnly())
@@ -98,6 +117,21 @@ public class WeaponsController : Controller
             existing.Description = model.Description;
             existing.Price = model.Price;
             existing.Manufacturer = model.Manufacturer;
+        }
+
+        if (!IsSkladnikOnly())
+        {
+            if (model.RemoveImage)
+            {
+                CatalogImageStorage.DeleteIfExists(_environment, existing.ImageFileName);
+                existing.ImageFileName = null;
+            }
+
+            if (model.ImageFile is not null)
+            {
+                CatalogImageStorage.DeleteIfExists(_environment, existing.ImageFileName);
+                existing.ImageFileName = await CatalogImageStorage.SaveAsync(_environment, model.ImageFile, "weapon", cancellationToken);
+            }
         }
 
         await _weaponService.UpdateAsync(existing, cancellationToken);
@@ -122,6 +156,12 @@ public class WeaponsController : Controller
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
     {
+        var existing = await _weaponService.GetByIdAsync(id, cancellationToken);
+        if (existing is not null)
+        {
+            CatalogImageStorage.DeleteIfExists(_environment, existing.ImageFileName);
+        }
+
         await _weaponService.DeleteAsync(id, cancellationToken);
         return RedirectToAction(nameof(Index));
     }
@@ -147,7 +187,9 @@ public class WeaponsController : Controller
             Price = weapon.Price,
             Manufacturer = weapon.Manufacturer,
             StockQuantity = weapon.StockQuantity,
-            IsAvailable = weapon.IsAvailable
+            IsAvailable = weapon.IsAvailable,
+            CurrentImagePath = CatalogImageStorage.ToPublicPath(weapon.ImageFileName),
+            HasImage = !string.IsNullOrWhiteSpace(weapon.ImageFileName)
         };
     }
 
@@ -164,5 +206,11 @@ public class WeaponsController : Controller
             StockQuantity = model.StockQuantity,
             IsAvailable = model.IsAvailable
         };
+    }
+
+    private static void ApplyImageState(WeaponInputModel model, Weapon weapon)
+    {
+        model.CurrentImagePath = CatalogImageStorage.ToPublicPath(weapon.ImageFileName);
+        model.HasImage = !string.IsNullOrWhiteSpace(weapon.ImageFileName);
     }
 }

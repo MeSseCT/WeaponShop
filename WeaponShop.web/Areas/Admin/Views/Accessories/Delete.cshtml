@@ -1,0 +1,25 @@
+@model Accessory
+
+<section class="form-shell">
+    <h2>Smazat doplněk</h2>
+    <p class="danger-note">Tato operace odstraní <strong>@Model.Name</strong> z veřejného katalogu.</p>
+
+    <dl class="row mt-3">
+        <dt class="col-sm-3">Kategorie</dt>
+        <dd class="col-sm-9"><span class="badge-chip badge-chip-public">@CatalogPresentation.GetAccessoryCategoryLabel(Model.Category)</span></dd>
+        <dt class="col-sm-3">Výrobce</dt>
+        <dd class="col-sm-9">@Model.Manufacturer</dd>
+        <dt class="col-sm-3">Cena</dt>
+        <dd class="col-sm-9">@Model.Price.ToString("C")</dd>
+        <dt class="col-sm-3">Sklad</dt>
+        <dd class="col-sm-9">@Model.StockQuantity</dd>
+        <dt class="col-sm-3">Dostupnost</dt>
+        <dd class="col-sm-9">@(Model.IsAvailable ? "Dostupné" : "Skryté")</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post" class="hero-actions">
+        <input type="hidden" asp-for="Id" />
+        <button class="btn-danger-soft" type="submit">Smazat trvale</button>
+        <a class="btn-soft" asp-action="Index">Zrušit</a>
+    </form>
+</section>

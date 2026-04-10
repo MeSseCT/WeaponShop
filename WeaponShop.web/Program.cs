@@ -1,5 +1,7 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Localization;
 using WeaponShop.Domain.Identity;
 using WeaponShop.Application;
 using WeaponShop.Infrastructure;
@@ -8,6 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[]
+    {
+        new CultureInfo("cs-CZ")
+    };
+
+    options.DefaultRequestCulture = new RequestCulture("cs-CZ");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+});
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddCookie(IdentityConstants.ApplicationScheme, options =>
     {
@@ -28,12 +41,20 @@ if (httpsPort.HasValue)
 }
 
 var app = builder.Build();
+var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await context.Database.MigrateAsync();
-    await AppDbContextSeed.SeedAsync(scope.ServiceProvider, context);
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await context.Database.MigrateAsync();
+        await AppDbContextSeed.SeedAsync(scope.ServiceProvider, context);
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogWarning(exception, "Databaze neni pri startu dostupna. Aplikace poběží bez automaticke migrace a seedu.");
+    }
 }
 
 if (!app.Environment.IsDevelopment())
@@ -47,6 +68,7 @@ if (httpsPort.HasValue)
     app.UseHttpsRedirection();
 }
 app.UseStaticFiles();
+app.UseRequestLocalization(localizationOptions);
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

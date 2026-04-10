@@ -1,54 +1,311 @@
+@using System.Security.Claims
+@using WeaponShop.Application.Services
+@inject IAccessoryService AccessoryService
+@inject IWeaponService WeaponService
+@inject IOrderService OrderService
+@{
+    var availableAccessories = (await AccessoryService.GetAllAsync())
+        .Where(item => item.IsAvailable)
+        .ToList();
+
+    var accessoryCategories = availableAccessories
+        .Select(item => item.Category)
+        .Where(category => !string.IsNullOrWhiteSpace(category))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(CatalogPresentation.GetAccessoryCategorySortKey)
+        .ThenBy(CatalogPresentation.GetAccessoryCategoryLabel)
+        .ToList();
+
+    var opticsProducts = availableAccessories
+        .Where(item => string.Equals(item.Category, "Optics", StringComparison.OrdinalIgnoreCase))
+        .Take(6)
+        .ToList();
+
+    var storageProducts = availableAccessories
+        .Where(item => string.Equals(item.Category, "Storage", StringComparison.OrdinalIgnoreCase))
+        .Take(6)
+        .ToList();
+
+    var selfDefenseProducts = availableAccessories
+        .Where(item => string.Equals(item.Category, "SelfDefense", StringComparison.OrdinalIgnoreCase))
+        .Take(6)
+        .ToList();
+
+    var airgunProducts = availableAccessories
+        .Where(item => string.Equals(item.Category, "Airguns", StringComparison.OrdinalIgnoreCase))
+        .Take(6)
+        .ToList();
+
+    var availableWeapons = (await WeaponService.GetAllAsync())
+        .Where(item => item.IsAvailable)
+        .ToList();
+
+    var weaponCategories = availableWeapons
+        .Select(item => item.Category)
+        .Where(category => !string.IsNullOrWhiteSpace(category))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(CatalogPresentation.GetWeaponCategorySortKey)
+        .ToList();
+
+    var weaponManufacturers = availableWeapons
+        .Select(item => item.Manufacturer)
+        .Where(manufacturer => !string.IsNullOrWhiteSpace(manufacturer))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(manufacturer => manufacturer)
+        .Take(6)
+        .ToList();
+
+    var cartTotal = 0m;
+    if (User.IsInRole("Customer"))
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrWhiteSpace(currentUserId))
+        {
+            var currentOrder = await OrderService.GetCurrentOrderAsync(currentUserId);
+            cartTotal = currentOrder?.TotalPrice ?? 0m;
+        }
+    }
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WeaponShop</title>
+    <title>@(ViewData["Title"] is string title ? $"{title} | WeaponShop" : "WeaponShop")</title>
     <link rel="stylesheet" href="~/css/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
-    <header class="site-header">
-        <div class="site-wrap">
-            <a class="brand-mark" asp-area="" asp-controller="Home" asp-action="Index">Weapon<span>Shop</span></a>
-            <nav class="main-nav">
-                <a class="nav-pill" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                <a class="nav-pill" asp-area="" asp-controller="Weapons" asp-action="Index">Products</a>
-                @if (User.IsInRole("Customer"))
-                {
-                    <a class="nav-pill" asp-area="" asp-controller="Cart" asp-action="Index">Cart</a>
-                    <a class="nav-pill" asp-area="" asp-controller="Account" asp-action="Profile">Profile</a>
-                    <a class="nav-pill" asp-area="" asp-controller="Orders" asp-action="Index">Orders</a>
-                }
-                @if (User.IsInRole("Admin"))
-                {
-                    <a class="nav-pill" asp-area="Admin" asp-controller="Orders" asp-action="Index">Approvals</a>
-                    <a class="nav-pill" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Admin</a>
-                }
-                @if (User.IsInRole("Skladnik"))
-                {
-                    <a class="nav-pill" asp-area="Warehouse" asp-controller="Orders" asp-action="Index">Warehouse</a>
-                    <a class="nav-pill" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Inventory</a>
-                }
-                @if (User.IsInRole("Zbrojir"))
-                {
-                    <a class="nav-pill" asp-area="Gunsmith" asp-controller="Orders" asp-action="Index">Gunsmith</a>
-                }
-            </nav>
-            <nav class="auth-nav">
+    <div class="utility-strip">
+        <div class="site-wrap utility-strip-inner">
+            <div class="utility-copy">
+                <span>Podpora</span>
+                <strong>776 111 44</strong>
+            </div>
+            <div class="utility-copy">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <span class="auth-user">@User.Identity.Name</span>
-                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-                        <button type="submit" class="logout-btn">Logout</button>
+                    <a asp-area="" asp-controller="Account" asp-action="Profile">Můj účet</a>
+                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="utility-link-btn">Odhlásit</button>
                     </form>
                 }
                 else
                 {
-                    <a class="nav-pill" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
-                    <a class="btn-modern" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                    <a asp-area="" asp-controller="Account" asp-action="Login">Přihlášení</a>
+                    <a asp-area="" asp-controller="Account" asp-action="Register">Registrace</a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <header class="site-header">
+        <div class="site-wrap site-header-top">
+            <a class="brand-mark" asp-area="" asp-controller="Home" asp-action="Index">
+                <span class="brand-badge">GS</span>
+                <span class="brand-copy">
+                    GunShop
+                    <small>Český obchod se zbraněmi a doplňky</small>
+                </span>
+            </a>
+
+            <form method="get" asp-area="" asp-controller="Weapons" asp-action="Index" class="site-search">
+                <input type="hidden" name="access" value="all" />
+                <label class="visually-hidden" for="header-search">Hledat v katalogu</label>
+                <input id="header-search" name="search" type="search" placeholder="Hledat produkty..." />
+                <button type="submit">Hledat</button>
+            </form>
+
+            <div class="header-actions">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="header-action-card" asp-area="" asp-controller="Account" asp-action="Profile">
+                        <strong>Účet</strong>
+                        <span>@User.Identity.Name</span>
+                    </a>
+
+                    @if (User.IsInRole("Customer"))
+                    {
+                        <a class="header-action-card" asp-area="" asp-controller="Cart" asp-action="Index">
+                            <strong>Košík</strong>
+                            <span>@cartTotal.ToString("C")</span>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <a class="nav-pill nav-pill-dark" asp-area="" asp-controller="Account" asp-action="Login">Přihlášení</a>
+                    <a class="cart-card" asp-area="" asp-controller="Cart" asp-action="Index">
+                        <span class="cart-total">0 Kč</span>
+                        <span class="cart-label">Košík</span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="category-bar">
+            <div class="site-wrap nav-row">
+            <nav class="main-nav">
+                <div class="nav-mega">
+                    <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+                    <div class="mega-menu">
+                        <div class="mega-col">
+                            <span class="mega-title">Kategorie zbraní</span>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Všechny zbraně</a>
+                            @foreach (var category in weaponCategories)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="@category">@CatalogPresentation.GetWeaponCategoryLabel(category)</a>
+                            }
+                        </div>
+                        <div class="mega-col">
+                            <span class="mega-title">Výrobci</span>
+                            @foreach (var manufacturer in weaponManufacturers)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-manufacturer="@manufacturer">@manufacturer</a>
+                            }
+                        </div>
+                        <div class="mega-col mega-col-note">
+                            <span class="mega-title">Podmínky nákupu</span>
+                            <p>Doplňky jsou veřejně dostupné. Zbraně se zobrazí po přihlášení, potvrzení věku 18+ a nahrání alespoň jednoho dokladu.</p>
+                            <a class="btn-inline" asp-area="" asp-controller="Account" asp-action="Profile">Dokončit profil</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-mega">
+                    <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Optics">Optika</a>
+                    <div class="mega-menu">
+                        <div class="mega-col">
+                            <span class="mega-title">Kategorie optiky</span>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Optics">Všechna optika</a>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
+                        </div>
+                        <div class="mega-col">
+                            <span class="mega-title">Dostupné produkty</span>
+                            @foreach (var product in opticsProducts)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="AccessoryDetails" asp-route-id="@product.Id">@product.Name</a>
+                            }
+                        </div>
+                        <div class="mega-col mega-col-note">
+                            <span class="mega-title">Sekce</span>
+                            <p>Kolimátory, zaměřovače a další veřejně dostupné doplňky bez omezení věku.</p>
+                            <a class="btn-inline" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Optics">Otevřít optiku</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-mega">
+                    <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Storage">Pouzdra a uložení</a>
+                    <div class="mega-menu">
+                        <div class="mega-col">
+                            <span class="mega-title">Kategorie uložení</span>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Storage">Všechna pouzdra a uložení</a>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
+                        </div>
+                        <div class="mega-col">
+                            <span class="mega-title">Dostupné produkty</span>
+                            @foreach (var product in storageProducts)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="AccessoryDetails" asp-route-id="@product.Id">@product.Name</a>
+                            }
+                        </div>
+                        <div class="mega-col mega-col-note">
+                            <span class="mega-title">Sekce</span>
+                            <p>Pouzdra, kufry, trezory a další způsoby bezpečného uložení vybavení.</p>
+                            <a class="btn-inline" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Storage">Otevřít uložení</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-mega">
+                    <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="SelfDefense">Sebeobrana</a>
+                    <div class="mega-menu">
+                        <div class="mega-col">
+                            <span class="mega-title">Kategorie sebeobrany</span>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="SelfDefense">Vše pro sebeobranu</a>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
+                        </div>
+                        <div class="mega-col">
+                            <span class="mega-title">Dostupné produkty</span>
+                            @foreach (var product in selfDefenseProducts)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="AccessoryDetails" asp-route-id="@product.Id">@product.Name</a>
+                            }
+                        </div>
+                        <div class="mega-col mega-col-note">
+                            <span class="mega-title">Sekce</span>
+                            <p>Veřejně dostupné prostředky osobní ochrany pro rychlé a jednoduché nakupování.</p>
+                            <a class="btn-inline" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="SelfDefense">Otevřít sebeobranu</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-mega">
+                    <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Airguns">Vzduchovky</a>
+                    <div class="mega-menu">
+                        <div class="mega-col">
+                            <span class="mega-title">Kategorie vzduchovek</span>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Airguns">Všechny vzduchovky</a>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
+                        </div>
+                        <div class="mega-col">
+                            <span class="mega-title">Dostupné produkty</span>
+                            @foreach (var product in airgunProducts)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="AccessoryDetails" asp-route-id="@product.Id">@product.Name</a>
+                            }
+                        </div>
+                        <div class="mega-col mega-col-note">
+                            <span class="mega-title">Sekce</span>
+                            <p>Rekreační vzduchovky a lehké vybavení pro volnočasovou a hobby střelbu.</p>
+                            <a class="btn-inline" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Airguns">Otevřít vzduchovky</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-mega">
+                    <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index">Všechny produkty</a>
+                    <div class="mega-menu">
+                        <div class="mega-col">
+                            <span class="mega-title">Veřejné kategorie</span>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
+                            @foreach (var category in accessoryCategories)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="@category">@CatalogPresentation.GetAccessoryCategoryLabel(category)</a>
+                            }
+                        </div>
+                        <div class="mega-col">
+                            <span class="mega-title">Kontrolovaný katalog</span>
+                            <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Všechny zbraně na ZP</a>
+                            @foreach (var category in weaponCategories)
+                            {
+                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="@category">@CatalogPresentation.GetWeaponCategoryLabel(category)</a>
+                            }
+                        </div>
+                        <div class="mega-col mega-col-note">
+                            <span class="mega-title">Celý obchod</span>
+                            <p>Přehled všech veřejných doplňků i kontrolovaného katalogu zbraní na jednom místě.</p>
+                            <a class="btn-inline" asp-area="" asp-controller="Weapons" asp-action="Index">Otevřít celý katalog</a>
+                        </div>
+                    </div>
+                </div>
+                @if (User.IsInRole("Customer"))
+                {
+                    <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Orders" asp-action="Index">Moje objednávky</a>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Orders" asp-action="Index">Schvalování</a>
+                    <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Správa zbraní</a>
+                    <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Accessories" asp-action="Index">Správa doplňků</a>
+                }
+                @if (User.IsInRole("Skladnik"))
+                {
+                    <a class="nav-pill nav-pill-gold" asp-area="Warehouse" asp-controller="Orders" asp-action="Index">Sklad</a>
+                }
+                @if (User.IsInRole("Zbrojir"))
+                {
+                    <a class="nav-pill nav-pill-gold" asp-area="Gunsmith" asp-controller="Orders" asp-action="Index">Zbrojíř</a>
                 }
             </nav>
+        </div>
         </div>
     </header>
 
@@ -57,6 +314,36 @@
             @RenderBody()
         </div>
     </main>
+
+    <footer class="site-footer">
+        <div class="site-wrap footer-grid">
+            <section class="footer-brand">
+                <div class="footer-mark">GunShop</div>
+                <p>Český e-shop se zbraněmi, optikou a doplňky napojený na schvalovací workflow administrátora, skladu a zbrojíře.</p>
+            </section>
+
+            <section>
+                <h3>Katalog</h3>
+                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Doplňky</a>
+                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+                <a asp-area="" asp-controller="Weapons" asp-action="Index">Všechny produkty</a>
+            </section>
+
+            <section>
+                <h3>Účet</h3>
+                <a asp-area="" asp-controller="Account" asp-action="Register">Registrace</a>
+                <a asp-area="" asp-controller="Account" asp-action="Login">Přihlášení</a>
+                <a asp-area="" asp-controller="Account" asp-action="Profile">Ověření profilu</a>
+            </section>
+
+            <section>
+                <h3>Provoz</h3>
+                <a asp-area="Admin" asp-controller="Orders" asp-action="Index">Schvalování</a>
+                <a asp-area="Warehouse" asp-controller="Orders" asp-action="Index">Skladová fronta</a>
+                <a asp-area="Gunsmith" asp-controller="Orders" asp-action="Index">Fronta zbrojíře</a>
+            </section>
+        </div>
+    </footer>
 
     @if (IsSectionDefined("Scripts"))
     {

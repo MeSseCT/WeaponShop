@@ -3,34 +3,34 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Order history</h2>
-            <p class="panel-subtitle">All orders for selected customer.</p>
+            <h2>Historie objednávek zákazníka</h2>
+            <p class="panel-subtitle">Přehled všech objednávek vybraného zákazníka.</p>
         </div>
         <div class="btn-row">
-            <a class="btn-soft" asp-action="Index">Back to approvals</a>
-            <a class="btn-soft" asp-action="All">All orders</a>
+            <a class="btn-soft" asp-action="Index">Zpět na schvalování</a>
+            <a class="btn-soft" asp-action="All">Všechny objednávky</a>
         </div>
     </div>
 
     <form method="get" class="form-shell form-shell-wide" style="margin-bottom: 1rem;">
         <input type="hidden" name="userId" value="@Context.Request.Query["userId"]" />
         <div class="mb-3">
-            <label class="field-label" for="statusFilter">Status filter</label>
+            <label class="field-label" for="statusFilter">Filtr stavu</label>
             <select id="statusFilter" name="status" class="form-control">
-                <option value="">All</option>
+                <option value="">Vše</option>
                 @foreach (var status in Enum.GetValues<OrderStatus>())
                 {
                     var selected = string.Equals(Context.Request.Query["status"], status.ToString(), StringComparison.OrdinalIgnoreCase);
-                    <option value="@status" selected="@(selected ? "selected" : null)">@status</option>
+                    <option value="@status" selected="@(selected ? "selected" : null)">@CatalogPresentation.GetStatusLabel(status)</option>
                 }
             </select>
         </div>
-        <button class="btn-modern" type="submit">Apply filter</button>
+        <button class="btn-modern" type="submit">Použít filtr</button>
     </form>
 
     @if (Model.Count == 0)
     {
-        <div class="data-empty">No orders found for this customer.</div>
+        <div class="data-empty">Pro tohoto zákazníka nebyly nalezeny žádné objednávky.</div>
     }
     else
     {
@@ -38,12 +38,12 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Order</th>
-                        <th>Status</th>
-                        <th>Customer</th>
-                        <th>Items</th>
+                        <th>Objednávka</th>
+                        <th>Stav</th>
+                        <th>Zákazník</th>
+                        <th>Položky</th>
                         <th>Audit</th>
-                        <th class="text-end">Actions</th>
+                        <th class="text-end">Akce</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,7 +54,7 @@
                                 <div>#@order.Id</div>
                                 <div class="panel-subtitle">@order.CreatedAt.ToLocalTime().ToString("g")</div>
                             </td>
-                            <td><span class="badge-cat">@order.Status</span></td>
+                            <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
                             <td>
                                 <div>@order.User?.FirstName @order.User?.LastName</div>
                                 <div class="panel-subtitle">@order.User?.Email</div>
@@ -62,14 +62,14 @@
                             <td>
                                 @foreach (var item in order.Items)
                                 {
-                                    <div>@item.Weapon?.Name x @item.Quantity</div>
+                                    <div>@item.GetDisplayName() x @item.Quantity</div>
                                 }
                             </td>
                             <td>
                                 <div class="audit-list compact">
                                     @if (order.Audits.Count == 0)
                                     {
-                                        <div class="panel-subtitle">No audit yet</div>
+                                        <div class="panel-subtitle">Zatím bez auditu</div>
                                     }
                                     else
                                     {
@@ -86,12 +86,12 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-row">
-                                    <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">View</a>
+                                    <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Zobrazit</a>
                                     <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Word</a>
                                     <form asp-area="Admin" asp-action="DeleteHistory" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
                                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                                        <button type="submit" class="btn-inline btn-inline-danger">Delete</button>
+                                        <button type="submit" class="btn-inline btn-inline-danger">Smazat</button>
                                     </form>
                                 </div>
                             </td>

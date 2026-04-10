@@ -3,10 +3,10 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Cart</h2>
-            <p class="panel-subtitle">Draft order for your current session.</p>
+            <h2>Košík</h2>
+            <p class="panel-subtitle">Zbraně i veřejné doplňky v jedné rozpracované objednávce.</p>
         </div>
-        <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Continue shopping</a>
+        <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Zpět do katalogu</a>
     </div>
 
     @if (TempData["StatusMessage"] is string statusMessage)
@@ -21,7 +21,7 @@
 
     @if (Model.CurrentOrder is null || Model.CurrentOrder.Items.Count == 0)
     {
-        <div class="data-empty">Your cart is empty.</div>
+        <div class="data-empty">Košík je prázdný.</div>
     }
     else
     {
@@ -29,27 +29,41 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th class="text-end">Unit price</th>
-                        <th class="text-end">Quantity</th>
-                        <th class="text-end">Line total</th>
-                        <th class="text-end">Action</th>
+                        <th>Název</th>
+                        <th>Typ</th>
+                        <th>Kategorie</th>
+                        <th class="text-end">Cena za kus</th>
+                        <th class="text-end">Množství</th>
+                        <th class="text-end">Cena celkem</th>
+                        <th class="text-end">Akce</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model.CurrentOrder.Items)
                     {
+                        var categoryCode = item.GetCategoryCode();
+                        var categoryLabel = item.IsWeapon
+                            ? CatalogPresentation.GetWeaponCategoryLabel(categoryCode)
+                            : CatalogPresentation.GetAccessoryCategoryLabel(categoryCode);
+
                         <tr>
-                            <td>@item.Weapon?.Name</td>
-                            <td><span class="badge-cat">@item.Weapon?.Category</span></td>
+                            <td>@item.GetDisplayName()</td>
+                            <td>@(item.IsWeapon ? "Zbraň" : "Doplněk")</td>
+                            <td><span class="badge-cat">@categoryLabel</span></td>
                             <td class="text-end">@item.UnitPrice.ToString("C")</td>
                             <td class="text-end">@item.Quantity</td>
                             <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
                             <td class="text-end">
                                 <form asp-controller="Cart" asp-action="Remove" method="post">
-                                    <input type="hidden" name="weaponId" value="@item.WeaponId" />
-                                    <button class="btn-danger-soft" type="submit">Remove</button>
+                                    @if (item.IsWeapon)
+                                    {
+                                        <input type="hidden" name="weaponId" value="@item.WeaponId" />
+                                    }
+                                    else
+                                    {
+                                        <input type="hidden" name="accessoryId" value="@item.AccessoryId" />
+                                    }
+                                    <button class="btn-danger-soft" type="submit">Odebrat</button>
                                 </form>
                             </td>
                         </tr>
@@ -60,26 +74,151 @@
 
         <div class="panel-head" style="margin-top: 1rem;">
             <p class="panel-subtitle">
-                Total: <strong>@Model.CurrentOrder.TotalPrice.ToString("C")</strong>
+                Celkem: <strong>@Model.CurrentOrder.TotalPrice.ToString("C")</strong>
             </p>
-            <form asp-controller="Cart" asp-action="Checkout" method="post">
-                <button class="btn-modern" type="submit">Checkout</button>
-            </form>
+            @if (Model.ContainsRestrictedItems)
+            {
+                <div class="panel-subtitle">Objednávka obsahuje zbraně, proto bude po odeslání čekat na schválení a je dostupná pouze s osobním odběrem.</div>
+            }
         </div>
     }
 </section>
 
+@if (Model.CurrentOrder is not null && Model.CurrentOrder.Items.Count > 0)
+{
+    <section class="panel" style="margin-top: 1rem;">
+        <div class="panel-head">
+            <div>
+                <h2>Checkout</h2>
+                <p class="panel-subtitle">Vyplňte doručení, platbu a kontaktní údaje pro dokončení objednávky.</p>
+            </div>
+        </div>
+
+        <form asp-controller="Cart" asp-action="Checkout" method="post" class="form-shell form-shell-wide">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="checkout-grid">
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.ContactEmail" class="field-label">Kontaktní e-mail</label>
+                    <input asp-for="Checkout.ContactEmail" class="form-control" />
+                    <span asp-validation-for="Checkout.ContactEmail" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.ContactPhone" class="field-label">Kontaktní telefon</label>
+                    <input asp-for="Checkout.ContactPhone" class="form-control" />
+                    <span asp-validation-for="Checkout.ContactPhone" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.DeliveryMethod" class="field-label">Způsob doručení</label>
+                    <select asp-for="Checkout.DeliveryMethod" class="form-control">
+                        <option value="pickup">Osobní odběr</option>
+                        @if (!Model.ContainsRestrictedItems)
+                        {
+                            <option value="shipping">Doručení na adresu</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Checkout.DeliveryMethod" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.PaymentMethod" class="field-label">Způsob platby</label>
+                    <select asp-for="Checkout.PaymentMethod" class="form-control">
+                        <option value="bank-transfer">Bankovní převod</option>
+                        @if (!Model.ContainsRestrictedItems)
+                        {
+                            <option value="cash-on-delivery">Dobírka</option>
+                        }
+                        <option value="cash-on-pickup">Platba při převzetí</option>
+                    </select>
+                    <span asp-validation-for="Checkout.PaymentMethod" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="checkout-grid">
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.ShippingName" class="field-label">Jméno příjemce</label>
+                    <input asp-for="Checkout.ShippingName" class="form-control" />
+                    <span asp-validation-for="Checkout.ShippingName" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.ShippingStreet" class="field-label">Ulice a číslo</label>
+                    <input asp-for="Checkout.ShippingStreet" class="form-control" />
+                    <span asp-validation-for="Checkout.ShippingStreet" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.ShippingCity" class="field-label">Město</label>
+                    <input asp-for="Checkout.ShippingCity" class="form-control" />
+                    <span asp-validation-for="Checkout.ShippingCity" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.ShippingPostalCode" class="field-label">PSČ</label>
+                    <input asp-for="Checkout.ShippingPostalCode" class="form-control" />
+                    <span asp-validation-for="Checkout.ShippingPostalCode" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="sidebar-field">
+                <label class="checkbox-row">
+                    <input asp-for="Checkout.BillingSameAsShipping" />
+                    <span>Fakturační adresa je stejná jako dodací</span>
+                </label>
+            </div>
+
+            <div class="checkout-grid">
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.BillingName" class="field-label">Fakturační jméno</label>
+                    <input asp-for="Checkout.BillingName" class="form-control" />
+                    <span asp-validation-for="Checkout.BillingName" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.BillingStreet" class="field-label">Fakturační ulice</label>
+                    <input asp-for="Checkout.BillingStreet" class="form-control" />
+                    <span asp-validation-for="Checkout.BillingStreet" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.BillingCity" class="field-label">Fakturační město</label>
+                    <input asp-for="Checkout.BillingCity" class="form-control" />
+                    <span asp-validation-for="Checkout.BillingCity" class="text-danger"></span>
+                </div>
+
+                <div class="sidebar-field">
+                    <label asp-for="Checkout.BillingPostalCode" class="field-label">Fakturační PSČ</label>
+                    <input asp-for="Checkout.BillingPostalCode" class="form-control" />
+                    <span asp-validation-for="Checkout.BillingPostalCode" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="sidebar-field">
+                <label asp-for="Checkout.CustomerNote" class="field-label">Poznámka k objednávce</label>
+                <textarea asp-for="Checkout.CustomerNote" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Checkout.CustomerNote" class="text-danger"></span>
+            </div>
+
+            <div class="filter-actions filter-actions-classic">
+                <button class="btn-modern" type="submit">Odeslat objednávku</button>
+            </div>
+        </form>
+    </section>
+}
+
 <section class="panel" style="margin-top: 1rem;">
     <div class="panel-head">
         <div>
-            <h2>Your Requests</h2>
-            <p class="panel-subtitle">Submitted purchase requests and their current status.</p>
+            <h2>Odeslané objednávky</h2>
+            <p class="panel-subtitle">Přehled zakázek, které už byly odeslány do zpracování.</p>
         </div>
     </div>
 
     @if (Model.SubmittedOrders.Count == 0)
     {
-        <div class="data-empty">No submitted requests yet.</div>
+        <div class="data-empty">Zatím nemáte žádné odeslané objednávky.</div>
     }
     else
     {
@@ -87,12 +226,13 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Order ID</th>
-                        <th>Created</th>
-                        <th>Status</th>
-                        <th class="text-end">Items</th>
-                        <th class="text-end">Total</th>
-                        <th class="text-end">Details</th>
+                        <th>Objednávka</th>
+                        <th>Vytvořeno</th>
+                        <th>Stav</th>
+                        <th>Doručení</th>
+                        <th class="text-end">Položky</th>
+                        <th class="text-end">Celkem</th>
+                        <th class="text-end">Detail</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -101,11 +241,12 @@
                         <tr>
                             <td>#@order.Id</td>
                             <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
-                            <td><span class="badge-cat">@order.Status</span></td>
+                            <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
+                            <td>@(order.DeliveryMethod == "shipping" ? "Doručení" : "Osobní odběr")</td>
                             <td class="text-end">@order.Items.Count</td>
                             <td class="text-end">@order.TotalPrice.ToString("C")</td>
                             <td class="text-end">
-                                <a class="btn-inline" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">View</a>
+                                <a class="btn-inline" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">Zobrazit</a>
                             </td>
                         </tr>
                     }

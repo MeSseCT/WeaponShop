@@ -23,47 +23,110 @@ public static class AppDbContextSeed
         await SeedStaffUserAsync(userManager, configuration, "Skladnik", "warehouse@weaponshop.local", "Warehouse123!", "Warehouse", "Staff", "SeedWarehouse");
         await SeedStaffUserAsync(userManager, configuration, "Zbrojir", "gunsmith@weaponshop.local", "Gunsmith123!", "Gunsmith", "Staff", "SeedGunsmith");
 
-        // Only seed weapons when there are no records yet.
-        if (await context.Weapons.AnyAsync(cancellationToken))
+        if (!await context.Weapons.AnyAsync(cancellationToken))
         {
-            return;
+            var demoWeapons = new[]
+            {
+                new Weapon
+                {
+                    Name = "Glock 17",
+                    Category = "B",
+                    Description = "Popular 9x19mm semi-automatic pistol.",
+                    Price = 650m,
+                    Manufacturer = "Glock",
+                    StockQuantity = 5,
+                    IsAvailable = true
+                },
+                new Weapon
+                {
+                    Name = "CZ P-10",
+                    Category = "B",
+                    Description = "Modern polymer-framed striker-fired pistol.",
+                    Price = 700m,
+                    Manufacturer = "Česká zbrojovka",
+                    StockQuantity = 6,
+                    IsAvailable = true
+                },
+                new Weapon
+                {
+                    Name = "Sa vz. 58",
+                    Category = "B",
+                    Description = "Classic Czech 7.62×39mm assault rifle (civilian semi-auto version).",
+                    Price = 1200m,
+                    Manufacturer = "Česká zbrojovka",
+                    StockQuantity = 4,
+                    IsAvailable = true
+                }
+            };
+
+            await context.Weapons.AddRangeAsync(demoWeapons, cancellationToken);
         }
 
-        var demoWeapons = new[]
+        var demoAccessories = new[]
         {
-            new Weapon
+            new Accessory
             {
-                Name = "Glock 17",
-                Category = "B",
-                Description = "Popular 9x19mm semi-automatic pistol.",
-                Price = 650m,
-                Manufacturer = "Glock",
-                StockQuantity = 5,
+                Name = "Vector Red Dot",
+                Category = "Optics",
+                Description = "Compact red dot for range training, PCC builds and modern sport setups.",
+                Price = 189m,
+                Manufacturer = "Vector",
+                StockQuantity = 14,
                 IsAvailable = true
             },
-            new Weapon
+            new Accessory
             {
-                Name = "CZ P-10",
-                Category = "B",
-                Description = "Modern polymer-framed striker-fired pistol.",
-                Price = 700m,
-                Manufacturer = "Česká zbrojovka",
+                Name = "Guardian Safe S1",
+                Category = "Storage",
+                Description = "Home safe for documents, ammunition and shooting accessories.",
+                Price = 249m,
+                Manufacturer = "Guardian",
                 StockQuantity = 6,
                 IsAvailable = true
             },
-            new Weapon
+            new Accessory
             {
-                Name = "Sa vz. 58",
-                Category = "B",
-                Description = "Classic Czech 7.62×39mm assault rifle (civilian semi-auto version).",
-                Price = 1200m,
-                Manufacturer = "Česká zbrojovka",
-                StockQuantity = 4,
+                Name = "Range Pro Kit",
+                Category = "Protection",
+                Description = "Hearing protection, clear glasses and a compact cleaning kit in one bundle.",
+                Price = 119m,
+                Manufacturer = "Otis",
+                StockQuantity = 18,
+                IsAvailable = true
+            },
+            new Accessory
+            {
+                Name = "Pepper Guard Compact",
+                Category = "SelfDefense",
+                Description = "Compact pepřový sprej pro osobní ochranu a každodenní nošení.",
+                Price = 29m,
+                Manufacturer = "Walther",
+                StockQuantity = 24,
+                IsAvailable = true
+            },
+            new Accessory
+            {
+                Name = "Umarex Air Rifle 4x32",
+                Category = "Airguns",
+                Description = "Základní vzduchovka se zaměřovačem pro rekreační střelbu na zahradě i střelnici.",
+                Price = 219m,
+                Manufacturer = "Umarex",
+                StockQuantity = 9,
                 IsAvailable = true
             }
         };
 
-        await context.Weapons.AddRangeAsync(demoWeapons, cancellationToken);
+        foreach (var accessory in demoAccessories)
+        {
+            var exists = await context.Accessories
+                .AnyAsync(item => item.Name == accessory.Name, cancellationToken);
+
+            if (!exists)
+            {
+                await context.Accessories.AddAsync(accessory, cancellationToken);
+            }
+        }
+
         await context.SaveChangesAsync(cancellationToken);
     }
 

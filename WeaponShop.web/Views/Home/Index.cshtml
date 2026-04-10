@@ -1,34 +1,107 @@
-<section class="hero">
-    <p class="hero-kicker">Czech E-Commerce Platform</p>
-    <h1>Modern gun store stack on .NET 8, MVC, Identity and PostgreSQL.</h1>
-    <p>
-        This baseline is now ready for the bachelor thesis flow: authentication, role-based access,
-        product listing and protected admin management.
-    </p>
-    <div class="hero-actions">
-        <a class="btn-modern" asp-controller="Weapons" asp-action="Index">Browse products</a>
-        @if (User.IsInRole("Admin"))
-        {
-            <a class="btn-soft" asp-area="Admin" asp-controller="Orders" asp-action="Index">Open approvals</a>
-        }
-        else
-        {
-            <a class="btn-soft" asp-controller="Account" asp-action="Register">Create account</a>
-        }
+@{
+    ViewData["Title"] = "Úvod";
+}
+
+<section class="hero hero-shell">
+    <div class="hero-copy">
+        <div class="hero-stack">
+            <p class="hero-kicker">Český e-shop se zbraněmi</p>
+            <h1>Klasický obchod pro zbraně, optiku a doplňky.</h1>
+            <p>
+                Doplňky a ostatní veřejné položky jsou dostupné okamžitě. Katalog zbraní se odemyká až po přihlášení,
+                potvrzení věku 18+ a nahrání dokladů.
+            </p>
+        </div>
+
+        <div class="hero-actions">
+            <a class="btn-modern" asp-controller="Weapons" asp-action="Index">Prohlédnout celý katalog</a>
+            <a class="btn-soft" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Zobrazit doplňky</a>
+        </div>
+
+        <div class="hero-trustbar">
+            <div>
+                <strong>Veřejná zóna</strong>
+                <span>Optika, pouzdra a ochranné potřeby</span>
+            </div>
+            <div>
+                <strong>Ověřená zóna</strong>
+                <span>Zbraně po validaci profilu a dokladů</span>
+            </div>
+            <div>
+                <strong>Workflow</strong>
+                <span>Administrátor, sklad a zbrojíř</span>
+            </div>
+        </div>
+    </div>
+
+    <aside class="hero-stage">
+        <div class="hero-stage-card hero-stage-card-classic">
+            <span class="hero-stage-tag">Nákupní pravidla</span>
+            <h2>Jak funguje obchod</h2>
+            <ol class="hero-steps">
+                <li>Doplňky jsou veřejně přístupné všem návštěvníkům.</li>
+                <li>Zbraně se zobrazí až po ověření zákaznického profilu.</li>
+                <li>Objednávky dál procházejí schválením, skladem a zbrojířem.</li>
+            </ol>
+        </div>
+    </aside>
+</section>
+
+<section class="promo-banner panel">
+    <div class="promo-banner-copy">
+        <p class="section-kicker">Doporučené kategorie</p>
+        <h2>Optika, pouzdra, ochranné potřeby i zbraně na zbrojní průkaz.</h2>
+        <p class="panel-subtitle">Vzhled storefrontu je teď klidnější, konzervativní a blíž klasickému českému e-shopu.</p>
+        <div class="hero-actions">
+            <a class="btn-modern" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Nakoupit doplňky</a>
+            <a class="btn-soft" asp-controller="Account" asp-action="Register">Vytvořit zákaznický účet</a>
+        </div>
+    </div>
+    <div class="promo-banner-points">
+        <div class="promo-point">
+            <strong>Optika</strong>
+            <span>Kolimátory, zaměřovače a montáže</span>
+        </div>
+        <div class="promo-point">
+            <strong>Pouzdra a uložení</strong>
+            <span>Bezpečné přenášení i domácí skladování</span>
+        </div>
+        <div class="promo-point">
+            <strong>Ochranné potřeby</strong>
+            <span>Brýle, sluchátka a střelecké příslušenství</span>
+        </div>
     </div>
 </section>
 
-<section class="feature-grid">
-    <article class="feature-card">
-        <h3>Security baseline</h3>
-        <p>Identity authentication, role checks and anti-forgery protection on all write operations.</p>
-    </article>
-    <article class="feature-card">
-        <h3>Layered backend</h3>
-        <p>Web uses Application services, while data access stays in Infrastructure through EF Core.</p>
-    </article>
-    <article class="feature-card">
-        <h3>PostgreSQL runtime</h3>
-        <p>Dockerized database with migrations ready for repeatable local development.</p>
-    </article>
+<section class="home-categories">
+    <div class="section-header">
+        <div>
+            <p class="section-kicker">Mapa obchodu</p>
+            <h2>Kategorie vycházející z reálné databáze</h2>
+            <p class="panel-subtitle">Doplňky jsou veřejné. Zbraně se zobrazují až po splnění podmínek účtu.</p>
+        </div>
+    </div>
+
+    <div class="category-grid">
+        <a class="category-tile category-tile-featured" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">
+            <span class="category-eyebrow">Veřejná nabídka</span>
+            <h3>Doplňky</h3>
+            <p>Optika, pouzdra, uložení a ochranné potřeby bez omezení věku.</p>
+        </a>
+        <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Optics">
+            <span class="category-eyebrow">Doplňky</span>
+            <h3>Optika</h3>
+            <p>Kolimátory, zaměřovače a další vybavení pro přesnou střelbu.</p>
+        </a>
+        <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="B">
+            <span class="category-eyebrow">Ověřená zóna</span>
+            <h3>Kategorie B</h3>
+            <p>Pistole a další zbraně pro zákazníky s dokončeným ověřením.</p>
+        </a>
+        <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="C">
+            <span class="category-eyebrow">Ověřená zóna</span>
+            <h3>Kategorie C</h3>
+            <p>Dlouhé zbraně a sportovní varianty dostupné po ověření profilu.</p>
+        </a>
+    </div>
 </section>

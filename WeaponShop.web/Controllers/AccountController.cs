@@ -64,7 +64,7 @@ public class AccountController : Controller
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user is null || !await _userManager.CheckPasswordAsync(user, model.Password))
         {
-            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            ModelState.AddModelError(string.Empty, "Neplatný pokus o přihlášení.");
             return View(model);
         }
 
@@ -104,7 +104,7 @@ public class AccountController : Controller
 
         if (!model.DateOfBirth.HasValue || !IsAdult(model.DateOfBirth.Value))
         {
-            ModelState.AddModelError(nameof(model.DateOfBirth), "You must be at least 18 years old.");
+            ModelState.AddModelError(nameof(model.DateOfBirth), "Musíte být starší 18 let.");
             return View(model);
         }
 
@@ -187,11 +187,11 @@ public class AccountController : Controller
         var dateOfBirth = model.DateOfBirth;
         if (!dateOfBirth.HasValue)
         {
-            ModelState.AddModelError(nameof(model.DateOfBirth), "Date of birth is required.");
+            ModelState.AddModelError(nameof(model.DateOfBirth), "Datum narození je povinné.");
         }
         else if (!IsAdult(dateOfBirth.Value))
         {
-            ModelState.AddModelError(nameof(model.DateOfBirth), "You must be at least 18 years old.");
+            ModelState.AddModelError(nameof(model.DateOfBirth), "Musíte být starší 18 let.");
         }
 
         if (!ModelState.IsValid)
@@ -202,7 +202,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        user.DateOfBirth = dateOfBirth ?? throw new InvalidOperationException("Date of birth is required.");
+        user.DateOfBirth = dateOfBirth ?? throw new InvalidOperationException("Datum narození je povinné.");
         var updateResult = await _userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
@@ -217,7 +217,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        TempData["StatusMessage"] = "Profile was updated.";
+        TempData["StatusMessage"] = "Profil byl aktualizován.";
         return RedirectToAction(nameof(Profile));
     }
 
@@ -234,7 +234,7 @@ public class AccountController : Controller
 
         if (model.IdCardFile is null && model.DriverLicenseFile is null)
         {
-            ModelState.AddModelError(string.Empty, "Upload at least one document.");
+            ModelState.AddModelError(string.Empty, "Nahrajte alespoň jeden doklad.");
         }
 
         if (model.IdCardFile is not null || model.DriverLicenseFile is not null)
@@ -282,7 +282,7 @@ public class AccountController : Controller
             return View("Profile", BuildProfileViewModel(user));
         }
 
-        TempData["StatusMessage"] = "Documents were uploaded successfully.";
+        TempData["StatusMessage"] = "Doklady byly úspěšně nahrány.";
         return RedirectToAction(nameof(Profile));
     }
 
@@ -361,19 +361,19 @@ public class AccountController : Controller
         var extension = Path.GetExtension(file.FileName);
         if (!AllowedExtensions.Contains(extension))
         {
-            ModelState.AddModelError(string.Empty, $"Unsupported file type '{extension}'. Allowed: PDF, JPG, JPEG, PNG.");
+            ModelState.AddModelError(string.Empty, $"Nepodporovaný typ souboru '{extension}'. Povolené: PDF, JPG, JPEG, PNG.");
             return false;
         }
 
         if (file.Length == 0)
         {
-            ModelState.AddModelError(string.Empty, "Uploaded file is empty.");
+            ModelState.AddModelError(string.Empty, "Nahraný soubor je prázdný.");
             return false;
         }
 
         if (file.Length > MaxDocumentSizeBytes)
         {
-            ModelState.AddModelError(string.Empty, "Document size cannot exceed 5 MB.");
+            ModelState.AddModelError(string.Empty, "Velikost dokumentu nesmí překročit 5 MB.");
             return false;
         }
 
@@ -537,7 +537,7 @@ public class AccountController : Controller
 
         if (user.DocumentsUploadCount >= MaxDocumentUploadsPerDay)
         {
-            ModelState.AddModelError(string.Empty, "Document upload limit reached. Try again tomorrow.");
+            ModelState.AddModelError(string.Empty, "Denní limit nahrání dokladů byl vyčerpán. Zkuste to znovu zítra.");
             return false;
         }
 

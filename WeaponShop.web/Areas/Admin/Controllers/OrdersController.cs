@@ -99,7 +99,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.DeleteOrderAsync(id, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} history was deleted.";
+            TempData["StatusMessage"] = $"Historie objednávky č. {id} byla smazána.";
         }
         catch (Exception exception)
         {
@@ -128,7 +128,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.ApproveOrderAsync(id, actorUserId, actorName, actorRole, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was approved and sent to warehouse.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla schválena a předána skladu.";
         }
         catch (Exception exception)
         {
@@ -150,7 +150,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.RejectOrderAsync(id, actorUserId, actorName, actorRole, null, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was rejected.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla zamítnuta.";
         }
         catch (Exception exception)
         {
@@ -163,7 +163,7 @@ public class OrdersController : Controller
     private bool TryGetActor(out string userId, out string actorName, out string actorRole)
     {
         userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        actorName = User.Identity?.Name ?? "unknown";
+        actorName = User.Identity?.Name ?? "neznámý uživatel";
         actorRole = User.IsInRole("Admin") ? "Admin" : "Unknown";
         return !string.IsNullOrWhiteSpace(userId);
     }

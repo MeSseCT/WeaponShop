@@ -3,15 +3,18 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Inventory - Product management</h2>
-            <p class="panel-subtitle">Manage weapons, stock counts, and availability.</p>
+            <h2>Sklad zbraní</h2>
+            <p class="panel-subtitle">Správa zbraní, popisů, skladových zásob a dostupnosti v katalogu.</p>
         </div>
-        <a class="btn-modern" asp-action="Create">Create weapon</a>
+        <div class="btn-row">
+            <a class="btn-soft" asp-controller="Accessories" asp-action="Index">Správa doplňků</a>
+            <a class="btn-modern" asp-action="Create">Přidat zbraň</a>
+        </div>
     </div>
 
     @if (Model.Count == 0)
     {
-        <div class="data-empty">No weapons found.</div>
+        <div class="data-empty">Žádné zbraně nebyly nalezeny.</div>
     }
     else
     {
@@ -19,13 +22,13 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Manufacturer</th>
-                        <th class="text-end">Price</th>
-                        <th class="text-end">Stock</th>
-                        <th>Availability</th>
-                        <th class="text-end">Actions</th>
+                        <th>Název</th>
+                        <th>Kategorie</th>
+                        <th>Výrobce</th>
+                        <th class="text-end">Cena</th>
+                        <th class="text-end">Sklad</th>
+                        <th>Dostupnost</th>
+                        <th class="text-end">Akce</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -37,15 +40,15 @@
                             <td>@weapon.Manufacturer</td>
                             <td class="text-end">@weapon.Price.ToString("C")</td>
                             <td class="text-end">@weapon.StockQuantity</td>
-                            <td>@(weapon.IsAvailable ? "Available" : "Hidden")</td>
+                            <td>@(weapon.IsAvailable ? "Dostupné" : "Skryté")</td>
                             <td class="text-end">
                                 <div class="btn-row">
                                     <a class="btn-inline" asp-action="Edit" asp-route-id="@weapon.Id">
-                                        @(User.IsInRole("Skladnik") && !User.IsInRole("Admin") ? "Adjust stock" : "Edit")
+                                        @(User.IsInRole("Skladnik") && !User.IsInRole("Admin") ? "Upravit sklad" : "Upravit")
                                     </a>
                                     @if (User.IsInRole("Admin"))
                                     {
-                                        <a class="btn-inline btn-inline-danger" asp-action="Delete" asp-route-id="@weapon.Id">Delete</a>
+                                        <a class="btn-inline btn-inline-danger" asp-action="Delete" asp-route-id="@weapon.Id">Smazat</a>
                                     }
                                 </div>
                             </td>

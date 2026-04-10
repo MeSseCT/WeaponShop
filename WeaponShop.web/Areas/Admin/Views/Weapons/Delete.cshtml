@@ -1,25 +1,25 @@
 @model Weapon
 
 <section class="form-shell">
-    <h2>Delete weapon</h2>
-    <p class="danger-note">This operation removes <strong>@Model.Name</strong> from catalog records.</p>
+    <h2>Smazat zbraň</h2>
+    <p class="danger-note">Tato operace odstraní <strong>@Model.Name</strong> z katalogu.</p>
 
     <dl class="row mt-3">
-        <dt class="col-sm-3">Category</dt>
-        <dd class="col-sm-9"><span class="badge-cat">@Model.Category</span></dd>
-        <dt class="col-sm-3">Manufacturer</dt>
+        <dt class="col-sm-3">Kategorie</dt>
+        <dd class="col-sm-9"><span class="badge-cat">@CatalogPresentation.GetWeaponCategoryLabel(Model.Category)</span></dd>
+        <dt class="col-sm-3">Výrobce</dt>
         <dd class="col-sm-9">@Model.Manufacturer</dd>
-        <dt class="col-sm-3">Price</dt>
+        <dt class="col-sm-3">Cena</dt>
         <dd class="col-sm-9">@Model.Price.ToString("C")</dd>
-        <dt class="col-sm-3">Stock</dt>
+        <dt class="col-sm-3">Sklad</dt>
         <dd class="col-sm-9">@Model.StockQuantity</dd>
-        <dt class="col-sm-3">Availability</dt>
-        <dd class="col-sm-9">@(Model.IsAvailable ? "Available" : "Hidden")</dd>
+        <dt class="col-sm-3">Dostupnost</dt>
+        <dd class="col-sm-9">@(Model.IsAvailable ? "Dostupné" : "Skryté")</dd>
     </dl>
 
     <form asp-action="Delete" method="post" class="hero-actions">
         <input type="hidden" asp-for="Id" />
-        <button class="btn-danger-soft" type="submit">Delete permanently</button>
-        <a class="btn-soft" asp-action="Index">Cancel</a>
+        <button class="btn-danger-soft" type="submit">Smazat trvale</button>
+        <a class="btn-soft" asp-action="Index">Zrušit</a>
     </form>
 </section>

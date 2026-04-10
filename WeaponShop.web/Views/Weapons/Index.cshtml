@@ -1,66 +1,261 @@
-@model IReadOnlyList<Weapon>
+@model WeaponShop.Web.ViewModels.Weapons.StoreCatalogViewModel
 
-<section class="panel">
-    <div class="panel-head">
-        <div>
-            <h2>Products</h2>
-            <p class="panel-subtitle">Current catalog preview available for customers.</p>
-        </div>
-    </div>
+@{
+    ViewData["Title"] = "Katalog";
+    var showAccessories = Model.AccessFilter is "all" or "accessories" or "public";
+    var showRestricted = Model.AccessFilter is "all" or "restricted";
+    var totalVisibleItems = Model.AccessoryProducts.Count + (Model.CanViewRestrictedCatalog ? Model.RestrictedProducts.Count : Model.RestrictedPreviewProducts.Count);
+    var pageTitle = Model.AccessFilter switch
+    {
+        "accessories" or "public" => "Doplňky",
+        "restricted" when !string.IsNullOrWhiteSpace(Model.LegalCategoryFilter) => CatalogPresentation.GetWeaponCategoryLabel(Model.LegalCategoryFilter),
+        "restricted" => "Zbraně na zbrojní průkaz",
+        _ => "Katalog produktů"
+    };
+}
 
-    @if (Model.Count == 0)
-    {
-        <div class="data-empty">No products found.</div>
-    }
-    else
-    {
-        <div class="table-wrap">
-            <table class="data-grid">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Manufacturer</th>
-                        <th class="text-end">Price</th>
-                        <th class="text-end">Stock</th>
-                        <th>Availability</th>
-                        @if (User.IsInRole("Customer"))
-                        {
-                            <th class="text-end">Action</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var weapon in Model)
-                    {
-                        <tr>
-                            <td>@weapon.Name</td>
-                            <td><span class="badge-cat">@weapon.Category</span></td>
-                            <td>@weapon.Manufacturer</td>
-                            <td class="text-end">@weapon.Price.ToString("C")</td>
-                            <td class="text-end">@weapon.StockQuantity</td>
-                            <td>@(weapon.IsAvailable ? "Available" : "Unavailable")</td>
-                            @if (User.IsInRole("Customer"))
+<section class="store-layout">
+    <aside class="store-aside">
+        <partial name="_StoreSidebar" />
+    </aside>
+
+    <div class="store-main">
+        <nav class="breadcrumb-bar breadcrumb-classic">
+            <a asp-controller="Home" asp-action="Index">Domů</a>
+            <span>/</span>
+            <a asp-action="Index">Katalog</a>
+            <span>/</span>
+            <span>@pageTitle</span>
+        </nav>
+
+        <section class="catalog-heading">
+            <div>
+                <h1 class="catalog-title">@pageTitle</h1>
+                <p class="catalog-copy">Zobrazuji 1 - @totalVisibleItems z @totalVisibleItems výsledků.</p>
+            </div>
+        </section>
+
+        <section class="catalog-filter-box panel">
+            <form method="get" class="catalog-filter-form">
+                <div class="filter-grid">
+                    <div class="sidebar-field">
+                        <label class="field-label" for="access">Typ nabídky</label>
+                        <select class="form-control" id="access" name="access">
+                            <option value="all" selected="@(Model.AccessFilter == "all" ? "selected" : null)">Celý obchod</option>
+                            <option value="accessories" selected="@(Model.AccessFilter is "accessories" or "public" ? "selected" : null)">Pouze doplňky</option>
+                            <option value="restricted" selected="@(Model.AccessFilter == "restricted" ? "selected" : null)">Pouze zbraně</option>
+                        </select>
+                    </div>
+                    <div class="sidebar-field">
+                        <label class="field-label" for="accessoryCategory">Kategorie doplňků</label>
+                        <select class="form-control" id="accessoryCategory" name="accessoryCategory">
+                            <option value="">Všechny kategorie</option>
+                            @foreach (var option in Model.AccessoryCategories)
                             {
-                                <td class="text-end">
-                                    @if (weapon.IsAvailable && weapon.StockQuantity > 0)
-                                    {
-                                        <form asp-controller="Cart" asp-action="Add" method="post">
-                                            <input type="hidden" name="weaponId" value="@weapon.Id" />
-                                            <input type="hidden" name="quantity" value="1" />
-                                            <button type="submit" class="btn-soft">Add to cart</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <span class="panel-subtitle">Out of stock</span>
-                                    }
-                                </td>
+                                <option value="@option" selected="@(Model.AccessoryCategoryFilter == option ? "selected" : null)">@CatalogPresentation.GetAccessoryCategoryLabel(option)</option>
                             }
-                        </tr>
+                        </select>
+                    </div>
+                    <div class="sidebar-field">
+                        <label class="field-label" for="legalCategory">Kategorie zbraní</label>
+                        <select class="form-control" id="legalCategory" name="legalCategory">
+                            <option value="">Všechny kategorie</option>
+                            @foreach (var option in Model.LegalCategories)
+                            {
+                                <option value="@option" selected="@(Model.LegalCategoryFilter == option ? "selected" : null)">@CatalogPresentation.GetWeaponCategoryLabel(option)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sidebar-field">
+                        <label class="field-label" for="manufacturer">Značka</label>
+                        <select class="form-control" id="manufacturer" name="manufacturer">
+                            <option value="">Všechny značky</option>
+                            @foreach (var option in Model.Manufacturers)
+                            {
+                                <option value="@option" selected="@(Model.ManufacturerFilter == option ? "selected" : null)">@option</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sidebar-field">
+                        <label class="field-label" for="sort">Řazení</label>
+                        <select class="form-control" id="sort" name="sort">
+                            <option value="featured" selected="@(Model.SortBy == "featured" ? "selected" : null)">Výchozí</option>
+                            <option value="price-asc" selected="@(Model.SortBy == "price-asc" ? "selected" : null)">Cena od nejnižší</option>
+                            <option value="price-desc" selected="@(Model.SortBy == "price-desc" ? "selected" : null)">Cena od nejvyšší</option>
+                            <option value="stock" selected="@(Model.SortBy == "stock" ? "selected" : null)">Dostupnost skladem</option>
+                        </select>
+                    </div>
+                    <div class="sidebar-field">
+                        <label class="field-label" for="search">Hledat</label>
+                        <input class="form-control" id="search" name="search" value="@Model.Search" placeholder="Název produktu nebo výrobce" />
+                    </div>
+                </div>
+                <div class="filter-actions filter-actions-classic">
+                    <button type="submit" class="btn-modern">Použít filtry</button>
+                    <a class="btn-soft" asp-action="Index">Vymazat všechny filtry</a>
+                </div>
+            </form>
+        </section>
+
+        @if (TempData["ErrorMessage"] is string errorMessage)
+        {
+            <div class="notice-banner notice-danger">@errorMessage</div>
+        }
+
+        @if (!Model.CanViewRestrictedCatalog)
+        {
+            <div class="notice-banner">
+                <strong>Detaily zbraní jsou zatím uzamčené.</strong>
+                <span>Otevřete profil a dokončete ověření 18+ pro odemčení kontrolovaných položek.</span>
+                <a class="btn-inline" asp-controller="Account" asp-action="Profile">Otevřít profil</a>
+            </div>
+        }
+
+        @if (showAccessories)
+        {
+            <section class="catalog-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Doplňky a příslušenství</h2>
+                        <p class="panel-subtitle">Veřejně dostupné produkty bez omezení věku.</p>
+                    </div>
+                </div>
+
+                @if (Model.AccessoryProducts.Count == 0)
+                {
+                    <div class="data-empty">Žádné doplňky neodpovídají zvoleným filtrům.</div>
+                }
+                else
+                {
+                    <div class="catalog-grid">
+                        @foreach (var product in Model.AccessoryProducts)
+                        {
+                            <article class="product-card product-card-classic @product.AccentClass">
+                                <a class="product-media" asp-action="AccessoryDetails" asp-route-id="@product.AccessoryId">
+                                    <div class="product-visual">
+                                        <img src="@product.ImagePath" alt="@product.Name" />
+                                    </div>
+                                </a>
+
+                                <div class="product-body">
+                                    <div class="product-badges">
+                                        <span class="badge-chip badge-chip-public">@product.CategoryDisplay</span>
+                                    </div>
+                                    <h3 class="product-title">@product.Name</h3>
+                                    <p class="product-meta">@product.Manufacturer</p>
+                                    <p class="product-copy">@product.ShortDescription</p>
+                                    <div class="product-price-row">
+                                        <span class="stock-inline @(product.IsAvailable ? "stock-inline-in" : "stock-inline-out")">
+                                            @(product.IsAvailable ? "ZBOŽÍ JE SKLADEM" : "NENÍ SKLADEM")
+                                        </span>
+                                        <strong>@product.Price.ToString("C")</strong>
+                                    </div>
+                                    <div class="product-actions product-actions-split">
+                                        <a class="btn-soft full-width" asp-action="AccessoryDetails" asp-route-id="@product.AccessoryId">Zobrazit detail</a>
+                                        @if (User.IsInRole("Customer") && product.IsAvailable && product.AccessoryId.HasValue)
+                                        {
+                                            <form asp-controller="Cart" asp-action="Add" method="post" class="full-width">
+                                                <input type="hidden" name="accessoryId" value="@product.AccessoryId" />
+                                                <input type="hidden" name="quantity" value="1" />
+                                                <button type="submit" class="btn-modern full-width">Přidat do košíku</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        }
+
+        @if (showRestricted)
+        {
+            <section class="catalog-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Zbraně s kontrolovaným přístupem</h2>
+                        <p class="panel-subtitle">Produkty dostupné po ověření zákaznického účtu.</p>
+                    </div>
+                </div>
+
+                @if (Model.CanViewRestrictedCatalog)
+                {
+                    @if (Model.RestrictedProducts.Count == 0)
+                    {
+                        <div class="data-empty">Žádné zbraně neodpovídají zvoleným filtrům.</div>
                     }
-                </tbody>
-            </table>
-        </div>
-    }
+                    else
+                    {
+                        <div class="catalog-grid">
+                            @foreach (var product in Model.RestrictedProducts)
+                            {
+                                <article class="product-card product-card-classic @product.AccentClass">
+                                    <a class="product-media" asp-action="Details" asp-route-id="@product.WeaponId">
+                                        <div class="product-visual">
+                                            <img src="@product.ImagePath" alt="@product.Name" />
+                                        </div>
+                                    </a>
+
+                                    <div class="product-body">
+                                        <div class="product-badges">
+                                            <span class="badge-chip badge-chip-restricted">@product.CategoryDisplay</span>
+                                        </div>
+                                        <h3 class="product-title">@product.Name</h3>
+                                        <p class="product-meta">@product.Manufacturer</p>
+                                        <p class="product-copy">@product.ShortDescription</p>
+                                        <div class="product-price-row">
+                                            <span class="stock-inline @(product.IsAvailable ? "stock-inline-in" : "stock-inline-out")">
+                                                @(product.IsAvailable ? "ZBOŽÍ JE SKLADEM" : "NENÍ SKLADEM")
+                                            </span>
+                                            <strong>@product.Price.ToString("C")</strong>
+                                        </div>
+                                        <div class="product-actions product-actions-split">
+                                            <a class="btn-soft full-width" asp-action="Details" asp-route-id="@product.WeaponId">Zobrazit detail</a>
+                                            @if (User.IsInRole("Customer") && product.IsAvailable && product.WeaponId.HasValue)
+                                            {
+                                                <form asp-controller="Cart" asp-action="Add" method="post" class="full-width">
+                                                    <input type="hidden" name="weaponId" value="@product.WeaponId" />
+                                                    <input type="hidden" name="quantity" value="1" />
+                                                    <button type="submit" class="btn-modern full-width">Přidat do košíku</button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="catalog-grid">
+                        @foreach (var product in Model.RestrictedPreviewProducts)
+                        {
+                            <article class="product-card product-card-classic @product.AccentClass product-card-locked">
+                                <div class="product-media">
+                                    <div class="product-visual">
+                                        <img src="@product.ImagePath" alt="@product.Name" />
+                                    </div>
+                                    <div class="product-lock">Odemkne se po ověření zákazníka</div>
+                                </div>
+
+                                <div class="product-body">
+                                    <div class="product-badges">
+                                        <span class="badge-chip badge-chip-restricted">@product.CategoryDisplay</span>
+                                    </div>
+                                    <h3 class="product-title">@product.Name</h3>
+                                    <p class="product-meta">@product.Manufacturer</p>
+                                    <p class="product-copy">Pouze náhled. Detail produktu i nákupní akce se zobrazí až po splnění podmínek profilu.</p>
+                                    <div class="product-actions">
+                                        <a class="btn-soft full-width" asp-controller="Account" asp-action="Profile">Odemknout katalog</a>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        }
+    </div>
 </section>

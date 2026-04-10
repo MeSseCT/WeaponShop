@@ -11,6 +11,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddScoped<IAccessoryService, AccessoryService>();
         services.AddScoped<IWeaponService, WeaponService>();
         services.AddScoped<IOrderService, OrderService>();
         return services;

@@ -1,0 +1,10 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="48" fill="#10181D"/>
+  <circle cx="574" cy="402" r="156" stroke="#B6C9D3" stroke-width="44"/>
+  <circle cx="574" cy="402" r="48" fill="#C78A2D"/>
+  <rect x="734" y="340" width="172" height="124" rx="26" fill="#2A3640"/>
+  <rect x="274" y="352" width="144" height="98" rx="22" fill="#2A3640"/>
+  <rect x="462" y="542" width="230" height="34" rx="17" fill="#6D8C9D"/>
+  <text x="110" y="136" fill="#DCE8EF" font-size="24" font-family="Arial, sans-serif" font-weight="700">PUBLIC ACCESSORY</text>
+  <text x="110" y="692" fill="#98A9B5" font-size="30" font-family="Arial, sans-serif">Optics and range gear</text>
+</svg>

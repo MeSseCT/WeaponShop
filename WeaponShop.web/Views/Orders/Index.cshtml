@@ -3,15 +3,15 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>My orders</h2>
-            <p class="panel-subtitle">All submitted orders and their current status.</p>
+            <h2>Moje objednávky</h2>
+            <p class="panel-subtitle">Přehled všech odeslaných objednávek a jejich aktuálního stavu.</p>
         </div>
-        <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Continue shopping</a>
+        <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Zpět do katalogu</a>
     </div>
 
     @if (Model.Count == 0)
     {
-        <div class="data-empty">No submitted orders yet.</div>
+        <div class="data-empty">Zatím nemáte žádné odeslané objednávky.</div>
     }
     else
     {
@@ -19,12 +19,12 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Order</th>
-                        <th>Created</th>
-                        <th>Status</th>
-                        <th class="text-end">Items</th>
-                        <th class="text-end">Total</th>
-                        <th class="text-end">Details</th>
+                        <th>Objednávka</th>
+                        <th>Vytvořeno</th>
+                        <th>Stav</th>
+                        <th class="text-end">Položky</th>
+                        <th class="text-end">Celkem</th>
+                        <th class="text-end">Detail</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,11 +33,11 @@
                         <tr>
                             <td>#@order.Id</td>
                             <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
-                            <td><span class="badge-cat">@order.Status</span></td>
+                            <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
                             <td class="text-end">@order.Items.Count</td>
                             <td class="text-end">@order.TotalPrice.ToString("C")</td>
                             <td class="text-end">
-                                <a class="btn-inline" asp-action="Details" asp-route-id="@order.Id">View</a>
+                                <a class="btn-inline" asp-action="Details" asp-route-id="@order.Id">Zobrazit</a>
                             </td>
                         </tr>
                     }

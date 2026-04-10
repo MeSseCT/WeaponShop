@@ -1,0 +1,80 @@
+@using WeaponShop.Application.Services
+@inject IAccessoryService AccessoryService
+@inject IWeaponService WeaponService
+@{
+    var currentAccess = ViewContext.HttpContext.Request.Query["access"].ToString();
+    var currentAccessoryCategory = ViewContext.HttpContext.Request.Query["accessoryCategory"].ToString();
+    var currentLegalCategory = ViewContext.HttpContext.Request.Query["legalCategory"].ToString();
+
+    var accessories = (await AccessoryService.GetAllAsync())
+        .Where(item => item.IsAvailable)
+        .ToList();
+
+    var weapons = (await WeaponService.GetAllAsync())
+        .Where(item => item.IsAvailable)
+        .ToList();
+
+    var accessoryGroups = accessories
+        .GroupBy(item => item.Category)
+        .OrderBy(group => CatalogPresentation.GetAccessoryCategorySortKey(group.Key))
+        .ThenBy(group => CatalogPresentation.GetAccessoryCategoryLabel(group.Key))
+        .ToList();
+
+    var weaponGroups = weapons
+        .GroupBy(item => item.Category)
+        .OrderBy(group => CatalogPresentation.GetWeaponCategorySortKey(group.Key))
+        .ToList();
+}
+
+<div class="store-sidebar-box">
+    <div class="store-sidebar-group">
+        <h3>Doplňky</h3>
+        <a class="store-sidebar-link @(currentAccess == "accessories" && string.IsNullOrWhiteSpace(currentAccessoryCategory) ? "is-active" : null)"
+           asp-controller="Weapons"
+           asp-action="Index"
+           asp-route-access="accessories">
+            <span>Všechny doplňky</span>
+            <strong>@accessories.Count</strong>
+        </a>
+
+        @foreach (var group in accessoryGroups)
+        {
+            <a class="store-sidebar-link @(string.Equals(currentAccessoryCategory, group.Key, StringComparison.OrdinalIgnoreCase) ? "is-active" : null)"
+               asp-controller="Weapons"
+               asp-action="Index"
+               asp-route-access="accessories"
+               asp-route-accessoryCategory="@group.Key">
+                <span>@CatalogPresentation.GetAccessoryCategoryLabel(group.Key)</span>
+                <strong>@group.Count()</strong>
+            </a>
+        }
+    </div>
+
+    <div class="store-sidebar-group">
+        <h3>Zbraně na zbrojní průkaz</h3>
+        <a class="store-sidebar-link @(currentAccess == "restricted" && string.IsNullOrWhiteSpace(currentLegalCategory) ? "is-active" : null)"
+           asp-controller="Weapons"
+           asp-action="Index"
+           asp-route-access="restricted">
+            <span>Všechny zbraně</span>
+            <strong>@weapons.Count</strong>
+        </a>
+
+        @foreach (var group in weaponGroups)
+        {
+            <a class="store-sidebar-link @(string.Equals(currentLegalCategory, group.Key, StringComparison.OrdinalIgnoreCase) ? "is-active" : null)"
+               asp-controller="Weapons"
+               asp-action="Index"
+               asp-route-access="restricted"
+               asp-route-legalCategory="@group.Key">
+                <span>@CatalogPresentation.GetWeaponCategoryLabel(group.Key)</span>
+                <strong>@group.Count()</strong>
+            </a>
+        }
+    </div>
+
+    <div class="store-sidebar-note">
+        <strong>Pravidla nákupu</strong>
+        <p>Doplňky jsou veřejně dostupné. Pro zobrazení detailu zbraní je nutné přihlášení, věk 18+ a nahrané doklady.</p>
+    </div>
+</div>

@@ -1,0 +1,8 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="48" fill="#0E151A"/>
+  <circle cx="796" cy="398" r="110" fill="#1E2830"/>
+  <path d="M184 438H670L760 350H910L996 418V466H908L828 546H646L574 616H482L432 520H294L246 592H184L220 520H184V438Z" fill="#2C3942"/>
+  <rect x="116" y="110" width="300" height="38" rx="19" fill="#C78A2D"/>
+  <text x="150" y="136" fill="#10161B" font-size="24" font-family="Arial, sans-serif" font-weight="700">TACTICAL RENDER</text>
+  <text x="116" y="698" fill="#98A9B5" font-size="30" font-family="Arial, sans-serif">Restricted catalog visual</text>
+</svg>

@@ -3,26 +3,51 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Order #@Model.Id</h2>
-            <p class="panel-subtitle">Status updates for this order.</p>
+            <h2>Objednávka č. @Model.Id</h2>
+            <p class="panel-subtitle">Přehled stavu a všech aktualizací této objednávky.</p>
         </div>
-        <a class="btn-soft" asp-action="Index">Back to orders</a>
+        <a class="btn-soft" asp-action="Index">Zpět na objednávky</a>
     </div>
 
     <div class="table-wrap" style="margin-bottom: 1.5rem;">
         <table class="data-grid">
             <tbody>
                 <tr>
-                    <th>Status</th>
-                    <td><span class="badge-cat">@Model.Status</span></td>
-                    <th>Created</th>
+                    <th>Stav</th>
+                    <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(Model.Status)</span></td>
+                    <th>Vytvořeno</th>
                     <td>@Model.CreatedAt.ToLocalTime().ToString("g")</td>
                 </tr>
                 <tr>
-                    <th>Total</th>
+                    <th>Celkem</th>
                     <td>@Model.TotalPrice.ToString("C")</td>
-                    <th>Items</th>
+                    <th>Položky</th>
                     <td>@Model.Items.Count</td>
+                </tr>
+                <tr>
+                    <th>Doručení</th>
+                    <td>@(Model.DeliveryMethod == "shipping" ? "Doručení na adresu" : "Osobní odběr")</td>
+                    <th>Platba</th>
+                    <td>@(Model.PaymentMethod == "cash-on-delivery" ? "Dobírka" : Model.PaymentMethod == "cash-on-pickup" ? "Platba při převzetí" : "Bankovní převod")</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-wrap" style="margin-bottom: 1.5rem;">
+        <table class="data-grid">
+            <tbody>
+                <tr>
+                    <th>Kontakt</th>
+                    <td>@Model.ContactEmail<br />@Model.ContactPhone</td>
+                    <th>Příjemce</th>
+                    <td>@Model.ShippingName</td>
+                </tr>
+                <tr>
+                    <th>Dodací údaje</th>
+                    <td>@Model.ShippingStreet, @Model.ShippingCity, @Model.ShippingPostalCode</td>
+                    <th>Fakturační údaje</th>
+                    <td>@Model.BillingName, @Model.BillingStreet, @Model.BillingCity, @Model.BillingPostalCode</td>
                 </tr>
             </tbody>
         </table>
@@ -32,17 +57,17 @@
         <table class="data-grid">
             <thead>
                 <tr>
-                    <th>Items</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Unit price</th>
-                    <th class="text-end">Line total</th>
+                    <th>Položky</th>
+                    <th class="text-end">Množství</th>
+                    <th class="text-end">Cena za kus</th>
+                    <th class="text-end">Cena celkem</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in Model.Items)
                 {
                     <tr>
-                        <td>@item.Weapon?.Name</td>
+                        <td>@item.GetDisplayName()</td>
                         <td class="text-end">@item.Quantity</td>
                         <td class="text-end">@item.UnitPrice.ToString("C")</td>
                         <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
@@ -54,15 +79,15 @@
 
     <div class="panel-head">
         <div>
-            <h3 style="margin:0;">Order updates</h3>
-            <p class="panel-subtitle">Notifications tied to this order.</p>
+            <h3 style="margin:0;">Aktualizace objednávky</h3>
+            <p class="panel-subtitle">Notifikace navázané na tuto objednávku.</p>
         </div>
     </div>
 
     <div class="audit-list">
         @if (Model.Notifications.Count == 0)
         {
-            <div class="data-empty">No updates yet.</div>
+            <div class="data-empty">Zatím nejsou k dispozici žádné aktualizace.</div>
         }
         else
         {
@@ -71,7 +96,7 @@
                 <div class="audit-card">
                     <div class="audit-card-head">
                         <div class="audit-card-title">@notification.Title</div>
-                        <span class="badge-cat">@Model.Status</span>
+                            <span class="badge-cat">@CatalogPresentation.GetStatusLabel(Model.Status)</span>
                     </div>
                     <div class="audit-card-meta">@notification.CreatedAtUtc.ToLocalTime().ToString("g")</div>
                     <div class="audit-card-body">@notification.Message</div>

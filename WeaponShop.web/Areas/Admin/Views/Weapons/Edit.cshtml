@@ -1,16 +1,16 @@
 @model WeaponInputModel
 
 <section class="form-shell form-shell-wide">
-    <h2>Edit weapon</h2>
-    <p class="auth-sub">Update item details with full validation checks.</p>
+    <h2>Upravit zbraň</h2>
+    <p class="auth-sub">Úprava detailů produktu včetně popisu, ceny, obrázku a dostupnosti.</p>
 
-    <form asp-action="Edit" method="post">
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
         <input asp-for="Id" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <partial name="_WeaponForm" model="Model" />
         <div class="hero-actions">
-            <button class="btn-modern" type="submit">Save changes</button>
-            <a class="btn-soft" asp-action="Index">Cancel</a>
+            <button class="btn-modern" type="submit">Uložit změny</button>
+            <a class="btn-soft" asp-action="Index">Zrušit</a>
         </div>
     </form>
 </section>

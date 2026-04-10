@@ -1,0 +1,10 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="48" fill="#10181D"/>
+  <path d="M352 528C352 418 438 328 548 328H652C762 328 848 418 848 528V566H352V528Z" fill="#243039"/>
+  <path d="M436 310C436 250 484 202 544 202H656C716 202 764 250 764 310V342H436V310Z" fill="#2D3B45"/>
+  <rect x="300" y="394" width="128" height="92" rx="24" fill="#C78A2D"/>
+  <rect x="772" y="394" width="128" height="92" rx="24" fill="#C78A2D"/>
+  <rect x="510" y="566" width="180" height="42" rx="21" fill="#6D8C9D"/>
+  <text x="110" y="136" fill="#DCE8EF" font-size="24" font-family="Arial, sans-serif" font-weight="700">PUBLIC ACCESSORY</text>
+  <text x="110" y="692" fill="#98A9B5" font-size="30" font-family="Arial, sans-serif">Protection and maintenance</text>
+</svg>

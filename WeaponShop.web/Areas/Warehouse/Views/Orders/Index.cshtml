@@ -3,10 +3,10 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Skladnik - Warehouse checks</h2>
-            <p class="panel-subtitle">Orders approved by admin or returned from gunsmith.</p>
+            <h2>Skladové kontroly</h2>
+            <p class="panel-subtitle">Objednávky schválené administrátorem nebo vrácené od zbrojíře.</p>
         </div>
-        <a class="btn-soft" asp-action="History">My audit history</a>
+        <a class="btn-soft" asp-action="History">Moje auditní historie</a>
     </div>
 
     @{
@@ -25,22 +25,22 @@
 
     <form method="get" class="form-shell form-shell-wide" style="margin-bottom: 1rem;">
         <div class="mb-3">
-            <label class="field-label" for="statusFilter">Status filter</label>
+            <label class="field-label" for="statusFilter">Filtr stavu</label>
             <select id="statusFilter" name="status" class="form-control">
-                <option value="">All</option>
+                <option value="">Vše</option>
                 @foreach (var status in statusOptions)
                 {
                     var selected = string.Equals(Context.Request.Query["status"], status.ToString(), StringComparison.OrdinalIgnoreCase);
-                    <option value="@status" selected="@(selected ? "selected" : null)">@status</option>
+                    <option value="@status" selected="@(selected ? "selected" : null)">@CatalogPresentation.GetStatusLabel(status)</option>
                 }
             </select>
         </div>
-        <button class="btn-modern" type="submit">Apply filter</button>
+        <button class="btn-modern" type="submit">Použít filtr</button>
     </form>
 
     @if (Model.Count == 0)
     {
-        <div class="data-empty">No warehouse actions pending.</div>
+        <div class="data-empty">Žádné skladové akce aktuálně nečekají.</div>
     }
     else
     {
@@ -48,13 +48,13 @@
             <table class="data-grid">
                 <thead>
                     <tr>
-                        <th>Order</th>
-                        <th>Customer</th>
-                        <th>Items</th>
-                        <th>Status</th>
-                        <th>Checks</th>
+                        <th>Objednávka</th>
+                        <th>Zákazník</th>
+                        <th>Položky</th>
+                        <th>Stav</th>
+                        <th>Kontroly</th>
                         <th>Audit</th>
-                        <th class="text-end">Actions</th>
+                        <th class="text-end">Akce</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,34 +72,34 @@
                             <td>
                                 @foreach (var item in order.Items)
                                 {
-                                    <div>@item.Weapon?.Name x @item.Quantity</div>
+                                    <div>@item.GetDisplayName() x @item.Quantity</div>
                                 }
                             </td>
                             <td>
-                                <span class="badge-cat">@order.Status</span>
+                                <span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span>
                             </td>
                             <td>
                                 @if (order.ApprovedAtUtc.HasValue)
                                 {
-                                    <div class="panel-subtitle">Admin approved: @order.ApprovedAtUtc.Value.ToLocalTime().ToString("g")</div>
+                                    <div class="panel-subtitle">Schválil admin: @order.ApprovedAtUtc.Value.ToLocalTime().ToString("g")</div>
                                 }
                                 @if (order.WarehouseCheckedAtUtc.HasValue)
                                 {
-                                    <div class="panel-subtitle">Warehouse check: @order.WarehouseCheckedAtUtc.Value.ToLocalTime().ToString("g")</div>
+                                    <div class="panel-subtitle">Kontrola skladu: @order.WarehouseCheckedAtUtc.Value.ToLocalTime().ToString("g")</div>
                                 }
                                 @if (order.GunsmithCheckedAtUtc.HasValue)
                                 {
-                                    <div class="panel-subtitle">Gunsmith check: @order.GunsmithCheckedAtUtc.Value.ToLocalTime().ToString("g")</div>
+                                    <div class="panel-subtitle">Kontrola zbrojíře: @order.GunsmithCheckedAtUtc.Value.ToLocalTime().ToString("g")</div>
                                 }
                                 @if (order.PickupHandedOverAtUtc.HasValue)
                                 {
-                                    <div class="panel-subtitle">Pickup handed over: @order.PickupHandedOverAtUtc.Value.ToLocalTime().ToString("g")</div>
+                                    <div class="panel-subtitle">Předáno zákazníkovi: @order.PickupHandedOverAtUtc.Value.ToLocalTime().ToString("g")</div>
                                 }
                             </td>
                             <td>
                                 @if (order.Audits.Count == 0)
                                 {
-                                    <span class="panel-subtitle">No audit yet</span>
+                                    <span class="panel-subtitle">Zatím bez auditu</span>
                                 }
                                 else
                                 {
@@ -114,49 +114,63 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-row">
-                                    <a class="btn-inline" asp-action="Details" asp-route-id="@order.Id">Details</a>
+                                    <a class="btn-inline" asp-action="Details" asp-route-id="@order.Id">Detail</a>
                                     <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@order.Id">Word</a>
                                     @if (order.Status == OrderStatus.Approved)
                                     {
-                                        <form asp-action="SendToGunsmith" method="post">
-                                            <input type="hidden" name="id" value="@order.Id" />
-                                            <button type="submit" class="btn-inline">Send to gunsmith</button>
-                                        </form>
+                                        @if (order.Items.Any(item => item.IsWeapon))
+                                        {
+                                            <form asp-action="SendToGunsmith" method="post">
+                                                <input type="hidden" name="id" value="@order.Id" />
+                                                <button type="submit" class="btn-inline">Předat zbrojíři</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="MarkShipped" method="post">
+                                                <input type="hidden" name="id" value="@order.Id" />
+                                                <button type="submit" class="btn-inline">Označit jako odeslané</button>
+                                            </form>
+                                            <form asp-action="MarkReadyForPickup" method="post">
+                                                <input type="hidden" name="id" value="@order.Id" />
+                                                <button type="submit" class="btn-inline">Připravit k vyzvednutí</button>
+                                            </form>
+                                        }
                                     }
                                     @if (order.Status == OrderStatus.AwaitingDispatch)
                                     {
                                         <form asp-action="MarkShipped" method="post">
                                             <input type="hidden" name="id" value="@order.Id" />
-                                            <button type="submit" class="btn-inline">Mark shipped</button>
+                                            <button type="submit" class="btn-inline">Označit jako odeslané</button>
                                         </form>
                                         <form asp-action="MarkReadyForPickup" method="post">
                                             <input type="hidden" name="id" value="@order.Id" />
-                                            <button type="submit" class="btn-inline">Ready for pickup</button>
+                                            <button type="submit" class="btn-inline">Připravit k vyzvednutí</button>
                                         </form>
                                         <form asp-action="Reject" method="post">
                                             <input type="hidden" name="id" value="@order.Id" />
-                                            <input type="text" name="reason" class="form-control" placeholder="Reject reason" />
-                                            <button type="submit" class="btn-inline btn-inline-danger">Reject</button>
+                                            <input type="text" name="reason" class="form-control" placeholder="Důvod zamítnutí" />
+                                            <button type="submit" class="btn-inline btn-inline-danger">Zamítnout</button>
                                         </form>
                                     }
                                     @if (order.Status == OrderStatus.ReadyForPickup)
                                     {
                                         <form asp-action="ConfirmPickup" method="post">
                                             <input type="hidden" name="id" value="@order.Id" />
-                                            <button type="submit" class="btn-inline">Confirm pickup</button>
+                                            <button type="submit" class="btn-inline">Potvrdit převzetí</button>
                                         </form>
                                         <form asp-action="Reject" method="post">
                                             <input type="hidden" name="id" value="@order.Id" />
-                                            <input type="text" name="reason" class="form-control" placeholder="Reject reason" />
-                                            <button type="submit" class="btn-inline btn-inline-danger">Reject</button>
+                                            <input type="text" name="reason" class="form-control" placeholder="Důvod zamítnutí" />
+                                            <button type="submit" class="btn-inline btn-inline-danger">Zamítnout</button>
                                         </form>
                                     }
                                     @if (order.Status == OrderStatus.Approved)
                                     {
                                         <form asp-action="Reject" method="post">
                                             <input type="hidden" name="id" value="@order.Id" />
-                                            <input type="text" name="reason" class="form-control" placeholder="Reject reason" />
-                                            <button type="submit" class="btn-inline btn-inline-danger">Reject</button>
+                                            <input type="text" name="reason" class="form-control" placeholder="Důvod zamítnutí" />
+                                            <button type="submit" class="btn-inline btn-inline-danger">Zamítnout</button>
                                         </form>
                                     }
                                 </div>

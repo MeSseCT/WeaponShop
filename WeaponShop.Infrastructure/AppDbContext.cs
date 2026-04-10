@@ -18,6 +18,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Weapon> Weapons => Set<Weapon>();
+    public DbSet<Accessory> Accessories => Set<Accessory>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderAudit> OrderAudits => Set<OrderAudit>();
@@ -58,6 +59,21 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.Property(w => w.Manufacturer).HasColumnName("manufacturer_name");
             builder.Property(w => w.StockQuantity).HasColumnName("stock_quantity");
             builder.Property(w => w.IsAvailable).HasColumnName("is_available");
+            builder.Property(w => w.ImageFileName).HasColumnName("image_file_name");
+        });
+
+        modelBuilder.Entity<Accessory>(builder =>
+        {
+            builder.ToTable("catalog_accessories");
+            builder.Property(a => a.Id).HasColumnName("accessory_id");
+            builder.Property(a => a.Name).HasColumnName("accessory_name");
+            builder.Property(a => a.Category).HasColumnName("catalog_category");
+            builder.Property(a => a.Description).HasColumnName("accessory_description");
+            builder.Property(a => a.Price).HasColumnName("price_amount");
+            builder.Property(a => a.Manufacturer).HasColumnName("manufacturer_name");
+            builder.Property(a => a.StockQuantity).HasColumnName("stock_quantity");
+            builder.Property(a => a.IsAvailable).HasColumnName("is_available");
+            builder.Property(a => a.ImageFileName).HasColumnName("image_file_name");
         });
 
         modelBuilder.Entity<Order>(builder =>
@@ -76,6 +92,19 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.Property(o => o.ReadyForPickupAtUtc).HasColumnName("ready_for_pickup_at_utc");
             builder.Property(o => o.PickupHandedOverAtUtc).HasColumnName("pickup_handed_over_at_utc");
             builder.Property(o => o.StockReservedAtUtc).HasColumnName("stock_reserved_at_utc");
+            builder.Property(o => o.ContactEmail).HasColumnName("contact_email").HasMaxLength(200);
+            builder.Property(o => o.ContactPhone).HasColumnName("contact_phone").HasMaxLength(50);
+            builder.Property(o => o.DeliveryMethod).HasColumnName("delivery_method").HasMaxLength(50);
+            builder.Property(o => o.PaymentMethod).HasColumnName("payment_method").HasMaxLength(50);
+            builder.Property(o => o.ShippingName).HasColumnName("shipping_name").HasMaxLength(200);
+            builder.Property(o => o.ShippingStreet).HasColumnName("shipping_street").HasMaxLength(200);
+            builder.Property(o => o.ShippingCity).HasColumnName("shipping_city").HasMaxLength(100);
+            builder.Property(o => o.ShippingPostalCode).HasColumnName("shipping_postal_code").HasMaxLength(20);
+            builder.Property(o => o.BillingName).HasColumnName("billing_name").HasMaxLength(200);
+            builder.Property(o => o.BillingStreet).HasColumnName("billing_street").HasMaxLength(200);
+            builder.Property(o => o.BillingCity).HasColumnName("billing_city").HasMaxLength(100);
+            builder.Property(o => o.BillingPostalCode).HasColumnName("billing_postal_code").HasMaxLength(20);
+            builder.Property(o => o.CustomerNote).HasColumnName("customer_note").HasMaxLength(1000);
             builder.Property(o => o.TotalPrice).HasColumnName("total_amount");
 
             builder.HasOne(o => o.User)
@@ -145,6 +174,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.Property(oi => oi.Id).HasColumnName("request_item_id");
             builder.Property(oi => oi.OrderId).HasColumnName("request_id");
             builder.Property(oi => oi.WeaponId).HasColumnName("weapon_id");
+            builder.Property(oi => oi.AccessoryId).HasColumnName("accessory_id");
             builder.Property(oi => oi.Quantity).HasColumnName("quantity");
             builder.Property(oi => oi.UnitPrice).HasColumnName("unit_price");
 
@@ -153,7 +183,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(oi => oi.WeaponId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(oi => oi.Accessory)
+                .WithMany()
+                .HasForeignKey(oi => oi.AccessoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasIndex(oi => new { oi.OrderId, oi.WeaponId })
+                .IsUnique();
+            builder.HasIndex(oi => new { oi.OrderId, oi.AccessoryId })
                 .IsUnique();
 
             builder.Property(oi => oi.UnitPrice)

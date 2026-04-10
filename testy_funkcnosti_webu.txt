@@ -1,0 +1,271 @@
+TESTY FUNKCOSTI WEBU - NAVRH PRE BAKALARSKU PRACU
+
+Tento dokument obsahuje navrh testovacich scenarov pre projekt WeaponShop.
+Kazdy test uvadza:
+- nazov testu
+- kroky
+- ocakavany vysledok
+- co test dokazuje
+
+
+1. UNIT TESTY
+
+1.1 CreateOrder_CalculatesTotalPriceCorrectly
+Kroky:
+- vytvorit objednavku s viacerymi polozkami a roznymi cenami
+- spocitat celkovu cenu objednavky
+Ocakavany vysledok:
+- TotalPrice je spravny sucet vsetkych poloziek
+Dokazuje:
+- cenova logika objednavky funguje spravne
+
+1.2 AddWeaponToCart_RejectsUnavailableWeapon
+Kroky:
+- pokusit sa pridat do kosika zbran, ktora nie je dostupna
+Ocakavany vysledok:
+- operacia je zamietnuta alebo skonci chybou validacie
+Dokazuje:
+- nedostupny tovar nie je mozne objednat
+
+1.3 RestrictedWeapons_AreBlockedForUserWithoutVerifiedProfile
+Kroky:
+- simulovat pouzivatela bez potvrdeneho veku 18+
+- simulovat pouzivatela bez nahratych dokladov
+Ocakavany vysledok:
+- restricted zbrane sa nezobrazia alebo ich nie je mozne objednat
+Dokazuje:
+- vekova a dokumentova kontrola funguje
+
+1.4 RestrictedWeapons_AreAllowedForVerifiedAdultUser
+Kroky:
+- simulovat prihlaseneho a overeneho pouzivatela
+Ocakavany vysledok:
+- restricted zbrane su dostupne
+Dokazuje:
+- business gate funguje aj v pozitivnom scenari
+
+1.5 OrderStatus_CanMoveFromPendingToApproved
+Kroky:
+- vytvorit objednavku v stave Pending alebo AwaitingApproval
+- vykonat schvalenie adminom
+Ocakavany vysledok:
+- stav sa zmeni na Approved
+Dokazuje:
+- zakladny workflow objednavky funguje
+
+1.6 OrderStatus_CannotSkipInvalidTransition
+Kroky:
+- skusit prejst zo stavu Pending priamo do Shipped
+Ocakavany vysledok:
+- operacia je odmietnuta
+Dokazuje:
+- workflow ma kontrolovane prechody stavov
+
+1.7 UploadDocument_RejectsUnsupportedFileType
+Kroky:
+- pokusit sa nahrat nepovoleny format suboru
+Ocakavany vysledok:
+- validacia zlyha
+Dokazuje:
+- upload dokladov ma zakladnu bezpecnostnu kontrolu
+
+1.8 Accessory_CanBeVisibleWithoutAgeVerification
+Kroky:
+- otvorit accessory katalog bez prihlasenia
+Ocakavany vysledok:
+- verejne doplnky su viditelne
+Dokazuje:
+- verejna cast shopu je oddelena od restricted casti
+
+
+2. INTEGRACNE TESTY
+
+2.1 DatabaseMigration_CreatesRequiredSchema
+Kroky:
+- spustit migracie na cistej databaze
+Ocakavany vysledok:
+- vytvoria sa tabulky pre users, orders, weapons, accessories a images
+Dokazuje:
+- projekt je nasaditelny od nuly
+
+2.2 Seed_CreatesDefaultRolesAndAccounts
+Kroky:
+- spustit seed databazy
+Ocakavany vysledok:
+- vzniknu roly Admin, Customer, Skladnik a Zbrojir
+- vzniknu seed ucty a demo data
+Dokazuje:
+- aplikacia vie pripravit funkcne testovacie prostredie
+
+2.3 CreateOrder_PersistsOrderAndItems
+Kroky:
+- vytvorit kosik
+- odoslat objednavku
+Ocakavany vysledok:
+- objednavka a jej polozky sa spravne ulozia do databazy
+Dokazuje:
+- order flow funguje na backend urovni
+
+2.4 AdminApproval_UpdatesOrderInDatabase
+Kroky:
+- admin schvali objednavku
+Ocakavany vysledok:
+- stav objednavky sa aktualizuje v databaze
+Dokazuje:
+- admin workflow je korektne napojeny na DB
+
+2.5 AccessoryImage_IsSavedAndLoaded
+Kroky:
+- admin nahra obrazok doplnku
+- otvori sa detail produktu
+Ocakavany vysledok:
+- obrazok sa ulozi a zobrazi na detaile
+Dokazuje:
+- sprava obrazkov pre accessories funguje
+
+2.6 WeaponImage_CanBeUpdatedAndRemoved
+Kroky:
+- admin nahra obrazok zbrane
+- obrazok zmeni
+- obrazok odstrani
+Ocakavany vysledok:
+- system korektne prepise alebo odstrani obrazok
+- databaza a ulozisko ostanu konzistentne
+Dokazuje:
+- editacia obrazkov pri zbraniach funguje spravne
+
+
+3. WEB INTEGRACNE TESTY
+
+3.1 PublicUser_SeesAccessoriesCatalog
+Kroky:
+- neprihlaseny pouzivatel otvori katalog
+Ocakavany vysledok:
+- vidi accessories cast shopu
+Dokazuje:
+- verejny storefront funguje
+
+3.2 PublicUser_CannotOpenRestrictedWeaponsCatalog
+Kroky:
+- neprihlaseny pouzivatel otvori restricted katalog
+Ocakavany vysledok:
+- je presmerovany alebo nedostane pristup k detailom
+Dokazuje:
+- ochrana restricted casti funguje
+
+3.3 VerifiedUser_CanOpenRestrictedWeaponDetail
+Kroky:
+- prihlaseny a overeny pouzivatel otvori detail zbrane
+Ocakavany vysledok:
+- detail sa zobrazi
+Dokazuje:
+- autorizacia je spravne previazana s profilom
+
+3.4 AdminArea_IsAccessibleOnlyForAdmin
+Kroky:
+- otvorit admin cast ako guest, customer a admin
+Ocakavany vysledok:
+- pristup ma iba admin
+Dokazuje:
+- role-based authorization funguje spravne
+
+3.5 WarehouseArea_IsAccessibleOnlyForWarehouseRole
+Kroky:
+- otvorit skladove obrazovky s roznymi rolami
+Ocakavany vysledok:
+- pristup ma iba skladnik
+Dokazuje:
+- skladova cast je spravne chranena
+
+3.6 GunsmithArea_IsAccessibleOnlyForGunsmithRole
+Kroky:
+- otvorit zbrojarske obrazovky s roznymi rolami
+Ocakavany vysledok:
+- pristup ma iba zbrojir
+Dokazuje:
+- zbrojarska cast je spravne chranena
+
+3.7 ProductFilters_ReturnExpectedResults
+Kroky:
+- filtrovat produkty podla kategorie
+- filtrovat produkty podla vyrobcu
+- filtrovat produkty podla typu ponuky
+Ocakavany vysledok:
+- vracaju sa spravne produkty
+Dokazuje:
+- katalogove filtre funguju korektne
+
+
+4. END-TO-END TESTY
+
+4.1 Customer_BuysAccessoryWithoutRestrictedVerification
+Kroky:
+- otvorit accessory detail
+- pridat produkt do kosika
+- dokoncit objednavku
+Ocakavany vysledok:
+- nakup verejneho tovaru prejde uspesne
+Dokazuje:
+- shop funguje pre bezneho zakaznika aj bez restricted overenia
+
+4.2 Customer_CompletesVerificationAndSeesWeapons
+Kroky:
+- registrovat sa
+- vyplnit profil
+- nahrat doklady
+- prihlasit sa
+Ocakavany vysledok:
+- pouzivatel vidi restricted katalog zbrani
+Dokazuje:
+- verification flow funguje end-to-end
+
+4.3 Customer_CreatesRestrictedOrder_AndWorkflowProcessesIt
+Kroky:
+- overeny zakaznik objedna zbran
+- admin objednavku schvali
+- skladnik ju spracuje
+- zbrojir potvrdi dalsi krok
+Ocakavany vysledok:
+- objednavka prejde vsetkymi potrebnymi stavmi
+Dokazuje:
+- hlavny business proces aplikacie realne funguje
+
+4.4 Admin_ManagesCatalogContent
+Kroky:
+- admin prida accessory alebo zbran
+- doplni description
+- nahra obrazok
+- polozku upravi
+Ocakavany vysledok:
+- zmeny sa prejavia vo frontend katalozu
+Dokazuje:
+- admin katalog je funkcny a data sa publikuju do storefrontu
+
+
+5. CO BY PRECHOD TYCHTO TESTOV DOKAZOVAL
+
+Ak prejdu unit testy:
+- business logika je stabilna a predvidatelna
+
+Ak prejdu integracne testy:
+- Application, Infrastructure, EF Core a databaza spolu funguju
+
+Ak prejdu web integracne testy:
+- routovanie, roly, autorizacia a controllery su nastavene spravne
+
+Ak prejdu end-to-end testy:
+- aplikacia funguje ako realny e-shop z pohladu pouzivatela
+
+
+6. MINIMUM PRE BAKALARSKU PRACU
+
+Odporucane minimum:
+- 6 az 8 unit testov
+- 4 az 6 integracnych testov
+- 2 az 3 end-to-end scenare
+
+Takato sada testov by dokazovala:
+- ze si netestoval iba jednotlive funkcie
+- ale aj cele business scenare
+- a zaroven bezpecnostne obmedzenia systemu
+

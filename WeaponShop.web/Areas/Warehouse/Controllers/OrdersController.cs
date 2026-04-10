@@ -78,7 +78,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.MarkWarehouseCheckedAsync(id, actorUserId, actorName, actorRole, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was moved to gunsmith.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla předána zbrojíři.";
         }
         catch (Exception exception)
         {
@@ -100,7 +100,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.MarkShippedAsync(id, actorUserId, actorName, actorRole, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was marked as shipped.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla označena jako odeslaná.";
         }
         catch (Exception exception)
         {
@@ -122,7 +122,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.MarkReadyForPickupAsync(id, actorUserId, actorName, actorRole, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} is ready for pickup.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} je připravena k vyzvednutí.";
         }
         catch (Exception exception)
         {
@@ -144,7 +144,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.MarkPickupHandedOverAsync(id, actorUserId, actorName, actorRole, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was handed over to the customer.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla předána zákazníkovi.";
         }
         catch (Exception exception)
         {
@@ -166,7 +166,7 @@ public class OrdersController : Controller
         try
         {
             await _orderService.RejectOrderAsync(id, actorUserId, actorName, actorRole, reason, cancellationToken);
-            TempData["StatusMessage"] = $"Order #{id} was rejected.";
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla zamítnuta.";
         }
         catch (Exception exception)
         {
@@ -179,7 +179,7 @@ public class OrdersController : Controller
     private bool TryGetActor(out string userId, out string actorName, out string actorRole)
     {
         userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        actorName = User.Identity?.Name ?? "unknown";
+        actorName = User.Identity?.Name ?? "neznámý uživatel";
         actorRole = User.IsInRole("Skladnik") ? "Skladnik" : "Unknown";
         return !string.IsNullOrWhiteSpace(userId);
     }
