@@ -51,7 +51,7 @@
                     {
                         <tr>
                             <td>
-                                <div>#@order.Id</div>
+                                <div>@order.GetPublicOrderNumber()</div>
                                 <div class="panel-subtitle">@order.CreatedAt.ToLocalTime().ToString("g")</div>
                             </td>
                             <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
@@ -77,8 +77,8 @@
                                         {
                                             <div class="audit-chip">
                                                 @audit.OccurredAtUtc.ToLocalTime().ToString("g")
-                                                • @audit.ActorRole @audit.ActorName
-                                                • @audit.Action
+                                                • @audit.ActorName
+                                                • @CatalogPresentation.GetAuditActionLabel(audit.Action)
                                             </div>
                                         }
                                     }
@@ -87,7 +87,7 @@
                             <td class="text-end">
                                 <div class="btn-row">
                                     <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Zobrazit</a>
-                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Word</a>
+                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout DOC</a>
                                     <form asp-area="Admin" asp-action="DeleteHistory" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
                                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />

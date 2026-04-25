@@ -14,5 +14,5 @@ public class CheckoutDetails
     public string BillingStreet { get; set; } = string.Empty;
     public string BillingCity { get; set; } = string.Empty;
     public string BillingPostalCode { get; set; } = string.Empty;
-    public string CustomerNote { get; set; } = string.Empty;
+    public string? CustomerNote { get; set; }
 }

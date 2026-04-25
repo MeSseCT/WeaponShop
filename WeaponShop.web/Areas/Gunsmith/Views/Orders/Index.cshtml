@@ -62,7 +62,7 @@
                     {
                         <tr>
                             <td>
-                                <div>#@order.Id</div>
+                                <div>@order.GetPublicOrderNumber()</div>
                                 <div class="panel-subtitle">@order.CreatedAt.ToLocalTime().ToString("g")</div>
                             </td>
                             <td>
@@ -95,7 +95,7 @@
                                     {
                                         <div class="panel-subtitle">
                                             @audit.OccurredAtUtc.ToLocalTime().ToString("g") -
-                                            @audit.ActorRole @audit.ActorName: @audit.Action
+                                            @audit.ActorName: @CatalogPresentation.GetAuditActionLabel(audit.Action)
                                         </div>
                                     }
                                 }
@@ -103,7 +103,7 @@
                             <td class="text-end">
                                 <div class="btn-row">
                                     <a class="btn-inline" asp-action="Details" asp-route-id="@order.Id">Detail</a>
-                                    <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@order.Id">Word</a>
+                                    <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout DOC</a>
                                     <form asp-action="MarkChecked" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
                                         <button type="submit" class="btn-inline">Potvrdit kontrolu</button>

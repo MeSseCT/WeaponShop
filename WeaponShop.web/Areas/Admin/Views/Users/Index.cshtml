@@ -1,0 +1,75 @@
+@model IReadOnlyList<WeaponShop.Web.ViewModels.Admin.StaffUserListItemViewModel>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Interní uživatelé</h2>
+            <p class="panel-subtitle">Správa účtů pro administraci, sklad a zbrojířské zpracování.</p>
+        </div>
+        <a class="btn-modern" asp-action="Create">Vytvořit interní účet</a>
+    </div>
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="data-empty">@statusMessage</div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="data-empty">@errorMessage</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="data-empty">Zatím nejsou evidováni žádní interní uživatelé.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Jméno</th>
+                        <th>E-mail</th>
+                        <th>Role</th>
+                        <th>Stav</th>
+                        <th class="text-end">Akce</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>@user.FirstName @user.LastName</td>
+                            <td>@user.Email</td>
+                            <td><span class="badge-cat">@user.Role</span></td>
+                            <td>
+                                <span class="badge-cat">@(user.IsActive ? "Aktivní" : "Deaktivovaný")</span>
+                            </td>
+                            <td class="text-end">
+                                <a class="btn-inline" asp-action="Edit" asp-route-id="@user.Id">Upravit</a>
+
+                                <form asp-action="ToggleActive" method="post" class="inline-form">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn-inline" type="submit" disabled="@(user.IsCurrentAdmin ? "disabled" : null)">
+                                        @(user.IsActive ? "Deaktivovat" : "Aktivovat")
+                                    </button>
+                                </form>
+
+                                @if (!user.IsCurrentAdmin)
+                                {
+                                    <form asp-action="Delete" method="post" class="inline-form" onsubmit="return confirm('Opravdu chcete interní účet smazat?');">
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn-danger-soft" type="submit">Smazat</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

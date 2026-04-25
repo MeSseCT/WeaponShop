@@ -18,4 +18,21 @@ public class ApplicationUserRepository : IApplicationUserRepository
         return await _context.Users
             .SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
     }
+
+    public async Task<List<ApplicationUser>> GetByIdsAsync(IEnumerable<string> userIds, CancellationToken cancellationToken = default)
+    {
+        var ids = userIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (ids.Length == 0)
+        {
+            return [];
+        }
+
+        return await _context.Users
+            .Where(user => ids.Contains(user.Id))
+            .ToListAsync(cancellationToken);
+    }
 }

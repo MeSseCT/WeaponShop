@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Net;
+using System.Text;
 using WeaponShop.Application.Interfaces;
 using WeaponShop.Domain;
 using WeaponShop.Domain.Identity;
@@ -18,6 +21,7 @@ public class OrderService : IOrderService
     private readonly IApplicationUserRepository _applicationUserRepository;
     private readonly INotificationRepository _notificationRepository;
     private readonly IEmailSender _emailSender;
+    private readonly IInvoiceDocumentService _invoiceDocumentService;
 
     public OrderService(
         IOrderRepository orderRepository,
@@ -25,7 +29,8 @@ public class OrderService : IOrderService
         IAccessoryRepository accessoryRepository,
         IApplicationUserRepository applicationUserRepository,
         INotificationRepository notificationRepository,
-        IEmailSender emailSender)
+        IEmailSender emailSender,
+        IInvoiceDocumentService invoiceDocumentService)
     {
         _orderRepository = orderRepository;
         _weaponRepository = weaponRepository;
@@ -33,6 +38,7 @@ public class OrderService : IOrderService
         _applicationUserRepository = applicationUserRepository;
         _notificationRepository = notificationRepository;
         _emailSender = emailSender;
+        _invoiceDocumentService = invoiceDocumentService;
     }
 
     public async Task<Order> CreateOrderAsync(string userId, CancellationToken cancellationToken = default)
@@ -55,24 +61,34 @@ public class OrderService : IOrderService
         return order;
     }
 
-    public Task<Order?> GetByIdAsync(int orderId, CancellationToken cancellationToken = default)
+    public async Task<Order?> GetByIdAsync(int orderId, CancellationToken cancellationToken = default)
     {
-        return _orderRepository.GetByIdAsync(orderId, cancellationToken);
+        var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
+        if (order is not null)
+        {
+            await PopulateAuditActorNamesAsync(order.Audits, cancellationToken);
+        }
+
+        return order;
     }
 
-    public Task<List<OrderAudit>> GetAuditsByActorAsync(string actorUserId, CancellationToken cancellationToken = default)
+    public async Task<List<OrderAudit>> GetAuditsByActorAsync(string actorUserId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(actorUserId))
         {
             throw new ArgumentException("ID uživatele, který provádí akci, je povinné.", nameof(actorUserId));
         }
 
-        return _orderRepository.GetAuditsByActorAsync(actorUserId, cancellationToken);
+        var audits = await _orderRepository.GetAuditsByActorAsync(actorUserId, cancellationToken);
+        await PopulateAuditActorNamesAsync(audits, cancellationToken);
+        return audits;
     }
 
-    public Task<List<Order>> GetAllOrdersAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Order>> GetAllOrdersAsync(CancellationToken cancellationToken = default)
     {
-        return _orderRepository.GetAllAsync(cancellationToken);
+        var orders = await _orderRepository.GetAllAsync(cancellationToken);
+        await PopulateAuditActorNamesAsync(orders.SelectMany(order => order.Audits), cancellationToken);
+        return orders;
     }
 
     public async Task<Order?> GetCurrentOrderAsync(string userId, CancellationToken cancellationToken = default)
@@ -82,7 +98,13 @@ public class OrderService : IOrderService
             throw new ArgumentException("ID uživatele je povinné.", nameof(userId));
         }
 
-        return await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken);
+        var order = await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken);
+        if (order is not null)
+        {
+            await PopulateAuditActorNamesAsync(order.Audits, cancellationToken);
+        }
+
+        return order;
     }
 
     public async Task<List<Order>> GetSubmittedOrdersAsync(string userId, CancellationToken cancellationToken = default)
@@ -93,6 +115,7 @@ public class OrderService : IOrderService
         }
 
         var allUserOrders = await _orderRepository.GetByUserIdAsync(userId, cancellationToken);
+        await PopulateAuditActorNamesAsync(allUserOrders.SelectMany(order => order.Audits), cancellationToken);
         return allUserOrders
             .Where(order => order.Status != OrderStatus.Created)
             .ToList();
@@ -105,26 +128,34 @@ public class OrderService : IOrderService
             throw new ArgumentException("ID uživatele je povinné.", nameof(userId));
         }
 
-        return await _orderRepository.GetByUserIdAsync(userId, cancellationToken);
+        var orders = await _orderRepository.GetByUserIdAsync(userId, cancellationToken);
+        await PopulateAuditActorNamesAsync(orders.SelectMany(order => order.Audits), cancellationToken);
+        return orders;
     }
 
-    public Task<List<Order>> GetAwaitingApprovalOrdersAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Order>> GetAwaitingApprovalOrdersAsync(CancellationToken cancellationToken = default)
     {
-        return _orderRepository.GetAwaitingApprovalAsync(cancellationToken);
+        var orders = await _orderRepository.GetAwaitingApprovalAsync(cancellationToken);
+        await PopulateAuditActorNamesAsync(orders.SelectMany(order => order.Audits), cancellationToken);
+        return orders;
     }
 
-    public Task<List<Order>> GetWarehouseOrdersAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Order>> GetWarehouseOrdersAsync(CancellationToken cancellationToken = default)
     {
-        return _orderRepository.GetByStatusesAsync(
+        var orders = await _orderRepository.GetByStatusesAsync(
             new[] { OrderStatus.Approved, OrderStatus.AwaitingDispatch, OrderStatus.ReadyForPickup },
             cancellationToken);
+        await PopulateAuditActorNamesAsync(orders.SelectMany(order => order.Audits), cancellationToken);
+        return orders;
     }
 
-    public Task<List<Order>> GetGunsmithOrdersAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Order>> GetGunsmithOrdersAsync(CancellationToken cancellationToken = default)
     {
-        return _orderRepository.GetByStatusesAsync(
+        var orders = await _orderRepository.GetByStatusesAsync(
             new[] { OrderStatus.AwaitingGunsmith },
             cancellationToken);
+        await PopulateAuditActorNamesAsync(orders.SelectMany(order => order.Audits), cancellationToken);
+        return orders;
     }
 
     public async Task<Order> AddItemAsync(int orderId, int weaponId, int quantity, CancellationToken cancellationToken = default)
@@ -269,6 +300,7 @@ public class OrderService : IOrderService
         ApplyCheckoutDetails(currentOrder, checkoutDetails, user);
 
         var now = DateTime.UtcNow;
+        currentOrder.OrderNumber ??= GeneratePublicOrderNumber(now);
         await ReserveStockIfNeededAsync(currentOrder, now, cancellationToken);
 
         var fromStatus = currentOrder.Status;
@@ -283,10 +315,12 @@ public class OrderService : IOrderService
             OrderId = currentOrder.Id,
             FromStatus = fromStatus,
             ToStatus = currentOrder.Status,
-            Action = containsRestrictedItems ? "CheckoutSubmitted" : "PublicOrderAutoApproved",
+            Action = containsRestrictedItems
+                ? "Objednávka odeslána ke schválení"
+                : "Veřejná objednávka byla automaticky potvrzena",
             ActorUserId = userId,
             ActorName = $"{user.FirstName} {user.LastName}".Trim(),
-            ActorRole = "Customer",
+            ActorRole = "Zákazník",
             OccurredAtUtc = now,
             Notes = currentOrder.CustomerNote
         }, cancellationToken);
@@ -303,7 +337,7 @@ public class OrderService : IOrderService
         }, cancellationToken);
 
         await _orderRepository.SaveChangesAsync(cancellationToken);
-        await SendCustomerEmailAsync(currentOrder, title, message, cancellationToken);
+        await SendCheckoutEmailsAsync(currentOrder, containsRestrictedItems, now, cancellationToken);
         return currentOrder;
     }
 
@@ -495,6 +529,9 @@ public class OrderService : IOrderService
                 break;
         }
 
+        order.OrderNumber ??= GeneratePublicOrderNumber(now);
+
+        var resolvedActorName = await ResolveActorNameAsync(actorUserId, actorName, cancellationToken);
         var action = ResolveAuditAction(status, actorRole, containsRestrictedItems);
         await _orderRepository.AddAuditAsync(new OrderAudit
         {
@@ -503,7 +540,7 @@ public class OrderService : IOrderService
             ToStatus = order.Status,
             Action = action,
             ActorUserId = actorUserId,
-            ActorName = actorName ?? string.Empty,
+            ActorName = resolvedActorName,
             ActorRole = actorRole ?? string.Empty,
             OccurredAtUtc = now,
             Notes = notes
@@ -531,10 +568,15 @@ public class OrderService : IOrderService
 
         await _orderRepository.SaveChangesAsync(cancellationToken);
 
-        if (order.Status is OrderStatus.Shipped or OrderStatus.ReadyForPickup)
+        if (order.Status is OrderStatus.Approved
+            or OrderStatus.AwaitingGunsmith
+            or OrderStatus.AwaitingDispatch
+            or OrderStatus.Rejected
+            or OrderStatus.Shipped
+            or OrderStatus.ReadyForPickup
+            or OrderStatus.Completed)
         {
-            var (title, message) = BuildCustomerNotification(order, now, null, containsRestrictedItems);
-            await SendCustomerEmailAsync(order, title, message, cancellationToken);
+            await SendStatusEmailsAsync(order, now, notes, containsRestrictedItems, cancellationToken);
         }
 
         return order;
@@ -669,29 +711,96 @@ public class OrderService : IOrderService
     {
         return status switch
         {
-            OrderStatus.Approved => containsRestrictedItems ? "AdminApproved" : "PublicOrderConfirmed",
+            OrderStatus.Approved => containsRestrictedItems
+                ? "Administrátor schválil objednávku"
+                : "Veřejná objednávka byla potvrzena",
             OrderStatus.Rejected => actorRole switch
             {
-                "Skladnik" => "WarehouseRejected",
-                "Zbrojir" => "GunsmithRejected",
-                _ => "AdminRejected"
+                "Skladník" => "Sklad zamítl objednávku",
+                "Zbrojíř" => "Zbrojíř zamítl objednávku",
+                _ => "Administrátor zamítl objednávku"
             },
-            OrderStatus.AwaitingGunsmith => "WarehouseChecked",
-            OrderStatus.AwaitingDispatch => "GunsmithChecked",
-            OrderStatus.Shipped => "OrderShipped",
-            OrderStatus.ReadyForPickup => "ReadyForPickup",
-            OrderStatus.Completed => "PickupHandedOver",
-            _ => $"StatusChanged:{status}"
+            OrderStatus.AwaitingGunsmith => "Sklad předal objednávku zbrojíři",
+            OrderStatus.AwaitingDispatch => "Zbrojíř vrátil objednávku na sklad",
+            OrderStatus.Shipped => "Objednávka byla odeslána",
+            OrderStatus.ReadyForPickup => "Objednávka je připravena k vyzvednutí",
+            OrderStatus.Completed => "Objednávka byla předána zákazníkovi",
+            _ => $"Změna stavu: {status}"
         };
+    }
+
+    private async Task PopulateAuditActorNamesAsync(IEnumerable<OrderAudit> audits, CancellationToken cancellationToken)
+    {
+        var auditList = audits
+            .Where(audit => !string.IsNullOrWhiteSpace(audit.ActorUserId))
+            .ToList();
+
+        if (auditList.Count == 0)
+        {
+            return;
+        }
+
+        var users = await _applicationUserRepository.GetByIdsAsync(
+            auditList.Select(audit => audit.ActorUserId),
+            cancellationToken);
+
+        var displayNamesByUserId = users.ToDictionary(
+            user => user.Id,
+            GetUserDisplayName,
+            StringComparer.Ordinal);
+
+        foreach (var audit in auditList)
+        {
+            if (displayNamesByUserId.TryGetValue(audit.ActorUserId, out var displayName)
+                && !string.IsNullOrWhiteSpace(displayName))
+            {
+                audit.ActorName = displayName;
+            }
+        }
+    }
+
+    private async Task<string> ResolveActorNameAsync(
+        string actorUserId,
+        string? fallbackActorName,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(actorUserId))
+        {
+            var user = await _applicationUserRepository.GetByIdAsync(actorUserId, cancellationToken);
+            var displayName = GetUserDisplayName(user);
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                return displayName;
+            }
+        }
+
+        return fallbackActorName?.Trim() ?? string.Empty;
+    }
+
+    private static string GetUserDisplayName(ApplicationUser? user)
+    {
+        if (user is null)
+        {
+            return string.Empty;
+        }
+
+        return $"{user.FirstName} {user.LastName}".Trim();
+    }
+
+    private static string GeneratePublicOrderNumber(DateTime now)
+    {
+        return $"WS-{now:yyyyMMdd}-{Guid.NewGuid():N}"[..20].ToUpperInvariant();
     }
 
     private static (string Title, string Message) BuildCheckoutNotification(Order order, bool containsRestrictedItems, DateTime now)
     {
+        var localTime = now.ToLocalTime();
+        var orderNumber = order.GetPublicOrderNumber();
         return containsRestrictedItems
-            ? ($"Objednávka č. {order.Id} čeká na schválení",
-                $"Objednávka č. {order.Id} byla přijata dne {now:yyyy-MM-dd HH:mm} UTC a čeká na ověření kontrolovaného zboží.")
-            : ($"Objednávka č. {order.Id} byla přijata",
-                $"Objednávka č. {order.Id} byla přijata dne {now:yyyy-MM-dd HH:mm} UTC a předána skladu k vyřízení.");
+            ? ($"Objednávka č. {orderNumber} čeká na schválení",
+                $"Objednávka č. {orderNumber} byla přijata dne {localTime:dd. MM. yyyy HH:mm} a čeká na ověření kontrolovaného zboží.")
+            : ($"Objednávka č. {orderNumber} byla přijata",
+                $"Objednávka č. {orderNumber} byla přijata dne {localTime:dd. MM. yyyy HH:mm} a předána skladu k vyřízení.");
     }
 
     private static (string Title, string Message) BuildCustomerNotification(
@@ -700,33 +809,174 @@ public class OrderService : IOrderService
         string? notes,
         bool containsRestrictedItems)
     {
+        var localTime = now.ToLocalTime();
         var reason = string.IsNullOrWhiteSpace(notes) ? "" : $" Důvod: {notes}";
+        var orderNumber = order.GetPublicOrderNumber();
         return order.Status switch
         {
-            OrderStatus.Approved when containsRestrictedItems => ($"Objednávka č. {order.Id} byla schválena",
-                $"Administrátor potvrdil doklady a objednávka č. {order.Id} byla předána skladu ({now:yyyy-MM-dd HH:mm} UTC)."),
-            OrderStatus.Approved => ($"Objednávka č. {order.Id} byla potvrzena",
-                $"Sklad může zahájit zpracování objednávky č. {order.Id} ({now:yyyy-MM-dd HH:mm} UTC)."),
-            OrderStatus.AwaitingGunsmith => ($"Objednávka č. {order.Id} míří ke zbrojíři",
-                $"Sklad potvrdil kontrolu zásob. Objednávka č. {order.Id} byla předána zbrojíři ({now:yyyy-MM-dd HH:mm} UTC)."),
-            OrderStatus.AwaitingDispatch => ($"Objednávka č. {order.Id} se vrací na sklad",
-                $"Zbrojíř dokončil kontrolu. Objednávka č. {order.Id} byla vrácena zpět skladu ({now:yyyy-MM-dd HH:mm} UTC)."),
-            OrderStatus.Rejected => ($"Objednávka č. {order.Id} byla zamítnuta",
-                $"Objednávka č. {order.Id} byla zamítnuta ({now:yyyy-MM-dd HH:mm} UTC).{reason}"),
-            OrderStatus.Shipped => ($"Objednávka č. {order.Id} byla odeslána",
-                $"Vaše objednávka č. {order.Id} byla odeslána dne {now:yyyy-MM-dd HH:mm} UTC."),
-            OrderStatus.ReadyForPickup => ($"Objednávka č. {order.Id} je připravena k vyzvednutí",
-                $"Vaše objednávka č. {order.Id} je připravena k vyzvednutí od {now:yyyy-MM-dd HH:mm} UTC."),
-            OrderStatus.Completed => ($"Objednávka č. {order.Id} byla převzata",
-                $"Osobní odběr byl potvrzen dne {now:yyyy-MM-dd HH:mm} UTC."),
-            _ => ("Objednávka byla aktualizována", $"Vaše objednávka č. {order.Id} byla aktualizována.")
+            OrderStatus.Approved when containsRestrictedItems => ($"Objednávka č. {orderNumber} byla schválena",
+                $"Administrátor potvrdil doklady a objednávka č. {orderNumber} byla předána skladu ({localTime:dd. MM. yyyy HH:mm})."),
+            OrderStatus.Approved => ($"Objednávka č. {orderNumber} byla potvrzena",
+                $"Sklad může zahájit zpracování objednávky č. {orderNumber} ({localTime:dd. MM. yyyy HH:mm})."),
+            OrderStatus.AwaitingGunsmith => ($"Objednávka č. {orderNumber} míří ke zbrojíři",
+                $"Sklad potvrdil kontrolu zásob. Objednávka č. {orderNumber} byla předána zbrojíři ({localTime:dd. MM. yyyy HH:mm})."),
+            OrderStatus.AwaitingDispatch => ($"Objednávka č. {orderNumber} se vrací na sklad",
+                $"Zbrojíř dokončil kontrolu. Objednávka č. {orderNumber} byla vrácena zpět skladu ({localTime:dd. MM. yyyy HH:mm})."),
+            OrderStatus.Rejected when IsDocumentCompletionRequest(notes) => ($"Je potřeba doplnit doklady k objednávce č. {orderNumber}",
+                $"Objednávku č. {orderNumber} nelze zatím dokončit. Doplňte prosím požadované doklady a odešlete je znovu.{reason}"),
+            OrderStatus.Rejected => ($"Objednávka č. {orderNumber} byla zamítnuta",
+                $"Objednávka č. {orderNumber} byla zamítnuta ({localTime:dd. MM. yyyy HH:mm}).{reason}"),
+            OrderStatus.Shipped => ($"Objednávka č. {orderNumber} byla odeslána",
+                $"Vaše objednávka č. {orderNumber} byla odeslána dne {localTime:dd. MM. yyyy HH:mm}."),
+            OrderStatus.ReadyForPickup => ($"Objednávka č. {orderNumber} je připravena k vyzvednutí",
+                $"Vaše objednávka č. {orderNumber} je připravena k vyzvednutí od {localTime:dd. MM. yyyy HH:mm}."),
+            OrderStatus.Completed => ($"Objednávka č. {orderNumber} byla převzata",
+                $"Osobní odběr byl potvrzen dne {localTime:dd. MM. yyyy HH:mm}."),
+            _ => ("Objednávka byla aktualizována", $"Vaše objednávka č. {orderNumber} byla aktualizována.")
         };
+    }
+
+    private async Task SendCheckoutEmailsAsync(
+        Order order,
+        bool containsRestrictedItems,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var (confirmationTitle, confirmationMessage) = BuildOrderReceivedEmail(order, now);
+        await SendCustomerEmailAsync(
+            order,
+            confirmationTitle,
+            confirmationMessage,
+            attachInvoice: false,
+            cancellationToken: cancellationToken);
+
+        if (!containsRestrictedItems)
+        {
+            return;
+        }
+
+        var (verificationTitle, verificationMessage) = BuildAwaitingVerificationEmail(order, now);
+        await SendCustomerEmailAsync(
+            order,
+            verificationTitle,
+            verificationMessage,
+            attachInvoice: false,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task SendStatusEmailsAsync(
+        Order order,
+        DateTime now,
+        string? notes,
+        bool containsRestrictedItems,
+        CancellationToken cancellationToken)
+    {
+        var statusEmail = BuildStatusEmail(order, now, notes, containsRestrictedItems);
+        if (statusEmail.HasValue)
+        {
+            await SendCustomerEmailAsync(
+                order,
+                statusEmail.Value.Title,
+                statusEmail.Value.Message,
+                attachInvoice: false,
+                cancellationToken: cancellationToken);
+        }
+
+        var invoiceEmail = BuildInvoiceEmail(order, now);
+        if (invoiceEmail.HasValue)
+        {
+            await SendCustomerEmailAsync(
+                order,
+                invoiceEmail.Value.Title,
+                invoiceEmail.Value.Message,
+                attachInvoice: true,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    private static (string Title, string Message) BuildOrderReceivedEmail(Order order, DateTime now)
+    {
+        var localTime = now.ToLocalTime();
+        var orderNumber = order.GetPublicOrderNumber();
+        return ($"Potvrzení přijetí objednávky č. {orderNumber}",
+            $"Potvrzujeme přijetí objednávky č. {orderNumber} ze dne {localTime:dd. MM. yyyy HH:mm}. Rekapitulaci objednávky najdete níže v tomto e-mailu.");
+    }
+
+    private static (string Title, string Message) BuildAwaitingVerificationEmail(Order order, DateTime now)
+    {
+        var localTime = now.ToLocalTime();
+        var orderNumber = order.GetPublicOrderNumber();
+        return ($"Objednávka č. {orderNumber} čeká na ověření",
+            $"Objednávka č. {orderNumber} obsahuje regulované zboží a od {localTime:dd. MM. yyyy HH:mm} čeká na kontrolu věku, dokladů a schválení objednávky.");
+    }
+
+    private static (string Title, string Message)? BuildStatusEmail(
+        Order order,
+        DateTime now,
+        string? notes,
+        bool containsRestrictedItems)
+    {
+        var localTime = now.ToLocalTime();
+        var reason = string.IsNullOrWhiteSpace(notes) ? string.Empty : $" Důvod: {notes}";
+        var orderNumber = order.GetPublicOrderNumber();
+
+        return order.Status switch
+        {
+            OrderStatus.Approved => ($"Objednávka č. {orderNumber} byla schválena",
+                containsRestrictedItems
+                    ? $"Objednávka č. {orderNumber} byla dne {localTime:dd. MM. yyyy HH:mm} schválena po kontrole zákaznického profilu a dokladů."
+                    : $"Objednávka č. {orderNumber} byla dne {localTime:dd. MM. yyyy HH:mm} schválena a předána k dalšímu zpracování."),
+            OrderStatus.Rejected when IsDocumentCompletionRequest(notes) => ($"Je potřeba doplnit doklady k objednávce č. {orderNumber}",
+                $"Objednávku č. {orderNumber} zatím nelze schválit. Doplňte prosím požadované doklady v zákaznickém účtu a objednávku následně znovu odešlete.{reason}"),
+            OrderStatus.Rejected => ($"Objednávka č. {orderNumber} byla zamítnuta",
+                $"Objednávka č. {orderNumber} byla dne {localTime:dd. MM. yyyy HH:mm} zamítnuta.{reason}"),
+            OrderStatus.ReadyForPickup => ($"Objednávka č. {orderNumber} je připravena k odběru",
+                $"Objednávka č. {orderNumber} je od {localTime:dd. MM. yyyy HH:mm} připravena k osobnímu odběru. Přineste si prosím potřebné doklady a číslo objednávky."),
+            OrderStatus.Shipped => ($"Objednávka č. {orderNumber} byla expedována",
+                $"Objednávka č. {orderNumber} byla dne {localTime:dd. MM. yyyy HH:mm} předána k doručení na uvedenou adresu."),
+            _ => null
+        };
+    }
+
+    private static (string Title, string Message)? BuildInvoiceEmail(Order order, DateTime now)
+    {
+        var localTime = now.ToLocalTime();
+        var orderNumber = order.GetPublicOrderNumber();
+
+        return order.Status switch
+        {
+            OrderStatus.ReadyForPickup => ($"Faktura k objednávce č. {orderNumber}",
+                $"K objednávce č. {orderNumber}, která je od {localTime:dd. MM. yyyy HH:mm} připravena k odběru, přikládáme fakturu v PDF."),
+            OrderStatus.Shipped => ($"Faktura k objednávce č. {orderNumber}",
+                $"K objednávce č. {orderNumber}, která byla dne {localTime:dd. MM. yyyy HH:mm} expedována, přikládáme fakturu v PDF."),
+            _ => null
+        };
+    }
+
+    private static bool IsDocumentCompletionRequest(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return false;
+        }
+
+        var normalized = notes.ToLowerInvariant();
+        return normalized.Contains("doklad")
+            || normalized.Contains("občansk")
+            || normalized.Contains("obciansk")
+            || normalized.Contains("povolen")
+            || normalized.Contains("ověřen")
+            || normalized.Contains("overen")
+            || normalized.Contains("věk")
+            || normalized.Contains("vek")
+            || normalized.Contains("identit");
     }
 
     private async Task SendCustomerEmailAsync(
         Order order,
         string title,
         string message,
+        bool attachInvoice,
         CancellationToken cancellationToken)
     {
         var email = !string.IsNullOrWhiteSpace(order.ContactEmail)
@@ -738,7 +988,126 @@ public class OrderService : IOrderService
             return;
         }
 
-        await _emailSender.SendAsync(email, title, message, cancellationToken);
+        var invoice = attachInvoice ? _invoiceDocumentService.BuildInvoice(order) : null;
+        var body = BuildCustomerEmailBody(order, title, message, invoice?.InvoiceNumber);
+        var attachments = invoice is null
+            ? null
+            : new[]
+            {
+                new EmailAttachment
+                {
+                    FileName = invoice.PdfFileName,
+                    ContentType = "application/pdf",
+                    Content = invoice.PdfContent
+                }
+            };
+
+        await _emailSender.SendAsync(
+            email,
+            title,
+            body,
+            isHtml: true,
+            attachments: attachments,
+            cancellationToken: cancellationToken);
+    }
+
+    private static string BuildCustomerEmailBody(Order order, string title, string message, string? invoiceNumber)
+    {
+        var culture = new CultureInfo("cs-CZ");
+        var orderNumber = WebUtility.HtmlEncode(order.GetPublicOrderNumber());
+        var createdAt = WebUtility.HtmlEncode(order.CreatedAt.ToLocalTime().ToString("d. M. yyyy HH:mm", culture));
+        var totalPrice = WebUtility.HtmlEncode(order.TotalPrice.ToString("C", culture));
+        var encodedTitle = WebUtility.HtmlEncode(title);
+        var encodedMessage = WebUtility.HtmlEncode(message);
+        var shippingName = WebUtility.HtmlEncode(order.ShippingName);
+        var shippingStreet = WebUtility.HtmlEncode(order.ShippingStreet);
+        var shippingCity = WebUtility.HtmlEncode($"{order.ShippingPostalCode} {order.ShippingCity}".Trim());
+        var billingName = WebUtility.HtmlEncode(order.BillingName);
+        var billingStreet = WebUtility.HtmlEncode(order.BillingStreet);
+        var billingCity = WebUtility.HtmlEncode($"{order.BillingPostalCode} {order.BillingCity}".Trim());
+
+        var invoiceBlock = string.IsNullOrWhiteSpace(invoiceNumber)
+            ? string.Empty
+            : $$"""
+            <div style="border:1px solid #d6c4a1;background:#fff8e8;padding:16px 18px;border-radius:12px;margin-bottom:24px;">
+                <strong style="display:block;margin-bottom:6px;">Faktura byla vygenerována.</strong>
+                <span style="font-size:14px;color:#5c4b27;">K objednávce je přiložen elektronický doklad {{WebUtility.HtmlEncode(invoiceNumber)}}.</span>
+            </div>
+""";
+
+        var rows = string.Join(
+            string.Empty,
+            order.Items.Select(item =>
+                $$"""
+                    <tr>
+                        <td style="padding:12px;border-bottom:1px solid #ece6d8;">{{WebUtility.HtmlEncode(item.GetDisplayName())}}</td>
+                        <td style="padding:12px;border-bottom:1px solid #ece6d8;text-align:right;">{{item.Quantity.ToString(culture)}}</td>
+                        <td style="padding:12px;border-bottom:1px solid #ece6d8;text-align:right;">{{WebUtility.HtmlEncode((item.UnitPrice * item.Quantity).ToString("C", culture))}}</td>
+                    </tr>
+"""));
+
+        return $$"""
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <title>Stav objednávky</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f1ea;font-family:Arial,Helvetica,sans-serif;color:#182230;">
+    <div style="max-width:760px;margin:0 auto;padding:24px 16px;">
+        <div style="background:#182230;color:#ffffff;padding:24px 28px;border-radius:18px 18px 0 0;">
+            <div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:#d6c4a1;">Zbrojnice</div>
+            <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;">{{encodedTitle}}</h1>
+        </div>
+        <div style="background:#ffffff;padding:28px;border:1px solid #e5dfd2;border-top:none;border-radius:0 0 18px 18px;">
+            <p style="margin:0 0 18px;font-size:15px;line-height:1.7;">{{encodedMessage}}</p>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 24px;">
+                <div style="border:1px solid #e5dfd2;background:#fcfbf8;padding:14px 16px;border-radius:12px;">
+                    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6f39;margin-bottom:6px;">Objednávka</div>
+                    <strong style="font-size:18px;">{{orderNumber}}</strong>
+                </div>
+                <div style="border:1px solid #e5dfd2;background:#fcfbf8;padding:14px 16px;border-radius:12px;">
+                    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6f39;margin-bottom:6px;">Vytvořeno</div>
+                    <strong style="font-size:18px;">{{createdAt}}</strong>
+                </div>
+                <div style="border:1px solid #e5dfd2;background:#fcfbf8;padding:14px 16px;border-radius:12px;">
+                    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6f39;margin-bottom:6px;">Celkem</div>
+                    <strong style="font-size:18px;">{{totalPrice}}</strong>
+                </div>
+            </div>
+            {{invoiceBlock}}
+            <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+                <thead>
+                    <tr>
+                        <th style="background:#182230;color:#ffffff;padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;">Položka</th>
+                        <th style="background:#182230;color:#ffffff;padding:12px;text-align:right;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;">Množství</th>
+                        <th style="background:#182230;color:#ffffff;padding:12px;text-align:right;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;">Cena</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{rows}}
+                </tbody>
+            </table>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div style="border:1px solid #e5dfd2;background:#fcfbf8;padding:16px;border-radius:12px;">
+                    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6f39;margin-bottom:8px;">Dodací údaje</div>
+                    <div>{{shippingName}}</div>
+                    <div>{{shippingStreet}}</div>
+                    <div>{{shippingCity}}</div>
+                </div>
+                <div style="border:1px solid #e5dfd2;background:#fcfbf8;padding:16px;border-radius:12px;">
+                    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6f39;margin-bottom:8px;">Fakturační údaje</div>
+                    <div>{{billingName}}</div>
+                    <div>{{billingStreet}}</div>
+                    <div>{{billingCity}}</div>
+                </div>
+            </div>
+            <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#6b7280;">Tento e-mail byl odeslán automaticky z aplikace Zbrojnice.</p>
+        </div>
+    </div>
+</body>
+</html>
+""";
     }
 
     private async Task ReserveStockIfNeededAsync(Order order, DateTime now, CancellationToken cancellationToken)
@@ -895,7 +1264,7 @@ public class OrderService : IOrderService
 
         if (!hasRequiredDocument)
         {
-            throw new InvalidOperationException("Před přidáním zbraní do košíku nahrajte občanský nebo řidičský průkaz.");
+            throw new InvalidOperationException("Před přidáním zbraní do košíku nahrajte občanský průkaz nebo nákupní povolení.");
         }
     }
 
@@ -981,7 +1350,7 @@ public class OrderService : IOrderService
         order.BillingStreet = checkoutDetails.BillingStreet.Trim();
         order.BillingCity = checkoutDetails.BillingCity.Trim();
         order.BillingPostalCode = checkoutDetails.BillingPostalCode.Trim();
-        order.CustomerNote = checkoutDetails.CustomerNote.Trim();
+        order.CustomerNote = checkoutDetails.CustomerNote?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(order.ContactEmail))
         {

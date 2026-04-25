@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using WeaponShop.Application.Interfaces;
 using WeaponShop.Domain;
 using WeaponShop.Application.Services;
 using WeaponShop.Web.Helpers;
@@ -12,10 +13,12 @@ namespace WeaponShop.Web.Areas.Warehouse.Controllers;
 public class OrdersController : Controller
 {
     private readonly IOrderService _orderService;
+    private readonly IInvoiceDocumentService _invoiceDocumentService;
 
-    public OrdersController(IOrderService orderService)
+    public OrdersController(IOrderService orderService, IInvoiceDocumentService invoiceDocumentService)
     {
         _orderService = orderService;
+        _invoiceDocumentService = invoiceDocumentService;
     }
 
     [HttpGet]
@@ -64,6 +67,32 @@ public class OrdersController : Controller
 
         var bytes = OrderWordExport.BuildOrderDocument(order);
         return File(bytes, "application/msword", $"order-{id}.doc");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ViewInvoice(int id, CancellationToken cancellationToken)
+    {
+        var order = await _orderService.GetByIdAsync(id, cancellationToken);
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        var invoice = _invoiceDocumentService.BuildInvoice(order);
+        return Content(invoice.HtmlContent, "text/html; charset=utf-8");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DownloadInvoice(int id, CancellationToken cancellationToken)
+    {
+        var order = await _orderService.GetByIdAsync(id, cancellationToken);
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        var invoice = _invoiceDocumentService.BuildInvoice(order);
+        return File(invoice.PdfContent, "application/pdf", invoice.PdfFileName);
     }
 
     [ValidateAntiForgeryToken]
@@ -180,7 +209,7 @@ public class OrdersController : Controller
     {
         userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         actorName = User.Identity?.Name ?? "neznámý uživatel";
-        actorRole = User.IsInRole("Skladnik") ? "Skladnik" : "Unknown";
+        actorRole = User.IsInRole("Skladnik") ? "Skladník" : "Neznámá role";
         return !string.IsNullOrWhiteSpace(userId);
     }
 }

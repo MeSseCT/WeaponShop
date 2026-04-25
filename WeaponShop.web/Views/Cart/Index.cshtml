@@ -239,7 +239,7 @@
                     @foreach (var order in Model.SubmittedOrders)
                     {
                         <tr>
-                            <td>#@order.Id</td>
+                            <td>@order.GetPublicOrderNumber()</td>
                             <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
                             <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
                             <td>@(order.DeliveryMethod == "shipping" ? "Doručení" : "Osobní odběr")</td>

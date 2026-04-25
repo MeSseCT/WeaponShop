@@ -4,7 +4,7 @@
     <div class="panel-head">
         <div>
             <h2>Profil</h2>
-            <p class="panel-subtitle">Doplňte datum narození tak, aby odpovídalo občanskému nebo řidičskému průkazu.</p>
+            <p class="panel-subtitle">Doplňte datum narození tak, aby odpovídalo občanskému průkazu nebo nákupnímu povolení.</p>
         </div>
     </div>
 
@@ -28,13 +28,13 @@
     <div class="panel-head">
         <div>
             <h2>Ověřovací doklady</h2>
-            <p class="panel-subtitle">Nahrajte občanský nebo řidičský průkaz pro ruční kontrolu administrátorem.</p>
+            <p class="panel-subtitle">Nahrajte občanský průkaz nebo nákupní povolení pro ruční kontrolu administrátorem.</p>
         </div>
     </div>
 
     <div class="panel" style="margin-bottom: 1rem;">
         <p class="panel-subtitle">Občanský průkaz nahrán: @(Model.HasIdCard ? "Ano" : "Ne")</p>
-        <p class="panel-subtitle">Řidičský průkaz nahrán: @(Model.HasDriverLicense ? "Ano" : "Ne")</p>
+        <p class="panel-subtitle">Nákupní povolení nahráno: @(Model.HasDriverLicense ? "Ano" : "Ne")</p>
         @if (Model.DocumentsUpdatedAt.HasValue)
         {
             <p class="panel-subtitle">Poslední aktualizace: @Model.DocumentsUpdatedAt.Value.ToLocalTime().ToString("g")</p>
@@ -52,7 +52,7 @@
         </div>
 
         <div class="mb-4">
-            <label asp-for="DriverLicenseFile" class="field-label">Řidičský průkaz (PDF/JPG/PNG, max. 5 MB)</label>
+            <label asp-for="DriverLicenseFile" class="field-label">Nákupní povolení (PDF/JPG/PNG, max. 5 MB)</label>
             <input asp-for="DriverLicenseFile" type="file" class="form-control" />
             <span asp-validation-for="DriverLicenseFile" class="text-danger"></span>
         </div>

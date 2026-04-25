@@ -34,132 +34,171 @@ public class WeaponsController : Controller
         string? sort,
         CancellationToken cancellationToken)
     {
-        var user = User.Identity?.IsAuthenticated == true
-            ? await _userManager.GetUserAsync(User)
-            : null;
-
-        var isAdultConfirmed = user?.DateOfBirth is { } dateOfBirth && IsAdult(dateOfBirth);
-        var hasVerificationDocuments = user is not null && HasRequiredDocuments(user);
-        var canViewRestrictedCatalog = CanViewRestrictedCatalog(user);
-
-        var allAccessoryProducts = (await _accessoryService.GetAllAsync(cancellationToken))
-            .Select(MapAccessory)
-            .ToList();
-        var allRestrictedProducts = (await _weaponService.GetAllAsync(cancellationToken)).Select(MapWeapon).ToList();
-
-        var accessoryProducts = ApplyAccessoryFilters(
-                allAccessoryProducts,
-                accessoryCategory,
-                manufacturer,
-                search,
-                sort)
-            .ToList();
-
-        var restrictedProducts = ApplyRestrictedFilters(
-                allRestrictedProducts,
-                legalCategory,
-                manufacturer,
-                search,
-                sort)
-            .ToList();
-
-        var model = new StoreCatalogViewModel
+        try
         {
-            Search = search?.Trim() ?? string.Empty,
-            AccessFilter = string.IsNullOrWhiteSpace(access) ? "all" : access.Trim().ToLowerInvariant(),
-            AccessoryCategoryFilter = accessoryCategory?.Trim() ?? string.Empty,
-            LegalCategoryFilter = legalCategory?.Trim().ToUpperInvariant() ?? string.Empty,
-            ManufacturerFilter = manufacturer?.Trim() ?? string.Empty,
-            SortBy = string.IsNullOrWhiteSpace(sort) ? "featured" : sort.Trim().ToLowerInvariant(),
-            IsAuthenticated = User.Identity?.IsAuthenticated == true,
-            IsAdultConfirmed = isAdultConfirmed,
-            HasVerificationDocuments = hasVerificationDocuments,
-            CanViewRestrictedCatalog = canViewRestrictedCatalog,
-            Manufacturers = allAccessoryProducts
-                .Concat(allRestrictedProducts)
-                .Select(product => product.Manufacturer)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(name => name)
-                .ToList(),
-            AccessoryCategories = allAccessoryProducts
-                .Select(product => product.Category)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(CatalogPresentation.GetAccessoryCategorySortKey)
-                .ThenBy(CatalogPresentation.GetAccessoryCategoryLabel)
-                .ToList(),
-            LegalCategories = allRestrictedProducts
-                .Select(product => product.Category)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(CatalogPresentation.GetWeaponCategorySortKey)
-                .ToList(),
-            AccessoryProducts = accessoryProducts,
-            RestrictedProducts = restrictedProducts,
-            RestrictedPreviewProducts = restrictedProducts.Take(3).ToList()
-        };
+            var user = User.Identity?.IsAuthenticated == true
+                ? await _userManager.GetUserAsync(User)
+                : null;
 
-        return View(model);
+            var isAdultConfirmed = user?.DateOfBirth is { } dateOfBirth && IsAdult(dateOfBirth);
+            var hasVerificationDocuments = user is not null && HasRequiredDocuments(user);
+            var canViewRestrictedCatalog = CanViewRestrictedCatalog(user);
+
+            var allAccessoryProducts = (await _accessoryService.GetAllAsync(cancellationToken))
+                .Select(MapAccessory)
+                .ToList();
+            var allRestrictedProducts = (await _weaponService.GetAllAsync(cancellationToken)).Select(MapWeapon).ToList();
+
+            var accessoryProducts = ApplyAccessoryFilters(
+                    allAccessoryProducts,
+                    accessoryCategory,
+                    manufacturer,
+                    search,
+                    sort)
+                .ToList();
+
+            var restrictedProducts = ApplyRestrictedFilters(
+                    allRestrictedProducts,
+                    legalCategory,
+                    manufacturer,
+                    search,
+                    sort)
+                .ToList();
+
+            var model = new StoreCatalogViewModel
+            {
+                Search = search?.Trim() ?? string.Empty,
+                AccessFilter = string.IsNullOrWhiteSpace(access) ? "all" : access.Trim().ToLowerInvariant(),
+                AccessoryCategoryFilter = accessoryCategory?.Trim() ?? string.Empty,
+                LegalCategoryFilter = legalCategory?.Trim().ToUpperInvariant() ?? string.Empty,
+                ManufacturerFilter = manufacturer?.Trim() ?? string.Empty,
+                SortBy = string.IsNullOrWhiteSpace(sort) ? "featured" : sort.Trim().ToLowerInvariant(),
+                IsAuthenticated = User.Identity?.IsAuthenticated == true,
+                IsAdultConfirmed = isAdultConfirmed,
+                HasVerificationDocuments = hasVerificationDocuments,
+                CanViewRestrictedCatalog = canViewRestrictedCatalog,
+                Manufacturers = allAccessoryProducts
+                    .Concat(allRestrictedProducts)
+                    .Select(product => product.Manufacturer)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(name => name)
+                    .ToList(),
+                AccessoryCategories = allAccessoryProducts
+                    .Select(product => product.Category)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(CatalogPresentation.GetAccessoryCategorySortKey)
+                    .ThenBy(CatalogPresentation.GetAccessoryCategoryLabel)
+                    .ToList(),
+                LegalCategories = allRestrictedProducts
+                    .Select(product => product.Category)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(CatalogPresentation.GetWeaponCategorySortKey)
+                    .ToList(),
+                AccessoryProducts = accessoryProducts,
+                RestrictedProducts = restrictedProducts,
+                RestrictedPreviewProducts = restrictedProducts.Take(3).ToList()
+            };
+
+            return View(model);
+        }
+        catch (Exception)
+        {
+            TempData["ErrorMessage"] = "Katalog se teď nepodařilo načíst.";
+            return View(new StoreCatalogViewModel
+            {
+                Search = search?.Trim() ?? string.Empty,
+                AccessFilter = string.IsNullOrWhiteSpace(access) ? "all" : access.Trim().ToLowerInvariant(),
+                AccessoryCategoryFilter = accessoryCategory?.Trim() ?? string.Empty,
+                LegalCategoryFilter = legalCategory?.Trim().ToUpperInvariant() ?? string.Empty,
+                ManufacturerFilter = manufacturer?.Trim() ?? string.Empty,
+                SortBy = string.IsNullOrWhiteSpace(sort) ? "featured" : sort.Trim().ToLowerInvariant(),
+                IsAuthenticated = User.Identity?.IsAuthenticated == true
+            });
+        }
     }
 
     [HttpGet]
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
-        var weapon = await _weaponService.GetByIdAsync(id, cancellationToken);
-        if (weapon is null)
+        try
         {
-            return NotFound();
+            var weapon = await _weaponService.GetByIdAsync(id, cancellationToken);
+            if (weapon is null)
+            {
+                return NotFound();
+            }
+
+            var user = User.Identity?.IsAuthenticated == true
+                ? await _userManager.GetUserAsync(User)
+                : null;
+
+            if (!CanViewRestrictedCatalog(user))
+            {
+                TempData["ErrorMessage"] = "Kategorie zbraní se odemkne až po přihlášení, potvrzení věku 18+ a nahrání dokladů.";
+                return RedirectToAction(nameof(Index), new { access = "restricted" });
+            }
+
+            var relatedProducts = (await _weaponService.GetAllAsync(cancellationToken))
+                .Where(candidate => candidate.Id != weapon.Id && candidate.Category == weapon.Category)
+                .Take(3)
+                .Select(MapWeapon)
+                .ToList();
+
+            var imagePaths = ResolveWeaponImagePaths(weapon);
+
+            var model = new WeaponDetailsViewModel
+            {
+                Weapon = weapon,
+                ImagePaths = imagePaths,
+                ImagePath = imagePaths.First(),
+                CanAddToCart = User.IsInRole("Customer") && weapon.IsAvailable && weapon.StockQuantity > 0,
+                CanViewRestrictedCatalog = true,
+                RelatedProducts = relatedProducts
+            };
+
+            return View(model);
         }
-
-        var user = User.Identity?.IsAuthenticated == true
-            ? await _userManager.GetUserAsync(User)
-            : null;
-
-        if (!CanViewRestrictedCatalog(user))
+        catch (Exception)
         {
-            TempData["ErrorMessage"] = "Kategorie zbraní se odemkne až po přihlášení, potvrzení věku 18+ a nahrání dokladů.";
+            TempData["ErrorMessage"] = "Detail zbraně se teď nepodařilo načíst.";
             return RedirectToAction(nameof(Index), new { access = "restricted" });
         }
-
-        var relatedProducts = (await _weaponService.GetAllAsync(cancellationToken))
-            .Where(candidate => candidate.Id != weapon.Id && candidate.Category == weapon.Category)
-            .Take(3)
-            .Select(MapWeapon)
-            .ToList();
-
-        var model = new WeaponDetailsViewModel
-        {
-            Weapon = weapon,
-            ImagePath = ResolveWeaponImagePath(weapon),
-            CanAddToCart = User.IsInRole("Customer") && weapon.IsAvailable && weapon.StockQuantity > 0,
-            CanViewRestrictedCatalog = true,
-            RelatedProducts = relatedProducts
-        };
-
-        return View(model);
     }
 
     [HttpGet]
     public async Task<IActionResult> AccessoryDetails(int id, CancellationToken cancellationToken)
     {
-        var accessory = await _accessoryService.GetByIdAsync(id, cancellationToken);
-        if (accessory is null)
+        try
         {
-            return NotFound();
+            var accessory = await _accessoryService.GetByIdAsync(id, cancellationToken);
+            if (accessory is null)
+            {
+                return NotFound();
+            }
+
+            var relatedProducts = (await _accessoryService.GetAllAsync(cancellationToken))
+                .Where(candidate => candidate.Id != accessory.Id && candidate.Category == accessory.Category)
+                .Take(3)
+                .Select(MapAccessory)
+                .ToList();
+
+            var imagePaths = ResolveAccessoryImagePaths(accessory);
+
+            var model = new AccessoryDetailsViewModel
+            {
+                Accessory = accessory,
+                ImagePaths = imagePaths,
+                ImagePath = imagePaths.First(),
+                RelatedProducts = relatedProducts
+            };
+
+            return View(model);
         }
-
-        var relatedProducts = (await _accessoryService.GetAllAsync(cancellationToken))
-            .Where(candidate => candidate.Id != accessory.Id && candidate.Category == accessory.Category)
-            .Take(3)
-            .Select(MapAccessory)
-            .ToList();
-
-        var model = new AccessoryDetailsViewModel
+        catch (Exception)
         {
-            Accessory = accessory,
-            ImagePath = ResolveAccessoryImagePath(accessory),
-            RelatedProducts = relatedProducts
-        };
-
-        return View(model);
+            TempData["ErrorMessage"] = "Detail doplňku se teď nepodařilo načíst.";
+            return RedirectToAction(nameof(Index), new { access = "accessories" });
+        }
     }
 
     private bool CanViewRestrictedCatalog(ApplicationUser? user)
@@ -299,24 +338,47 @@ public class WeaponsController : Controller
 
     private static string ResolveWeaponImagePath(Weapon weapon)
     {
+        return ResolveWeaponImagePaths(weapon).First();
+    }
+
+    private static IReadOnlyList<string> ResolveWeaponImagePaths(Weapon weapon)
+    {
+        var imagePaths = new List<string>();
+
         var uploadedImagePath = CatalogImageStorage.ToPublicPath(weapon.ImageFileName);
         if (!string.IsNullOrWhiteSpace(uploadedImagePath))
         {
-            return uploadedImagePath;
+            imagePaths.Add(uploadedImagePath);
+        }
+
+        foreach (var galleryImage in weapon.Images
+                     .OrderBy(image => image.SortOrder)
+                     .ThenBy(image => image.Id))
+        {
+            var imagePath = CatalogImageStorage.ToPublicPath(galleryImage.FileName);
+            if (!string.IsNullOrWhiteSpace(imagePath) && !imagePaths.Contains(imagePath, StringComparer.OrdinalIgnoreCase))
+            {
+                imagePaths.Add(imagePath);
+            }
+        }
+
+        if (imagePaths.Count > 0)
+        {
+            return imagePaths;
         }
 
         var name = weapon.Name.ToLowerInvariant();
         if (name.Contains("glock") || name.Contains("p-10") || name.Contains("pistol"))
         {
-            return "/images/catalog/weapon-pistol.svg";
+            return new[] { "/images/catalog/weapon-pistol.svg" };
         }
 
         if (name.Contains("vz") || name.Contains("rifle") || name.Contains("carbine"))
         {
-            return "/images/catalog/weapon-rifle.svg";
+            return new[] { "/images/catalog/weapon-rifle.svg" };
         }
 
-        return "/images/catalog/weapon-generic.svg";
+        return new[] { "/images/catalog/weapon-generic.svg" };
     }
 
     private static StoreCatalogItemViewModel MapAccessory(Accessory accessory)
@@ -344,10 +406,33 @@ public class WeaponsController : Controller
 
     private static string ResolveAccessoryImagePath(Accessory accessory)
     {
+        return ResolveAccessoryImagePaths(accessory).First();
+    }
+
+    private static IReadOnlyList<string> ResolveAccessoryImagePaths(Accessory accessory)
+    {
+        var imagePaths = new List<string>();
+
         var uploadedImagePath = CatalogImageStorage.ToPublicPath(accessory.ImageFileName);
         if (!string.IsNullOrWhiteSpace(uploadedImagePath))
         {
-            return uploadedImagePath;
+            imagePaths.Add(uploadedImagePath);
+        }
+
+        foreach (var galleryImage in accessory.Images
+                     .OrderBy(image => image.SortOrder)
+                     .ThenBy(image => image.Id))
+        {
+            var imagePath = CatalogImageStorage.ToPublicPath(galleryImage.FileName);
+            if (!string.IsNullOrWhiteSpace(imagePath) && !imagePaths.Contains(imagePath, StringComparer.OrdinalIgnoreCase))
+            {
+                imagePaths.Add(imagePath);
+            }
+        }
+
+        if (imagePaths.Count > 0)
+        {
+            return imagePaths;
         }
 
         var category = accessory.Category.ToLowerInvariant();
@@ -355,14 +440,14 @@ public class WeaponsController : Controller
 
         if (category.Contains("optic") || name.Contains("dot") || name.Contains("scope"))
         {
-            return "/images/catalog/accessory-optic.svg";
+            return new[] { "/images/catalog/accessory-optic.svg" };
         }
 
         if (category.Contains("storage") || name.Contains("safe") || name.Contains("case"))
         {
-            return "/images/catalog/accessory-safe.svg";
+            return new[] { "/images/catalog/accessory-safe.svg" };
         }
 
-        return "/images/catalog/accessory-gear.svg";
+        return new[] { "/images/catalog/accessory-gear.svg" };
     }
 }

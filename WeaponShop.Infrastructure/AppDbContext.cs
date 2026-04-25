@@ -18,7 +18,9 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Weapon> Weapons => Set<Weapon>();
+    public DbSet<WeaponImage> WeaponImages => Set<WeaponImage>();
     public DbSet<Accessory> Accessories => Set<Accessory>();
+    public DbSet<AccessoryImage> AccessoryImages => Set<AccessoryImage>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderAudit> OrderAudits => Set<OrderAudit>();
@@ -60,6 +62,22 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.Property(w => w.StockQuantity).HasColumnName("stock_quantity");
             builder.Property(w => w.IsAvailable).HasColumnName("is_available");
             builder.Property(w => w.ImageFileName).HasColumnName("image_file_name");
+
+            builder.HasMany(w => w.Images)
+                .WithOne(image => image.Weapon)
+                .HasForeignKey(image => image.WeaponId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WeaponImage>(builder =>
+        {
+            builder.ToTable("weapon_images");
+            builder.Property(image => image.Id).HasColumnName("weapon_image_id");
+            builder.Property(image => image.WeaponId).HasColumnName("weapon_id");
+            builder.Property(image => image.FileName).HasColumnName("image_file_name").HasMaxLength(260);
+            builder.Property(image => image.SortOrder).HasColumnName("sort_order");
+
+            builder.HasIndex(image => new { image.WeaponId, image.SortOrder });
         });
 
         modelBuilder.Entity<Accessory>(builder =>
@@ -74,12 +92,29 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.Property(a => a.StockQuantity).HasColumnName("stock_quantity");
             builder.Property(a => a.IsAvailable).HasColumnName("is_available");
             builder.Property(a => a.ImageFileName).HasColumnName("image_file_name");
+
+            builder.HasMany(a => a.Images)
+                .WithOne(image => image.Accessory)
+                .HasForeignKey(image => image.AccessoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AccessoryImage>(builder =>
+        {
+            builder.ToTable("accessory_images");
+            builder.Property(image => image.Id).HasColumnName("accessory_image_id");
+            builder.Property(image => image.AccessoryId).HasColumnName("accessory_id");
+            builder.Property(image => image.FileName).HasColumnName("image_file_name").HasMaxLength(260);
+            builder.Property(image => image.SortOrder).HasColumnName("sort_order");
+
+            builder.HasIndex(image => new { image.AccessoryId, image.SortOrder });
         });
 
         modelBuilder.Entity<Order>(builder =>
         {
             builder.ToTable("purchase_requests");
             builder.Property(o => o.Id).HasColumnName("request_id");
+            builder.Property(o => o.OrderNumber).HasColumnName("order_number").HasMaxLength(32);
             builder.Property(o => o.UserId).HasColumnName("customer_user_id");
             builder.Property(o => o.CreatedAt).HasColumnName("created_at_utc");
             builder.Property(o => o.Status).HasColumnName("request_status");
@@ -119,6 +154,9 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
             builder.Property(o => o.TotalPrice)
                 .HasPrecision(18, 2);
+
+            builder.HasIndex(o => o.OrderNumber)
+                .IsUnique();
         });
 
         modelBuilder.Entity<OrderAudit>(builder =>
@@ -195,20 +233,30 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
             builder.Property(oi => oi.UnitPrice)
                 .HasPrecision(18, 2);
+
+            builder.ToTable(tableBuilder =>
+            {
+                tableBuilder.HasCheckConstraint(
+                    "CK_purchase_request_items_exactly_one_catalog_item",
+                    """
+                    (
+                        (CASE WHEN weapon_id IS NULL THEN 0 ELSE 1 END) +
+                        (CASE WHEN accessory_id IS NULL THEN 0 ELSE 1 END)
+                    ) = 1
+                    """);
+                tableBuilder.HasCheckConstraint(
+                    "CK_purchase_request_items_quantity_positive",
+                    "quantity > 0");
+            });
         });
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        if (optionsBuilder.IsConfigured)
+        if (!optionsBuilder.IsConfigured)
         {
-            return;
+            throw new InvalidOperationException(
+                "AppDbContext nebyl nakonfigurován. Použijte AddDbContext() nebo design-time factory s nastaveným connection stringem.");
         }
-
-        var connectionString =
-            Environment.GetEnvironmentVariable("WEAPONSHOP_CONNECTION_STRING")
-            ?? "Host=localhost;Port=5432;Database=weaponshop;Username=weaponshop;Password=weaponshop_dev_password;Include Error Detail=true";
-
-        optionsBuilder.UseNpgsql(connectionString);
     }
 }

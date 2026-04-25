@@ -20,9 +20,29 @@
     <div class="store-main">
 <section class="detail-shell detail-shell-classic">
     <div class="detail-media panel detail-media-classic">
-        <div class="product-visual product-visual-xl">
-            <img src="@Model.ImagePath" alt="@Model.Weapon.Name" />
+        <div class="product-visual product-visual-xl weapon-gallery-stage">
+            <img id="weapon-gallery-main"
+                 src="@Model.ImagePath"
+                 alt="@Model.Weapon.Name"
+                 data-gallery-main="true" />
         </div>
+
+        @if (Model.ImagePaths.Count > 1)
+        {
+            <div class="weapon-gallery-strip" aria-label="Galerie obrázků zbraně">
+                @for (var i = 0; i < Model.ImagePaths.Count; i++)
+                {
+                    var imagePath = Model.ImagePaths[i];
+                    <button type="button"
+                            class="weapon-gallery-thumb @(i == 0 ? "is-active" : null)"
+                            data-gallery-thumb="true"
+                            data-image-path="@imagePath"
+                            aria-label="Zobrazit obrázek @(i + 1)">
+                        <img src="@imagePath" alt="@Model.Weapon.Name" />
+                    </button>
+                }
+            </div>
+        }
     </div>
 
     <div class="detail-summary panel detail-summary-classic">
@@ -115,3 +135,29 @@
 </section>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const mainImage = document.querySelector("[data-gallery-main='true']");
+            const thumbnails = Array.from(document.querySelectorAll("[data-gallery-thumb='true']"));
+            if (!mainImage || thumbnails.length === 0) {
+                return;
+            }
+
+            const activate = (button) => {
+                const imagePath = button.dataset.imagePath;
+                if (!imagePath) {
+                    return;
+                }
+
+                mainImage.src = imagePath;
+                thumbnails.forEach((thumb) => thumb.classList.toggle("is-active", thumb === button));
+            };
+
+            thumbnails.forEach((button) => {
+                button.addEventListener("click", () => activate(button));
+            });
+        })();
+    </script>
+}

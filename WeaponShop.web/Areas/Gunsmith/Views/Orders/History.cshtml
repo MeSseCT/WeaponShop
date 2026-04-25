@@ -20,7 +20,7 @@
             {
                 <div class="audit-card">
                     <div class="audit-card-head">
-                        <div class="audit-card-title">Objednávka č. @audit.OrderId - @audit.Action</div>
+                        <div class="audit-card-title">Objednávka č. @(audit.Order?.GetPublicOrderNumber() ?? $"WS-{audit.OrderId:D6}") - @CatalogPresentation.GetAuditActionLabel(audit.Action)</div>
                         <span class="badge-cat">@CatalogPresentation.GetStatusLabel(audit.ToStatus)</span>
                     </div>
                     <div class="audit-card-meta">
@@ -30,7 +30,7 @@
                     <div class="audit-card-body">
                         <div>@audit.Order?.User?.FirstName @audit.Order?.User?.LastName</div>
                         <div class="panel-subtitle">@audit.Order?.User?.Email</div>
-                        <div class="panel-subtitle">@audit.ActorRole @audit.ActorName</div>
+                        <div class="panel-subtitle">@audit.ActorName</div>
                     </div>
                     @if (!string.IsNullOrWhiteSpace(audit.Notes))
                     {
@@ -38,7 +38,7 @@
                     }
                     <div class="audit-card-actions">
                         <a class="btn-inline" asp-action="Details" asp-route-id="@audit.OrderId">Detail</a>
-                        <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@audit.OrderId">Word</a>
+                        <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@audit.OrderId">Stáhnout DOC</a>
                     </div>
                 </div>
             }

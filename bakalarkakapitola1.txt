@@ -1,0 +1,852 @@
+Ukázka sazby kvalifikační práce
+Diploma Thesis Typesetting Demo
+
+Tomáš Duraj
+
+Bakalářská práce
+Vedoucí práce: doc. Ing. Jan Novák, Ph.D.
+Ostrava, 2026
+
+Č.j.VSB/25/117005
+
+Zadání bakalářské práce
+Tomáš Duraj
+
+Student:
+
+B0613A140014 Informatika
+
+Studijní program:
+Téma:
+
+Webová aplikace pro elektronický obchod se zbraněmi
+Web Application for Gun Shop
+
+Jazyk vypracování:
+
+slovenština
+
+Zásady pro vypracování:
+Cílem práce je vytvořit webovou aplikaci pro elektronický obchod se zaměřením na prodej zbraní.
+Aplikace bude vytvořena jako vícevrstvá s využitím libovolného frameworku a uložiště pro prostředí .NET.
+Vytvořený systém elektronického obchodu bude brát v potaz specifika prodeje zbraní v ČR. Systém by měl
+podporovat tvorbu objednávky/faktury/účtenky a její tisk a případné zaslání emailem zákazníkovi.
+Hlavní body zadání:
+1. Seznámení se dostupnými frameworky pro vícevrstvé webové aplikace v prostředí .NET a jejich
+vzájemné srovnání.
+2. Stručný přehled legislativy pro prodej a prodej zbraní v ČR.
+3. Rešerše existujících řešení pro elektronické obchody a jejich vzájemné srovnání.
+4. Návrh a implementace webové aplikace.
+5. Ověření funkčnosti a zhodnocení dosažených výsledků.
+6. Jednoduchá uživatelská příručka s popisem funkcí systému.
+Seznam doporučené odborné literatury:
+[1] FARLEY, David. Modern Software Engineering: Doing What Works to Build Better Software Faster.
+Addison-Wesley Professional, 2021.
+[2] INGENO, Joseph. Software Architect’s Handbook: Become a successful software architect by
+implementing effective architecture concepts. Packt Publishing Ltd, 2018.
+[3] FREEMAN, Adam. Pro ASP .NET MVC 5 (Expert's Voice in ASP. Net). NY: Apress, 2013, 832: 11.
+[4] PRICE, Mark J. C# 9 and. NET 5–Modern Cross-Platform Development: Build intelligent apps,
+websites, and services with Blazor, ASP. NET Core, and Entity Framework Core using Visual Studio
+Code. Packt Publishing Ltd, 2020.
+
+17. listopadu 2172/15
+708 00 Ostrava-Poruba
+Česká republika
+
+spojovatelka: +420 597 321 111
+epodatelna: epodatelna@vsb.cz
+ID datové schránky: d3kj88v
+
+IČ: 61989100
+DIČ: CZ61989100
+
+email: studijni.fei@vsb.cz
+www.fei.vsb.cz
+
+Formální náležitosti a rozsah bakalářské práce stanoví pokyny pro vypracování zveřejněné na webových
+stránkách fakulty.
+Vedoucí bakalářské práce:
+
+RNDr. Ing. Martin Radvanský, Ph.D.
+
+Datum zadání:
+
+01.09.2024
+
+Datum odevzdání:
+
+30.04.2026
+
+Garant studijního programu: Ing. Tomáš Fabián, Ph.D.
+V IS EDISON zadáno: 18.08.2025 10:00:07
+
+17. listopadu 2172/15
+708 00 Ostrava-Poruba
+Česká republika
+
+spojovatelka: +420 597 321 111
+epodatelna: epodatelna@vsb.cz
+ID datové schránky: d3kj88v
+
+IČ: 61989100
+DIČ: CZ61989100
+
+email: studijni.fei@vsb.cz
+www.fei.vsb.cz
+
+Abstrakt
+Cieľom bakalárskej práce je návrh a implementácia viacvrstvovej webovej aplikácie elektronického
+obchodu so zameraním na predaj zbraní v Českej republike. Práca sa zaoberá analýzou technológií
+platformy .NET, rešeršou existujúcich e-commerce riešení a identifikáciou legislatívnych požiadaviek
+vyplývajúcich zo zákona o zbraniach a strelive. Výsledkom práce je návrh a implementácia funkčného prototypu webovej aplikácie, ktorý zohľadňuje technické, bezpečnostné a legislatívne špecifiká
+predaja zbraní.
+
+Kľúčové slová
+elektronický obchod; webová aplikácia; .NET; viacvrstvová architektúra; predaj zbraní
+
+Abstract
+The aim of this bachelor’s thesis is the design and implementation of a multi-layered web application for an electronic commerce system focused on firearm sales in the Czech Republic. The thesis
+analyzes .NET platform technologies, reviews existing e-commerce solutions, and identifies legislative requirements arising from Czech firearms legislation. The result of the thesis is a functional
+prototype of a web application that reflects the technical, security, and legislative specifics of firearm
+sales.
+
+Keywords
+e-commerce; web application; .NET; multi-layer architecture; firearm sales
+
+Poďakovanie
+Rád by som na tomto mieste poďakoval všetkym, ktorí mi s touto prácoou pomohli, pretože by bez
+nich táto praca nevznikla.
+
+Obsah
+Zoznam použitých symbolov a skratiek
+
+7
+
+Zoznam obrázkov
+
+8
+
+Zoznam tabuliek
+
+9
+
+1 Úvod
+
+10
+
+1.1
+
+Frameworky pre viacvrstvové webové aplikácie v prostredí .NET . . . . . . . . . . .
+
+11
+
+1.2
+
+Ukladanie dát a prístup k databáze v prostredí .NET . . . . . . . . . . . . . . . . . .
+
+14
+
+1.3
+
+Rešerš existujúcich riešení pre elektronický obchod . . . . . . . . . . . . . . . . . . .
+
+17
+
+1.4
+
+Legislatívny rámec predaja zbraní v Českej republike . . . . . . . . . . . . . . . . . .
+
+20
+
+1.5
+
+Bezpečnosť systému a ochrana osobných údajov . . . . . . . . . . . . . . . . . . . . .
+
+23
+
+2 Návrh systému
+
+26
+
+2.1
+
+Ciele a požiadavky na systém . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+26
+
+2.2
+
+Architektonický návrh systému . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+27
+
+2.3
+
+Dátový model systému . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+34
+
+6
+
+Zoznam použitých skratiek a symbolov
+DVD
+
+–
+
+Digital Versatile Disc
+
+TNT
+
+–
+
+Trinitrotoluen
+
+UML
+
+–
+
+Unified Modeling Language
+
+HTML
+
+–
+
+Hyper Text Markup Language
+
+TUG
+
+–
+
+TEX Users Group
+
+7
+
+Zoznam obrázkov
+2.1
+
+Viacvrstvová architektúra systému . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+8
+
+33
+
+Zoznam tabuliek
+1.1
+
+Porovnanie prístupov pre viacvrstvové .NET web aplikácie . . . . . . . . . . . . . . .
+
+9
+
+14
+
+Kapitola 1
+
+Úvod
+Elektronické obchodovanie patrí medzi najrozšírenejšie formy predaja tovaru a služieb v súčasnom
+digitálnom prostredí. Rozvoj webových technológií umožnil vznik veľkého množstva internetových
+obchodov, ktoré zákazníkom poskytujú pohodlný nákup, rýchlu dostupnosť informácií a automatizované spracovanie objednávok. Súčasne rastie dopyt po špecializovaných systémoch elektronického
+obchodovania, ktoré musia rešpektovať špecifické legislatívne a technické požiadavky. Jedným z takýchto prípadov je aj predaj zbraní, ktorý je v Českej republike regulovaný rozsiahlym právnym
+rámcom.
+Predaj zbraní je špecifická oblasť, ktorá podlieha prísnym pravidlám, povinnostiam a obmedzeniam. Legislatíva určuje presné podmienky nadobúdania zbraní rôznych kategórií, identifikuje
+prípady, keď je možné tovar ponúkať online, a stanovuje postupy, ktoré je nutné dodržiavať pri
+samotnom procese predaja. Tieto požiadavky majú priamy vplyv na návrh a implementáciu elektronického obchodu v tejto oblasti. Systém musí okrem základných e-commerce funkcií správne
+pracovať so špecifickými obmedzeniami, ktoré vyplývajú z právnych predpisov.
+Cieľom tejto bakalárskej práce je navrhnúť a implementovať viacvrstvovú webovú aplikáciu
+pre elektronický obchod so zameraním na predaj zbraní. Súčasťou práce je analýza dostupných
+webových frameworkov v prostredí .NET, rešerš existujúcich riešení elektronického obchodovania a
+identifikácia ich výhod a obmedzení. Dôležitým aspektom je spracovanie legislatívnych požiadaviek,
+ktoré musia byť zohľadnené pri návrhu systému.
+Výstupom práce je funkčná webová aplikácia umožňujúca správu produktov, tvorbu objednávok
+a generovanie faktúr alebo účteniek. Systém umožňuje aj ich tlač a odoslanie zákazníkovi e-mailom.
+Dominantnou požiadavkou je vytvorenie prehľadnej, modulárnej a rozšíriteľnej architektúry, ktorá
+je v súlade s modernými prístupmi vývoja webových aplikácií v prostredí .NET.
+10
+
+1.1
+
+Frameworky pre viacvrstvové webové aplikácie v prostredí .NET
+
+Pri návrhu webovej aplikácie je dôležité zvoliť taký technický prístup, ktorý podporí požadovanú
+funkcionalitu, umožní udržateľný vývoj a zároveň nebude zbytočne zvyšovať komplexitu riešenia.
+V prostredí platformy .NET je možné realizovať webové aplikácie viacerými spôsobmi. Najčastejšie
+sa uvažuje o server-renderovaní (ASP.NET Core MVC alebo Razor Pages), o komponentovo orientovanom prístupe (Blazor) alebo o architektúre, kde backend poskytuje Web API a používateľské
+rozhranie tvorí samostatná SPA aplikácia.
+Táto práca sa zameriava na viacvrstvový systém elektronického obchodu so špecifikami predaja
+zbraní v Českej republike. Okrem bežných e-shop funkcií (katalóg, košík, objednávka) je dôležitá
+aj integrácia procesov, ako je overovanie oprávnení, auditovateľnosť krokov, generovanie dokladov
+(objednávka/faktúra/účtenka), tlač a zaslanie dokumentov emailom. Zvolený framework a architektonický prístup by preto mali prirodzene podporovať autentifikáciu a autorizáciu, správu rolí,
+prácu s databázou, integrácie a testovanie.
+
+1.1.1
+
+Viacvrstvová architektúra a rozdelenie zodpovedností
+
+Viacvrstvová architektúra (angl. layered architecture) je prístup, pri ktorom je systém rozdelený na
+samostatné časti podľa zodpovedností. Cieľom je znížiť prepojenosť komponentov, zlepšiť čitateľnosť
+kódu a umožniť jednoduchšie testovanie. V praxi sa často používa rozdelenie na:
+• Prezentačnú vrstvu (UI) – zobrazovanie dát, prijímanie vstupov, validácia na úrovni formulárov,
+• Aplikačnú vrstvu – implementácia prípadov použitia (napr. vytvorenie objednávky, zmena
+stavu objednávky),
+• Doménovú vrstvu – entity a pravidlá domény (napr. obmedzenia predaja, stavy objednávok),
+• Infraštruktúrnu vrstvu – databáza, email, generovanie PDF, logovanie, externé služby.
+Takéto rozdelenie je vhodné aj pre e-shop, keďže umožňuje oddeliť biznis pravidlá (napr. kontrolu dostupnosti, výpočet cien, spracovanie objednávky) od UI a od technických detailov (databáza, email). Pri systéme, ktorý má reflektovať špecifiká predaja zbraní, je výhodné, aby pravidlá
+overovania oprávnení a auditné záznamy boli implementované konzistentne na úrovni aplikačnej a
+doménovej vrstvy.
+
+1.1.2
+
+ASP.NET Core MVC a Razor Pages
+
+ASP.NET Core MVC je tradičný prístup založený na vzore MVC (Model–View–Controller). Controller spracuje HTTP požiadavku, vykoná potrebnú aplikačnú logiku (často cez služby) a vráti
+11
+
+View, ktoré sa vyrenderuje do HTML na serveri. Razor Pages je príbuzný prístup vhodný pre
+stránkovo orientované aplikácie, kde logika aj zobrazenie patria k jednej konkrétnej stránke. Oba
+prístupy sa opierajú o serverové renderovanie a prirodzene pracujú s request/response modelom
+webu.
+V kontexte e-shopu prináša server-renderovaný prístup viaceré výhody:
+• Jednoduchý vývoj transakčných stránok – košík, checkout, potvrdenie objednávky,
+• Prirodzené spracovanie formulárov – zadanie údajov, validácia, spracovanie chýb,
+• Dobrá podpora SEO a prístupnosti – stránky sú generované na serveri,
+• Jednoduchšie nasadenie – často jeden serverový projekt bez potreby separátneho frontendu.
+Nevýhodou môže byť nižšia interaktivita bez doplnkového JavaScriptu. Pri typickom e-shope
+však jadro tvorí bezpečný a predvídateľný objednávkový proces, preto je server-renderovanie často
+dostatočné a zároveň znižuje riziká vyplývajúce z vyššej komplexity architektúry.
+
+1.1.3
+
+Blazor Server a Blazor WebAssembly
+
+Blazor umožňuje vytvárať používateľské rozhranie pomocou komponentov a jazyka C#. Z pohľadu
+hostovania existujú dva hlavné režimy:
+• Blazor Server – UI logika beží na serveri, prehliadač komunikuje so serverom cez trvalé
+spojenie,
+• Blazor WebAssembly (WASM) – aplikácia sa spúšťa v prehliadači, pričom komunikácia
+s backendom prebieha cez HTTP API.
+Blazor je vhodný v prípadoch, kde je požadované dynamickejšie a interaktívnejšie UI bez rozsiahleho používania JavaScriptu. V e-shop systéme môže byť Blazor prínosný najmä pre administrátorské časti, kde sa pracuje s tabuľkami, filtrami a formulármi, a kde používateľ očakáva rýchlu
+odozvu bez častého obnovovania stránky.
+Súčasne je potrebné zohľadniť aj obmedzenia:
+• Blazor Server môže byť citlivejší na sieťové výpadky a pri vysokom počte súčasných používateľov zvyšuje nároky na server,
+• Blazor WASM môže mať vyššiu veľkosť počiatočného stiahnutia a vyžaduje jasne navrhnuté
+API rozhranie,
+• v porovnaní s klasickým MVC môže byť vývoj a ladenie niektorých scenárov menej priamočiare
+(najmä pri kombinácii SSR/CSR).
+12
+
+Pre potreby bakalárskej práce je preto vhodné zvážiť Blazor najmä tam, kde jeho prínosy (komponentovosť, interaktivita) prevážia nad zvýšenou komplexitou a prevádzkovými požiadavkami.
+
+1.1.4
+
+Web API + SPA (React/Angular/Vue)
+
+Architektúra Web API + SPA oddeľuje backend a frontend do samostatných aplikácií. Backend
+poskytuje rozhranie (typicky REST/JSON) a frontend je implementovaný ako samostatná SPA
+aplikácia. Tento prístup je vhodný pre aplikácie, ktoré vyžadujú vysokú mieru interaktivity alebo
+kde sa predpokladá viacero klientov (napr. mobilná aplikácia, externí partneri, integrácie).
+Výhodou je jasné oddelenie zodpovedností a možnosť nezávislého vývoja UI a backendu. Z
+pohľadu e-shopu však prístup zvyšuje náročnosť riešenia:
+• vznikajú dve samostatné časti systému (backend a frontend), čo zvyšuje rozsah implementácie,
+• autentifikácia a autorizácia sa často rieši tokenmi, čo vyžaduje správne nastavenie bezpečnosti
+(napr. CORS, ochrana tokenov),
+• treba riešiť verzovanie API a kompatibilitu medzi klientom a serverom.
+Pre bakalársku prácu môže byť tento prístup vhodný najmä vtedy, ak je cieľom demonštrovať
+modernú architektúru a integrácie. Zároveň však treba počítať s vyšším časovým a implementačným
+nákladom v porovnaní so server-renderovaným riešením.
+
+1.1.5
+
+Kritériá porovnania a výber vhodného prístupu
+
+Pri výbere frameworku a prístupu je možné použiť nasledovné kritériá:
+• Komplexita a udržateľnosť – počet častí systému a náročnosť údržby,
+• Výkon a škálovanie – záťaž na server, spracovanie súbežných používateľov,
+• Používateľská skúsenosť – interaktivita, rýchlosť odozvy, plynulosť práce,
+• SEO a prístupnosť – najmä pre verejný katalóg produktov,
+• Testovateľnosť – oddelenie biznis logiky od UI, podpora unit a integračných testov,
+• Integrácie – email, generovanie dokumentov (PDF), tlač, logovanie a audit.
+Zhrnutie základných rozdielov uvádza Tabuľka 1.1.
+Pre transakčný charakter e-shopu je často vhodné server-renderované riešenie (ASP.NET Core
+MVC alebo Razor Pages), ktoré je jednoduchšie na implementáciu a nasadenie. Komponentový
+prístup (Blazor) môže byť vhodný najmä pre interaktívnu administráciu. Prístup Web API + SPA
+prináša flexibilitu a moderné UX, avšak za cenu vyššej komplexity, ktorá môže byť pri časovo
+ohraničenom projekte menej výhodná.
+13
+
+Kritérium
+
+SEO
+
+MVC / Razor Pages
+nižšia, často jeden
+projekt
+stredná
+(doplnky
+podľa potreby)
+dobré (server-render)
+
+Nasadenie
+
+jednoduchšie
+
+Vhodnosť pre eshop
+
+veľmi dobrá
+
+Komplexita
+Interaktivita UI
+
+Blazor
+
+Web API + SPA
+
+stredná
+(Server/WASM)
+vysoká (komponenty)
+
+vyššia (oddelený FE/BE)
+vysoká (SPA)
+
+Server dobré, WASM
+náročnejšie
+jednoduché
+až
+stredné
+dobrá (najmä admin)
+
+často náročnejšie bez
+SSR
+zložitejšie (viac častí)
+dobrá, ale náročnejšia
+
+Tabuľka 1.1: Porovnanie prístupov pre viacvrstvové .NET web aplikácie
+
+1.1.6
+
+Zhrnutie
+
+V prostredí .NET existuje viacero možností tvorby viacvrstvových webových aplikácií. Pre potreby
+elektronického obchodu, kde je kľúčový stabilný objednávkový proces, generovanie dokladov a jednoduché nasadenie, predstavujú MVC alebo Razor Pages praktickú voľbu. Blazor rozširuje možnosti
+najmä v oblasti interaktívnych administrátorských častí, zatiaľ čo architektúra Web API + SPA
+poskytuje najväčšiu flexibilitu pri vývoji používateľského rozhrania, no zvyšuje nároky na návrh a
+implementáciu celého systému.
+// citacie
+
+1.2
+
+Ukladanie dát a prístup k databáze v prostredí .NET
+
+Webové aplikácie elektronického obchodu pracujú s veľkým množstvom štruktúrovaných dát, medzi
+ktoré patria produkty, objednávky, používatelia, doklady, platby a auditné záznamy. Spoľahlivé
+ukladanie a spracovanie týchto dát je kľúčové pre správnu funkčnosť systému, konzistenciu údajov a
+splnenie legislatívnych požiadaviek. V prostredí .NET sa najčastejšie využívajú relačné databázy v
+kombinácii s ORM nástrojmi, ktoré zjednodušujú prácu s dátami a umožňujú vývojárom pracovať
+s objektovým modelom namiesto priameho písania SQL dotazov.
+Táto kapitola sa zameriava na princípy práce s relačnými databázami v .NET aplikáciách, porovnanie prístupu pomocou Entity Framework Core a micro-ORM nástrojov (napr. Dapper) a na
+aspekty, ktoré sú dôležité pre transakčné systémy, akým je elektronický obchod.
+
+1.2.1
+
+Relačné databázy a dátový model e-shopu
+
+Relačné databázy sú založené na ukladaní dát do tabuliek s pevne definovanou štruktúrou, kde sú
+vzťahy medzi tabuľkami reprezentované pomocou cudzích kľúčov. Tento model je vhodný pre e-shop
+14
+
+systémy, pretože umožňuje jasne definovať vzťahy medzi entitami, ako sú produkty, objednávky,
+používatelia a doklady.
+Typický dátový model e-shopu zahŕňa:
+• Používateľov a roly – zákazníci, administrátori, oprávnenia,
+• Produkty a kategórie – vrátane špecifických údajov o zbraniach,
+• Objednávky a položky objednávok – stav objednávky, množstvá, ceny,
+• Doklady – faktúry, účtenky, evidencia generovaných dokumentov,
+• Auditné a logovacie záznamy – sledovanie dôležitých operácií v systéme.
+Použitie relačnej databázy umožňuje zachovať dátovú integritu prostredníctvom obmedzení
+(constraints), ako sú primárne a cudzie kľúče, jedinečné indexy alebo transakčné mechanizmy. Tieto
+vlastnosti sú obzvlášť dôležité pri spracovaní objednávok, kde musí byť zabezpečené, že údaje o platbách, stave objednávky a generovaných dokladoch zostanú konzistentné aj v prípade chyby alebo
+výpadku systému.
+
+1.2.2
+
+Entity Framework Core
+
+Entity Framework Core (EF Core) je oficiálny ORM nástroj platformy .NET, ktorý umožňuje
+mapovať databázové tabuľky na objektový model v jazyku C#. Vývojár pracuje s entitami a vzťahmi
+medzi nimi, pričom EF Core sa stará o generovanie SQL dotazov a komunikáciu s databázou.
+Medzi hlavné výhody EF Core patria:
+• Zvýšenie produktivity vývoja – menej manuálne písaného SQL kódu,
+• Silná integrácia s ASP.NET Core – jednoduché prepojenie so službami a autentifikáciou,
+• Podpora migrácií – verzovanie databázovej schémy priamo z kódu,
+• Podpora transakcií a zmenového sledovania – automatické sledovanie zmien v entitách.
+EF Core je vhodný pre väčšinu bežných scenárov v e-shope, kde sa pracuje s komplexnými
+dátovými štruktúrami a vzťahmi. V kombinácii s viacvrstvovou architektúrou umožňuje umiestniť
+databázovú logiku do infraštruktúrnej vrstvy, čím sa znižuje závislosť ostatných častí systému od
+konkrétneho úložiska.
+Nevýhodou EF Core môže byť mierne nižší výkon v porovnaní s ručne písanými SQL dotazmi a
+potreba správnej konfigurácie vzťahov a načítavania dát (napr. lazy vs. eager loading). Pri nesprávnom použití môže dôjsť k nadmernému počtu dotazov alebo k neefektívnemu prístupu k databáze.
+15
+
+1.2.3
+
+Micro-ORM prístup (napr. Dapper)
+
+Micro-ORM nástroje, ako napríklad Dapper, predstavujú ľahší prístup k práci s databázou. Nepracujú s komplexným sledovaním zmien ani s automatickým mapovaním vzťahov, ale zameriavajú sa
+na rýchle vykonávanie SQL dotazov a jednoduché mapovanie výsledkov na objekty.
+Výhody micro-ORM prístupu:
+• Vysoký výkon – minimálna réžia nad čistým SQL,
+• Plná kontrola nad dotazmi – presne definované SQL príkazy,
+• Vhodnosť pre čítacie scenáre – reporty, prehľady, agregácie.
+Nevýhodou je vyššia náročnosť na údržbu, keďže vývojár musí manuálne spravovať SQL dotazy
+a databázovú schému. V prípade väčších projektov môže tento prístup viesť k duplicitnému kódu a
+zníženej prehľadnosti. Pre e-shop aplikáciu je preto micro-ORM vhodný najmä ako doplnok k EF
+Core, napríklad pre výkonovo náročné prehľady alebo štatistiky.
+
+1.2.4
+
+Transakcie a konzistencia dát
+
+Transakcie zohrávajú kľúčovú úlohu pri spracovaní objednávok v elektronickom obchode. Jedna
+objednávka často zahŕňa viacero krokov, ako je uloženie objednávky, aktualizácia skladových zásob,
+zmena stavu objednávky a generovanie dokladov. Tieto operácie musia byť vykonané ako jeden
+logický celok, aby sa predišlo nekonzistentným stavom systému.
+Relačné databázy podporujú transakčný model založený na vlastnostiach ACID (Atomicity,
+Consistency, Isolation, Durability), ktorý zabezpečuje:
+• Atomickosť – buď sa vykonajú všetky operácie, alebo žiadna,
+• Konzistenciu – databáza zostáva v platnom stave,
+• Izoláciu – súbežné transakcie sa navzájom neovplyvňujú,
+• Trvácnosť – po potvrdení transakcie sú údaje trvalo uložené.
+V .NET aplikáciách je možné transakcie spravovať priamo pomocou databázového kontextu
+(napr. v EF Core) alebo explicitne prostredníctvom transakčných blokov. Správne navrhnuté transakcie sú obzvlášť dôležité pri systémoch, ktoré musia spĺňať legislatívne požiadavky na evidenciu a
+auditovateľnosť operácií.
+
+1.2.5
+
+Zhrnutie
+
+Práca s databázou predstavuje jednu z najdôležitejších častí elektronického obchodu. Relačné databázy poskytujú vhodný základ pre ukladanie štruktúrovaných dát a zabezpečenie ich integrity.
+16
+
+Entity Framework Core ponúka vysokú produktivitu vývoja a dobrú integráciu s .NET ekosystémom, zatiaľ čo micro-ORM nástroje, ako Dapper, umožňujú dosiahnuť vyšší výkon v špecifických
+scenároch. Pre e-shop aplikáciu je často vhodná kombinácia oboch prístupov, pričom transakcie a
+konzistencia dát zohrávajú kľúčovú úlohu pri spracovaní objednávok a generovaní dokladov.
+// citacie
+
+1.3
+
+Rešerš existujúcich riešení pre elektronický obchod
+
+Elektronický obchod predstavuje etablovanú oblasť softvérových riešení, pre ktorú existuje množstvo
+hotových platforiem a frameworkov. Tieto riešenia sa líšia rozsahom funkcionality, licenčnými podmienkami, možnosťami rozšírenia a mierou prispôsobenia špecifickým požiadavkám. Cieľom tejto
+kapitoly je analyzovať vybrané existujúce e-commerce riešenia a porovnať ich z pohľadu použiteľnosti pre systém zameraný na predaj zbraní v Českej republike.
+Rešerš slúži ako podklad pre rozhodnutie, či je vhodnejšie použiť existujúcu platformu alebo
+vytvoriť vlastné riešenie. Zároveň pomáha identifikovať funkcie a vlastnosti, ktoré by mal navrhovaný
+systém podporovať.
+
+1.3.1
+
+Typy e-commerce riešení
+
+Existujúce riešenia pre elektronický obchod je možné rozdeliť do niekoľkých základných kategórií:
+• Hotové open-source platformy – poskytujú základnú funkcionalitu e-shopu a umožňujú
+rozšírenie pomocou modulov,
+• Komerčné CMS riešenia – komplexné systémy určené pre väčšie firmy a korporácie,
+• SaaS platformy – cloudové riešenia poskytované formou služby,
+• Vlastné riešenia – aplikácie vyvinuté na mieru podľa konkrétnych požiadaviek.
+Každý z týchto prístupov má svoje výhody a nevýhody. Pre špecifický segment, akým je predaj
+zbraní, je dôležité posúdiť nielen technické vlastnosti, ale aj možnosti prispôsobenia legislatívnym
+a procesným obmedzeniam.
+
+1.3.2
+
+Open-source a .NET e-commerce platformy
+
+V prostredí .NET patrí medzi známe open-source e-commerce riešenia napríklad nopCommerce. Ide
+o plnohodnotnú e-shop platformu postavenú na ASP.NET Core, ktorá podporuje základné funkcie
+ako katalóg produktov, objednávky, platby, dopravu a správu používateľov.
+Medzi hlavné výhody open-source riešení patria:
+• dostupnosť zdrojového kódu a možnosť úprav,
+17
+
+• rozsiahla základná funkcionalita,
+• komunita a dostupné rozšírenia.
+Na druhej strane, pri zložitejších požiadavkách môže byť úprava existujúcej platformy náročná.
+Implementácia špecifických procesov, ako je overovanie oprávnení na nákup zbraní alebo auditovanie
+krokov, môže vyžadovať zásahy do jadra systému, čo zvyšuje náročnosť údržby a riziko problémov
+pri aktualizáciách.
+
+1.3.3
+
+Komerčné CMS riešenia
+
+Komerčné CMS a e-commerce platformy (napr. Kentico alebo Optimizely) ponúkajú robustné riešenia s vysokou mierou konfigurovateľnosti a profesionálnou podporou. Tieto systémy sú určené
+najmä pre väčšie organizácie a projekty s vysokými nárokmi na výkon, škálovanie a integrácie.
+Ich hlavnými výhodami sú:
+• profesionálna technická podpora,
+• rozsiahle možnosti integrácií,
+• dlhodobá podpora a stabilita.
+Nevýhodou je najmä vysoká cena licencie a zložitosť systému. Pre bakalársku prácu a menší
+projekt je takýto prístup často neprimeraný a neumožňuje dostatočne detailne prezentovať vlastný
+návrh a implementáciu systému.
+
+1.3.4
+
+SaaS e-commerce platformy
+
+SaaS platformy, ako napríklad Shopify alebo WooCommerce (v kombinácii s hostingom), poskytujú rýchle riešenie elektronického obchodu bez potreby vlastnej infraštruktúry. Používateľ získava
+hotový systém, ktorý je možné konfigurovať prostredníctvom administrátorského rozhrania.
+Výhody SaaS riešení:
+• rýchle nasadenie,
+• minimálne technické požiadavky,
+• automatické aktualizácie a údržba.
+Pre predaj zbraní však môžu byť tieto platformy problematické. Obmedzené možnosti úprav
+procesov, závislosť od poskytovateľa a legislatívne obmedzenia často znemožňujú implementáciu
+špecifických požiadaviek, ako je kontrola oprávnení alebo evidencia predaja podľa národnej legislatívy.
+18
+
+1.3.5
+
+Porovnávacie kritériá
+
+Pri porovnávaní existujúcich e-commerce riešení je možné použiť nasledujúce kritériá:
+• Možnosť prispôsobenia – schopnosť implementovať špecifické procesy,
+• Licenčné podmienky a náklady – open-source vs. komerčné riešenia,
+• Technologická flexibilita – možnosť zásahov do architektúry a kódu,
+• Podpora legislatívnych požiadaviek – evidencia, audit, správa dokladov,
+• Udržateľnosť a údržba – aktualizácie, rozšíriteľnosť, riziká závislosti.
+Na základe týchto kritérií možno konštatovať, že univerzálne e-commerce platformy sú vhodné
+pre bežný predaj tovaru, avšak pri špecifických doménach môžu narážať na svoje limity.
+
+1.3.6
+
+Odôvodnenie vlastného riešenia
+
+Predaj zbraní predstavuje špecifickú doménu, kde je potrebné dodržiavať legislatívne požiadavky,
+viesť presnú evidenciu a zabezpečiť auditovateľnosť procesov. Existujúce e-commerce riešenia tieto
+požiadavky často nepodporujú priamo alebo ich implementácia vyžaduje rozsiahle úpravy.
+Vytvorenie vlastného riešenia umožňuje:
+• navrhnúť proces objednávky s ohľadom na overovanie oprávnení,
+• implementovať evidenciu a generovanie dokladov podľa potrieb systému,
+• zachovať plnú kontrolu nad architektúrou a dátovým modelom,
+• prepojiť technické riešenie s legislatívnymi obmedzeniami.
+Z pohľadu bakalárskej práce má vlastné riešenie výhodu v tom, že umožňuje detailne prezentovať návrh, architektúru a implementačné rozhodnutia. Zároveň poskytuje priestor na prepojenie
+teoretických poznatkov s praktickou realizáciou systému.
+
+1.3.7
+
+Zhrnutie
+
+Rešerš existujúcich e-commerce riešení ukazuje, že na trhu existuje množstvo hotových platforiem
+vhodných pre bežný predaj tovaru. Pri špecifických požiadavkách, akými sú legislatívne obmedzenia
+predaja zbraní, však tieto riešenia narážajú na svoje limity. Vlastný vývoj systému umožňuje lepšie
+prispôsobiť architektúru, procesy a dátový model konkrétnej doméne a zároveň poskytuje vhodný
+základ pre demonštráciu znalostí v rámci bakalárskej práce.
+// urobit priklad shopu
+19
+
+1.4
+
+Legislatívny rámec predaja zbraní v Českej republike
+
+Pre návrh a implementáciu elektronického obchodu so zameraním na predaj zbraní je nevyhnutné
+vychádzať z platnej legislatívy Českej republiky. Oblasť nadobúdania, držania a predaja zbraní
+je regulovaná predovšetkým zákonom č. 119/2002 Sb., o strelných zbraniach a strelive (ďalej len
+„zákon o zbraniach“). Tento zákon definuje kategorizáciu zbraní, podmienky ich nadobúdania, ako
+aj povinnosti subjektov, ktoré s nimi obchodujú.
+Z pohľadu návrhu informačného systému elektronického obchodu je legislatívny rámec zásadný,
+keďže priamo ovplyvňuje proces objednávky, overovanie zákazníkov a povinnosti predajcu v oblasti
+evidencie a kontroly predaja.
+
+1.4.1
+
+Kategorizácia zbraní a streliva
+
+Zákon o zbraniach rozdeľuje zbrane a strelivo do kategórií A až D, pričom jednotlivé kategórie
+určujú mieru regulácie a prísnosť režimu predaja. Pre návrh e-shop systému je toto rozdelenie
+kľúčové, pretože determinuje, aké overenia musí systém vykonať pred dokončením objednávky.
+1.4.1.1
+
+Kategória A a A-I (zakázané zbrane)
+
+Do kategórie A patria zbrane, ktoré sú z hľadiska bezpečnosti štátu a verejného poriadku považované
+za najviac rizikové. Ide najmä o vojenské zbrane, zákerne konštruované zbrane, zbrane vyrobené
+z nedetekovateľných materiálov a špeciálne druhy streliva (napr. s priebojnou, výbušnou alebo
+zápalnou strelou).
+Kategória A-I predstavuje podkategóriu zavedenú novelizáciou zákona a zahŕňa napríklad samočinné zbrane upravené na samonabíjacie alebo zbrane vybavené nadlimitnými zásobníkmi (pre
+krátke zbrane nad 20 nábojov a pre dlhé zbrane nad 10 nábojov).
+Režim predaja: Zbrane kategórie A a A-I je možné nadobúdať výhradne na základe výnimky
+udelenej Políciou Českej republiky. V kontexte elektronického obchodu nie je možné tieto zbrane
+predávať prostredníctvom štandardného objednávkového procesu bez predchádzajúceho administratívneho overenia platnosti výnimky.
+1.4.1.2
+
+Kategória B (zbrane podliehajúce povoleniu)
+
+Do kategórie B patria najmä krátke strelné zbrane, ako sú pištole a revolvery, a samonabíjacie dlhé
+zbrane, ktoré nespadajú do kategórie A-I.
+Režim predaja: Na nadobudnutie zbrane kategórie B musí kupujúci spĺňať nasledovné podmienky:
+• byť držiteľom platného zbrojného preukazu,
+• disponovať nákupným povolením vydaným Políciou Českej republiky pre konkrétny typ zbrane.
+20
+
+Elektronický obchod musí tieto skutočnosti zohľadniť a zabrániť dokončeniu objednávky bez
+overenia splnenia uvedených podmienok.
+
+1.4.1.3
+
+Kategória C (zbrane podliehajúce ohláseniu)
+
+Kategória C zahŕňa predovšetkým lovecké zbrane, ako sú brokovnice a guľovnice, malorážky a
+plynové zbrane s energiou strely vyššou ako 16 J, pokiaľ nespadajú do kategórie C-I.
+Režim predaja: Zbraň kategórie C môže nadobudnúť držiteľ platného zbrojného preukazu.
+Na rozdiel od kategórie B sa nevyžaduje nákupné povolenie vopred, avšak nadobudnutie zbrane
+podlieha povinnosti následného ohlásenia príslušnému orgánu.
+
+1.4.1.4
+
+Kategória C-I (zbrane podliehajúce ohláseniu bez ZP)
+
+Kategória C-I bola zavedená novelizáciou zákona a zahŕňa zbrane, ktoré boli pôvodne zaradené do
+kategórie D, avšak z dôvodu sprísnenia kontroly podliehajú evidencii. Ide najmä o:
+• expanzné zbrane (plynové a poplašné zbrane), ktoré nespĺňajú technické požiadavky kategórie
+D,
+• jednoranové alebo dvojranové zbrane na delené strelivo.
+Režim predaja: Zbraň kategórie C-I môže nadobudnúť fyzická osoba, ktorá:
+• dosiahla vek minimálne 18 rokov,
+• je plne svojprávna,
+• má miesto pobytu na území Českej republiky.
+Držanie zbrojného preukazu sa nevyžaduje, avšak predajca je povinný viesť evidenciu predaja
+a kupujúci je registrovaný v Centrálnom registri zbraní.
+
+1.4.1.5
+
+Kategória D (ostatné zbrane)
+
+Kategória D predstavuje skupinu zbraní s najvoľnejším režimom predaja. Patria sem historické
+zbrane vyrobené do 31. 12. 1890, vzduchovky a plynové zbrane do zákonom stanoveného limitu
+výkonu, znehodnotené zbrane a športové zbrane typu paintball alebo airsoft.
+Režim predaja: Zbrane kategórie D sú voľne predajné fyzickým osobám starším ako 18 rokov,
+ktoré sú spôsobilé na právne úkony. Nevyžaduje sa registrácia ani zbrojný preukaz.
+21
+
+1.4.2
+
+Podmienky pre držiteľov zbrojnej licencie
+
+Subjekt prevádzkujúci elektronický obchod so zbraňami musí byť držiteľom zbrojnej licencie, ktorá
+predstavuje oprávnenie na podnikanie v oblasti nákupu a predaja zbraní a streliva. Pre e-shop je
+relevantná najmä zbrojná licencia skupiny C.
+Držiteľ zbrojnej licencie má podľa zákona povinnosť:
+• viesť evidenciu zbraní a streliva,
+• zabezpečiť zbrane proti odcudzeniu alebo zneužitiu,
+• overovať totožnosť kupujúceho a jeho oprávnenie na nadobudnutie zbrane (platnosť zbrojného
+preukazu, nákupné povolenie, vek).
+
+1.4.3
+
+Centrálny register zbraní
+
+Súčasťou legislatívneho rámca je Centrálny register zbraní (CRZ), v ktorom sa evidujú zbrane kategórií A, B, C a C-I. Predajca je povinný v zákonom stanovených lehotách zaznamenať nadobudnutie
+alebo prevod vlastníctva zbrane.
+Z pohľadu návrhu aplikácie je preto nevyhnutné zabezpečiť evidenciu technických parametrov
+zbraní, ako sú typ, značka, výrobné číslo, kaliber a kategória, ktoré sú potrebné pre komunikáciu s
+CRZ.
+
+1.4.4
+
+Zhrnutie legislatívnych požiadaviek na návrh aplikácie
+
+Z analýzy zákona o zbraniach vyplývajú pre návrh webovej aplikácie nasledovné požiadavky:
+• Segregácia tovaru – systém musí rozlišovať zbrane podľa kategórií A, B, C, C-I a D,
+• Overovanie oprávnení – pri kategóriách A, B a C nesmie byť umožnené dokončenie nákupu
+bez overenia zbrojného preukazu a prípadného povolenia,
+• Overovanie veku – pri kategóriách C-I a D musí systém kontrolovať dosiahnutie veku 18
+rokov,
+• Územné obmedzenia – predaj zbraní kategórie C-I je viazaný na pobyt kupujúceho na
+území Českej republiky.
+Tieto legislatívne obmedzenia majú priamy vplyv na návrh objednávkového procesu, dátového
+modelu a validačných mechanizmov v elektronickom obchode.
+// Dopisat jemne ako to budem riesit v implementacii.
+22
+
+1.5
+
+Bezpečnosť systému a ochrana osobných údajov
+
+Bezpečnosť predstavuje jednu z kľúčových vlastností webových aplikácií elektronického obchodu,
+najmä v prípadoch, keď systém pracuje s citlivými údajmi používateľov a podlieha legislatívnym
+obmedzeniam. Elektronický obchod so zbraňami spracúva osobné údaje zákazníkov, údaje o oprávneniach na nadobúdanie zbraní a záznamy o uskutočnených transakciách, čo kladie zvýšené nároky
+na bezpečnosť a ochranu dát.
+Táto kapitola sa zameriava na základné princípy autentifikácie a autorizácie, auditovanie činností v systéme, ochranu osobných údajov v súlade s nariadením GDPR a identifikáciu vybraných
+bezpečnostných rizík e-shopových aplikácií.
+
+1.5.1
+
+Autentifikácia a autorizácia používateľov
+
+Autentifikácia predstavuje proces overenia identity používateľa, zatiaľ čo autorizácia určuje, aké
+operácie je používateľ oprávnený vykonávať. V prostredí webových aplikácií sa tieto mechanizmy
+zvyčajne realizujú pomocou používateľských účtov, rolí a oprávnení.
+V e-shop systéme so zameraním na predaj zbraní je potrebné rozlišovať viaceré typy používateľov:
+• Neregistrovaný používateľ – prehliadanie katalógu,
+• Registrovaný zákazník – vytváranie objednávok, správa profilu,
+• Administrátor – správa produktov, objednávok a overovanie oprávnení.
+Autorizácia založená na rolách umožňuje obmedziť prístup k citlivým funkciám systému, ako je
+správa objednávok, evidencia zbraní alebo administratívne zásahy do systému. Správne navrhnutý
+autorizačný model znižuje riziko neoprávneného prístupu a zvyšuje bezpečnosť aplikácie.
+
+1.5.2
+
+Auditovanie a sledovanie činností
+
+Auditovanie predstavuje proces zaznamenávania vybraných udalostí a operácií v systéme. V prípade elektronického obchodu so zbraňami má auditovanie osobitný význam, keďže umožňuje spätne
+dohľadať kroky spojené s predajom, schvaľovaním objednávok a správou údajov o zbraniach.
+Auditné záznamy môžu zahŕňať:
+• vytvorenie a zmenu objednávky,
+• schválenie alebo zamietnutie objednávky administrátorom,
+• zmeny údajov o produktoch a kategóriách zbraní,
+• prihlásenia do systému a administratívne zásahy.
+23
+
+Z pohľadu návrhu systému je dôležité zabezpečiť, aby auditné záznamy boli nemenné, časovo
+označené a uchovávané po dobu potrebnú na splnenie legislatívnych požiadaviek. Auditovanie prispieva nielen k bezpečnosti, ale aj k transparentnosti systému.
+
+1.5.3
+
+Ochrana osobných údajov a GDPR
+
+Elektronický obchod spracúva osobné údaje zákazníkov, ako sú identifikačné a kontaktné údaje,
+údaje o objednávkach a v niektorých prípadoch aj informácie o oprávneniach na nadobúdanie zbraní.
+Spracovanie týchto údajov musí byť v súlade s nariadením Európskeho parlamentu a Rady (EÚ)
+2016/679 o ochrane osobných údajov (GDPR).
+Základné princípy ochrany osobných údajov zahŕňajú:
+• Minimalizáciu údajov – spracúvať len údaje nevyhnutné pre daný účel,
+• Obmedzenie účelu – používať údaje len na definované účely,
+• Bezpečné spracovanie – ochrana údajov pred neoprávneným prístupom,
+• Obmedzenie uchovávania – uchovávať údaje len po nevyhnutnú dobu.
+Pre návrh aplikácie to znamená potrebu jasne oddeliť osobné údaje od technických záznamov,
+zabezpečiť prístup k citlivým údajom len oprávneným používateľom a implementovať mechanizmy
+pre správu a prípadné vymazanie údajov v súlade s platnou legislatívou.
+
+1.5.4
+
+Bezpečnostné riziká e-shopových aplikácií
+
+Webové aplikácie elektronického obchodu čelia viacerým bezpečnostným rizikám, medzi ktoré patria napríklad neoprávnený prístup, únik dát, útoky typu SQL injection alebo Cross-Site Scripting
+(XSS).
+Základné opatrenia na minimalizáciu rizík zahŕňajú:
+• validáciu a sanitizáciu vstupných údajov,
+• používanie zabezpečených komunikačných kanálov (HTTPS),
+• obmedzenie prístupu k citlivým funkciám na základe rolí,
+• pravidelné aktualizácie použitých knižníc a frameworkov.
+V kontexte e-shopu so zameraním na predaj zbraní je dôležité venovať zvýšenú pozornosť ochrane
+administrátorského rozhrania a spracovaniu údajov, ktoré môžu mať právne dôsledky.
+24
+
+1.5.5
+
+Zhrnutie
+
+Bezpečnosť a ochrana osobných údajov predstavujú neoddeliteľnú súčasť návrhu elektronického obchodu so zbraňami. Správne navrhnuté mechanizmy autentifikácie, autorizácie a auditovania zvyšujú dôveryhodnosť systému a znižujú riziko zneužitia. Dodržiavanie princípov GDPR je nevyhnutné
+nielen z legislatívneho hľadiska, ale aj z pohľadu ochrany používateľov a dlhodobej udržateľnosti
+systému.
+
+25
+

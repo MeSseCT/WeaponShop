@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>WeaponShop.Web</RootNamespace>
     <AssemblyName>WeaponShop.Web</AssemblyName>
+    <UserSecretsId>weaponshop-shared-secrets</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

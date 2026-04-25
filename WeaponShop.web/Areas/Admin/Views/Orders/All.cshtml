@@ -25,7 +25,7 @@
                 </select>
             </div>
             <div class="mb-3">
-                <label class="field-label" for="searchQuery">Hledat (ID objednávky / e-mail / jméno)</label>
+                <label class="field-label" for="searchQuery">Hledat (číslo objednávky / e-mail / jméno)</label>
                 <input id="searchQuery" name="q" class="form-control" value="@Context.Request.Query["q"]" />
             </div>
         </div>
@@ -65,7 +65,7 @@
                     {
                         <tr>
                             <td>
-                                <div>#@order.Id</div>
+                                <div>@order.GetPublicOrderNumber()</div>
                                 <div class="panel-subtitle">@order.CreatedAt.ToLocalTime().ToString("g")</div>
                             </td>
                             <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
@@ -78,7 +78,7 @@
                             <td class="text-end">
                                 <div class="btn-row">
                                     <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Detail</a>
-                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Word</a>
+                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout DOC</a>
                                     <form asp-area="Admin" asp-action="DeleteHistory" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
                                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />

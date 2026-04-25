@@ -28,6 +28,7 @@ public class AccessoriesController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public IActionResult Create()
     {
         ViewData["FormMode"] = "Create";
@@ -36,13 +37,11 @@ public class AccessoriesController : Controller
 
     [ValidateAntiForgeryToken]
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(AccessoryInputModel model, CancellationToken cancellationToken)
     {
         ViewData["FormMode"] = "Create";
-        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
-        {
-            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
-        }
+        ValidateImageInputs(model);
 
         if (!ModelState.IsValid)
         {
@@ -50,15 +49,23 @@ public class AccessoriesController : Controller
         }
 
         var accessory = MapToEntity(model);
-        if (IsAdminOnly())
-        {
-            accessory.StockQuantity = 0;
-            accessory.IsAvailable = false;
-        }
 
         if (model.ImageFile is not null)
         {
             accessory.ImageFileName = await CatalogImageStorage.SaveAsync(_environment, model.ImageFile, "accessory", cancellationToken);
+        }
+
+        if (model.AdditionalImageFiles.Count > 0)
+        {
+            var sortOrder = 0;
+            foreach (var additionalImage in model.AdditionalImageFiles.Where(file => file is not null && file.Length > 0))
+            {
+                accessory.Images.Add(new AccessoryImage
+                {
+                    FileName = await CatalogImageStorage.SaveAsync(_environment, additionalImage, "accessory", cancellationToken),
+                    SortOrder = sortOrder++
+                });
+            }
         }
 
         await _accessoryService.AddAsync(accessory, cancellationToken);
@@ -94,10 +101,7 @@ public class AccessoriesController : Controller
             return NotFound();
         }
 
-        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
-        {
-            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
-        }
+        ValidateImageInputs(model);
 
         if (!ModelState.IsValid)
         {
@@ -117,9 +121,10 @@ public class AccessoriesController : Controller
             existing.Description = model.Description;
             existing.Price = model.Price;
             existing.Manufacturer = model.Manufacturer;
-            existing.StockQuantity = model.StockQuantity;
-            existing.IsAvailable = model.IsAvailable;
         }
+
+        existing.StockQuantity = model.StockQuantity;
+        existing.IsAvailable = model.IsAvailable;
 
         if (!IsSkladnikOnly())
         {
@@ -133,6 +138,37 @@ public class AccessoriesController : Controller
             {
                 CatalogImageStorage.DeleteIfExists(_environment, existing.ImageFileName);
                 existing.ImageFileName = await CatalogImageStorage.SaveAsync(_environment, model.ImageFile, "accessory", cancellationToken);
+            }
+
+            var galleryImagesToRemove = model.ExistingGalleryImages
+                .Where(image => image.Remove)
+                .Select(image => image.Id)
+                .ToHashSet();
+
+            if (galleryImagesToRemove.Count > 0)
+            {
+                var removedImages = existing.Images
+                    .Where(image => galleryImagesToRemove.Contains(image.Id))
+                    .ToList();
+
+                foreach (var removedImage in removedImages)
+                {
+                    CatalogImageStorage.DeleteIfExists(_environment, removedImage.FileName);
+                    existing.Images.Remove(removedImage);
+                }
+            }
+
+            var nextSortOrder = existing.Images.Count == 0
+                ? 0
+                : existing.Images.Max(image => image.SortOrder) + 1;
+
+            foreach (var additionalImage in model.AdditionalImageFiles.Where(file => file is not null && file.Length > 0))
+            {
+                existing.Images.Add(new AccessoryImage
+                {
+                    FileName = await CatalogImageStorage.SaveAsync(_environment, additionalImage, "accessory", cancellationToken),
+                    SortOrder = nextSortOrder++
+                });
             }
         }
 
@@ -162,6 +198,10 @@ public class AccessoriesController : Controller
         if (existing is not null)
         {
             CatalogImageStorage.DeleteIfExists(_environment, existing.ImageFileName);
+            foreach (var galleryImage in existing.Images)
+            {
+                CatalogImageStorage.DeleteIfExists(_environment, galleryImage.FileName);
+            }
         }
 
         await _accessoryService.DeleteAsync(id, cancellationToken);
@@ -191,7 +231,16 @@ public class AccessoriesController : Controller
             StockQuantity = accessory.StockQuantity,
             IsAvailable = accessory.IsAvailable,
             CurrentImagePath = CatalogImageStorage.ToPublicPath(accessory.ImageFileName),
-            HasImage = !string.IsNullOrWhiteSpace(accessory.ImageFileName)
+            HasImage = !string.IsNullOrWhiteSpace(accessory.ImageFileName),
+            ExistingGalleryImages = accessory.Images
+                .OrderBy(image => image.SortOrder)
+                .ThenBy(image => image.Id)
+                .Select(image => new AccessoryGalleryImageInputModel
+                {
+                    Id = image.Id,
+                    ImagePath = CatalogImageStorage.ToPublicPath(image.FileName) ?? string.Empty
+                })
+                .ToList()
         };
     }
 
@@ -214,5 +263,32 @@ public class AccessoriesController : Controller
     {
         model.CurrentImagePath = CatalogImageStorage.ToPublicPath(accessory.ImageFileName);
         model.HasImage = !string.IsNullOrWhiteSpace(accessory.ImageFileName);
+        model.ExistingGalleryImages = accessory.Images
+            .OrderBy(image => image.SortOrder)
+            .ThenBy(image => image.Id)
+            .Select(image => new AccessoryGalleryImageInputModel
+            {
+                Id = image.Id,
+                ImagePath = CatalogImageStorage.ToPublicPath(image.FileName) ?? string.Empty,
+                Remove = model.ExistingGalleryImages.FirstOrDefault(item => item.Id == image.Id)?.Remove ?? false
+            })
+            .ToList();
+    }
+
+    private void ValidateImageInputs(AccessoryInputModel model)
+    {
+        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
+        {
+            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
+        }
+
+        foreach (var additionalImage in model.AdditionalImageFiles.Where(file => file is not null && file.Length > 0))
+        {
+            if (!CatalogImageStorage.IsValidImage(additionalImage, out validationError))
+            {
+                ModelState.AddModelError(nameof(model.AdditionalImageFiles), validationError!);
+                break;
+            }
+        }
     }
 }

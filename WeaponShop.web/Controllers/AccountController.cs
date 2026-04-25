@@ -82,7 +82,7 @@ public class AccountController : Controller
             return Redirect(returnUrl);
         }
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToRoleLanding(principal);
     }
 
     [AllowAnonymous]
@@ -232,37 +232,26 @@ public class AccountController : Controller
             return Challenge();
         }
 
+        var originalIdCardFileName = user.IdCardFileName;
+        var originalDriverLicenseFileName = user.DriverLicenseFileName;
+        var originalDocumentsUpdatedAt = user.DocumentsUpdatedAt;
+        var originalUploadWindowStartedAtUtc = user.DocumentsUploadWindowStartedAtUtc;
+        var originalUploadCount = user.DocumentsUploadCount;
+        var savedDocuments = new List<SavedDocument>();
+
         if (model.IdCardFile is null && model.DriverLicenseFile is null)
         {
             ModelState.AddModelError(string.Empty, "Nahrajte alespoň jeden doklad.");
         }
 
-        if (model.IdCardFile is not null || model.DriverLicenseFile is not null)
+        if (model.IdCardFile is not null && !TryValidateDocument(model.IdCardFile))
         {
-            if (!await TryConsumeDocumentUploadSlotAsync(user))
-            {
-                return View("Profile", BuildProfileViewModel(user));
-            }
+            return View("Profile", BuildProfileViewModel(user));
         }
 
-        if (model.IdCardFile is not null)
+        if (model.DriverLicenseFile is not null && !TryValidateDocument(model.DriverLicenseFile))
         {
-            if (!TryValidateDocument(model.IdCardFile))
-            {
-                return View("Profile", BuildProfileViewModel(user));
-            }
-
-            user.IdCardFileName = await SaveDocumentAsync(user.Id, model.IdCardFile, "idcard", cancellationToken);
-        }
-
-        if (model.DriverLicenseFile is not null)
-        {
-            if (!TryValidateDocument(model.DriverLicenseFile))
-            {
-                return View("Profile", BuildProfileViewModel(user));
-            }
-
-            user.DriverLicenseFileName = await SaveDocumentAsync(user.Id, model.DriverLicenseFile, "driverlicense", cancellationToken);
+            return View("Profile", BuildProfileViewModel(user));
         }
 
         if (!ModelState.IsValid)
@@ -270,15 +259,74 @@ public class AccountController : Controller
             return View("Profile", BuildProfileViewModel(user));
         }
 
-        user.DocumentsUpdatedAt = DateTimeOffset.UtcNow;
-        var updateResult = await _userManager.UpdateAsync(user);
-        if (!updateResult.Succeeded)
+        if (!TryReserveDocumentUploadSlot(user))
         {
-            foreach (var error in updateResult.Errors)
+            return View("Profile", BuildProfileViewModel(user));
+        }
+
+        try
+        {
+            if (model.IdCardFile is not null)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                var idCardDocument = await SaveDocumentAsync(user.Id, model.IdCardFile, "idcard", cancellationToken);
+                savedDocuments.Add(idCardDocument);
+                user.IdCardFileName = idCardDocument.FileName;
             }
 
+            if (model.DriverLicenseFile is not null)
+            {
+                var driverLicenseDocument = await SaveDocumentAsync(user.Id, model.DriverLicenseFile, "driverlicense", cancellationToken);
+                savedDocuments.Add(driverLicenseDocument);
+                user.DriverLicenseFileName = driverLicenseDocument.FileName;
+            }
+
+            user.DocumentsUpdatedAt = DateTimeOffset.UtcNow;
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                DeleteSavedDocuments(savedDocuments);
+                RestoreDocumentState(
+                    user,
+                    originalIdCardFileName,
+                    originalDriverLicenseFileName,
+                    originalDocumentsUpdatedAt,
+                    originalUploadWindowStartedAtUtc,
+                    originalUploadCount);
+
+                foreach (var error in updateResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                return View("Profile", BuildProfileViewModel(user));
+            }
+
+            DeleteStoredDocument(user.Id, originalIdCardFileName, user.IdCardFileName);
+            DeleteStoredDocument(user.Id, originalDriverLicenseFileName, user.DriverLicenseFileName);
+        }
+        catch (OperationCanceledException)
+        {
+            DeleteSavedDocuments(savedDocuments);
+            RestoreDocumentState(
+                user,
+                originalIdCardFileName,
+                originalDriverLicenseFileName,
+                originalDocumentsUpdatedAt,
+                originalUploadWindowStartedAtUtc,
+                originalUploadCount);
+            throw;
+        }
+        catch (Exception)
+        {
+            DeleteSavedDocuments(savedDocuments);
+            RestoreDocumentState(
+                user,
+                originalIdCardFileName,
+                originalDriverLicenseFileName,
+                originalDocumentsUpdatedAt,
+                originalUploadWindowStartedAtUtc,
+                originalUploadCount);
+            ModelState.AddModelError(string.Empty, "Doklady se nepodařilo uložit. Zkuste to prosím znovu.");
             return View("Profile", BuildProfileViewModel(user));
         }
 
@@ -349,13 +397,6 @@ public class AccountController : Controller
         return File(bytes, contentType);
     }
 
-    [Authorize(Roles = "Customer")]
-    [HttpGet]
-    public IActionResult Notifications()
-    {
-        return RedirectToAction("Index", "Orders");
-    }
-
     private bool TryValidateDocument(IFormFile file)
     {
         var extension = Path.GetExtension(file.FileName);
@@ -380,7 +421,7 @@ public class AccountController : Controller
         return true;
     }
 
-    private async Task<string> SaveDocumentAsync(
+    private async Task<SavedDocument> SaveDocumentAsync(
         string userId,
         IFormFile file,
         string prefix,
@@ -400,7 +441,7 @@ public class AccountController : Controller
         var protectedBytes = _documentProtector.Protect(buffer.ToArray());
         await System.IO.File.WriteAllBytesAsync(filePath, protectedBytes, cancellationToken);
 
-        return fileName;
+        return new SavedDocument(fileName, filePath);
     }
 
     private string GetUserDocumentsDirectory(string userId)
@@ -523,7 +564,27 @@ public class AccountController : Controller
         return age >= 18;
     }
 
-    private async Task<bool> TryConsumeDocumentUploadSlotAsync(ApplicationUser user)
+    private IActionResult RedirectToRoleLanding(ClaimsPrincipal principal)
+    {
+        if (principal.IsInRole("Admin"))
+        {
+            return RedirectToAction("Index", "Orders", new { area = "Admin" });
+        }
+
+        if (principal.IsInRole("Skladnik"))
+        {
+            return RedirectToAction("Index", "Orders", new { area = "Warehouse" });
+        }
+
+        if (principal.IsInRole("Zbrojir"))
+        {
+            return RedirectToAction("Index", "Orders", new { area = "Gunsmith" });
+        }
+
+        return RedirectToAction("Index", "Home");
+    }
+
+    private bool TryReserveDocumentUploadSlot(ApplicationUser user)
     {
         var now = DateTimeOffset.UtcNow;
         var today = DateOnly.FromDateTime(now.UtcDateTime);
@@ -542,17 +603,63 @@ public class AccountController : Controller
         }
 
         user.DocumentsUploadCount += 1;
-        var updateResult = await _userManager.UpdateAsync(user);
-        if (!updateResult.Succeeded)
-        {
-            foreach (var error in updateResult.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            return false;
-        }
-
         return true;
     }
+
+    private void RestoreDocumentState(
+        ApplicationUser user,
+        string? idCardFileName,
+        string? driverLicenseFileName,
+        DateTimeOffset? documentsUpdatedAt,
+        DateTimeOffset? documentsUploadWindowStartedAtUtc,
+        int documentsUploadCount)
+    {
+        user.IdCardFileName = idCardFileName;
+        user.DriverLicenseFileName = driverLicenseFileName;
+        user.DocumentsUpdatedAt = documentsUpdatedAt;
+        user.DocumentsUploadWindowStartedAtUtc = documentsUploadWindowStartedAtUtc;
+        user.DocumentsUploadCount = documentsUploadCount;
+    }
+
+    private void DeleteSavedDocuments(IEnumerable<SavedDocument> savedDocuments)
+    {
+        foreach (var savedDocument in savedDocuments)
+        {
+            try
+            {
+                if (System.IO.File.Exists(savedDocument.FilePath))
+                {
+                    System.IO.File.Delete(savedDocument.FilePath);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup failures and keep the original upload error visible to the user.
+            }
+        }
+    }
+
+    private void DeleteStoredDocument(string userId, string? previousFileName, string? currentFileName)
+    {
+        if (string.IsNullOrWhiteSpace(previousFileName) ||
+            string.Equals(previousFileName, currentFileName, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var previousFilePath = Path.Combine(GetUserDocumentsDirectory(userId), previousFileName);
+        try
+        {
+            if (System.IO.File.Exists(previousFilePath))
+            {
+                System.IO.File.Delete(previousFilePath);
+            }
+        }
+        catch
+        {
+            // The new document is already persisted. Keep the request successful even if old file cleanup fails.
+        }
+    }
+
+    private sealed record SavedDocument(string FileName, string FilePath);
 }

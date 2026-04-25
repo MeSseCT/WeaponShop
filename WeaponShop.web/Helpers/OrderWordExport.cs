@@ -10,17 +10,17 @@ public static class OrderWordExport
         var sb = new StringBuilder();
         sb.Append(@"{\rtf1\ansi\deff0{\fonttbl{\f0 Calibri;}}\fs24");
 
-        AppendLine(sb, $"Objednavka #{order.Id}");
+        AppendLine(sb, $"Objednávka {order.GetPublicOrderNumber()}");
         AppendLine(sb, $"Stav: {CatalogPresentation.GetStatusLabel(order.Status)}");
-        AppendLine(sb, $"Vytvoreno: {order.CreatedAt.ToLocalTime():g}");
-        AppendLine(sb, $"Zakaznik: {order.User?.FirstName} {order.User?.LastName} ({order.User?.Email})");
+        AppendLine(sb, $"Vytvořeno: {order.CreatedAt.ToLocalTime():g}");
+        AppendLine(sb, $"Zákazník: {order.User?.FirstName} {order.User?.LastName} ({order.User?.Email})");
         AppendLine(sb, $"Kontakt: {order.ContactEmail} / {order.ContactPhone}");
-        AppendLine(sb, $"Doruceni: {(order.DeliveryMethod == "shipping" ? "Doruceni na adresu" : "Osobni odber")}");
+        AppendLine(sb, $"Doručení: {(order.DeliveryMethod == "shipping" ? "Doručení na adresu" : "Osobní odběr")}");
         AppendLine(sb, $"Platba: {ResolvePaymentLabel(order.PaymentMethod)}");
         AppendLine(sb, $"Celkem: {order.TotalPrice:C}");
         sb.Append(@"\par ");
 
-        AppendLine(sb, "Polozky:");
+        AppendLine(sb, "Položky:");
         foreach (var item in order.Items)
         {
             var name = item.GetDisplayName();
@@ -33,10 +33,12 @@ public static class OrderWordExport
         foreach (var audit in order.Audits.OrderByDescending(a => a.OccurredAtUtc))
         {
             var when = audit.OccurredAtUtc.ToLocalTime().ToString("g");
-            AppendLine(sb, $"{when} - {audit.ActorRole} {audit.ActorName}: {audit.Action} ({audit.FromStatus} -> {audit.ToStatus})");
+            AppendLine(
+                sb,
+                $"{when} - {CatalogPresentation.GetActorRoleLabel(audit.ActorRole)} {audit.ActorName}: {CatalogPresentation.GetAuditActionLabel(audit.Action)} ({CatalogPresentation.GetStatusLabel(audit.FromStatus)} -> {CatalogPresentation.GetStatusLabel(audit.ToStatus)})");
             if (!string.IsNullOrWhiteSpace(audit.Notes))
             {
-                AppendLine(sb, $"Poznamka: {audit.Notes}");
+                AppendLine(sb, $"Poznámka: {audit.Notes}");
             }
         }
 
@@ -62,9 +64,9 @@ public static class OrderWordExport
     {
         return paymentMethod switch
         {
-            "cash-on-delivery" => "Dobirka",
-            "cash-on-pickup" => "Platba pri prevzeti",
-            _ => "Bankovni prevod"
+            "cash-on-delivery" => "Dobírka",
+            "cash-on-pickup" => "Platba při převzetí",
+            _ => "Bankovní převod"
         };
     }
 }

@@ -8,7 +8,10 @@
         </div>
         <div class="btn-row">
             <a class="btn-soft" asp-controller="Accessories" asp-action="Index">Správa doplňků</a>
-            <a class="btn-modern" asp-action="Create">Přidat zbraň</a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="btn-modern" asp-action="Create">Přidat zbraň</a>
+            }
         </div>
     </div>
 

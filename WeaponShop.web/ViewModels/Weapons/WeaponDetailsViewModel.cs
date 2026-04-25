@@ -6,6 +6,7 @@ public class WeaponDetailsViewModel
 {
     public Weapon Weapon { get; set; } = new();
     public string ImagePath { get; set; } = string.Empty;
+    public IReadOnlyList<string> ImagePaths { get; set; } = Array.Empty<string>();
     public bool CanAddToCart { get; set; }
     public bool CanViewRestrictedCatalog { get; set; }
     public IReadOnlyList<StoreCatalogItemViewModel> RelatedProducts { get; set; } = Array.Empty<StoreCatalogItemViewModel>();

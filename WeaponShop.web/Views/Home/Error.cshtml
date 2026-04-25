@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Chyba aplikace";
+    var originalPath = ViewData["OriginalPath"] as string;
+}
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Nastala neočekávaná chyba</h2>
+            <p class="panel-subtitle">Požadovanou stránku se teď nepodařilo načíst. Zkuste akci zopakovat za chvíli.</p>
+        </div>
+        <a class="btn-soft" asp-controller="Home" asp-action="Index">Zpět na úvod</a>
+    </div>
+
+    <div class="data-empty">
+        @if (!string.IsNullOrWhiteSpace(originalPath))
+        {
+            <span>Poslední zpracovávaná adresa: <strong>@originalPath</strong></span>
+        }
+        else
+        {
+            <span>Došlo k chybě při zpracování požadavku.</span>
+        }
+    </div>
+</section>

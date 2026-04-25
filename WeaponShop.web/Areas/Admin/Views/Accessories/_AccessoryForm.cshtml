@@ -3,7 +3,7 @@
     var isCreate = (ViewData["FormMode"] as string) == "Create";
     var isSkladnikOnly = User.IsInRole("Skladnik") && !User.IsInRole("Admin");
     var showCatalogFields = !isSkladnikOnly || isCreate;
-    var showInventoryFields = isSkladnikOnly || !isCreate;
+    var showInventoryFields = true;
 }
 
 @if (showCatalogFields)
@@ -44,6 +44,12 @@
         <span asp-validation-for="ImageFile" class="text-danger"></span>
     </div>
 
+    <div class="mb-3">
+        <label asp-for="AdditionalImageFiles" class="field-label">Další obrázky produktu</label>
+        <input asp-for="AdditionalImageFiles" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="form-control" />
+        <span asp-validation-for="AdditionalImageFiles" class="text-danger"></span>
+    </div>
+
     @if (Model.HasImage && !string.IsNullOrWhiteSpace(Model.CurrentImagePath))
     {
         <div class="image-admin-preview mb-3">
@@ -57,6 +63,27 @@
             </div>
         </div>
     }
+
+    @if (Model.ExistingGalleryImages.Count > 0)
+    {
+        <div class="mb-4">
+            <label class="field-label">Galerie produktu</label>
+            <div class="image-admin-gallery">
+                @for (var i = 0; i < Model.ExistingGalleryImages.Count; i++)
+                {
+                    <div class="image-admin-gallery-card">
+                        <input asp-for="ExistingGalleryImages[i].Id" type="hidden" />
+                        <input asp-for="ExistingGalleryImages[i].ImagePath" type="hidden" />
+                        <img src="@Model.ExistingGalleryImages[i].ImagePath" alt="@Model.Name" />
+                        <div class="form-check">
+                            <input asp-for="ExistingGalleryImages[i].Remove" class="form-check-input" />
+                            <label asp-for="ExistingGalleryImages[i].Remove" class="form-check-label">Odstranit</label>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 }
 else
 {
@@ -67,6 +94,12 @@ else
     <input type="hidden" asp-for="Description" />
     <input type="hidden" asp-for="CurrentImagePath" />
     <input type="hidden" asp-for="HasImage" />
+    @for (var i = 0; i < Model.ExistingGalleryImages.Count; i++)
+    {
+        <input asp-for="ExistingGalleryImages[i].Id" type="hidden" />
+        <input asp-for="ExistingGalleryImages[i].ImagePath" type="hidden" />
+        <input asp-for="ExistingGalleryImages[i].Remove" type="hidden" />
+    }
 }
 
 @if (showInventoryFields)

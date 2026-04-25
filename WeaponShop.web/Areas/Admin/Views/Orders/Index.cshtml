@@ -46,7 +46,7 @@
                     {
                         <tr>
                             <td>
-                                <div>#@order.Id</div>
+                                <div>@order.GetPublicOrderNumber()</div>
                                 <div class="panel-subtitle">@order.CreatedAt.ToLocalTime().ToString("g")</div>
                             </td>
                             <td>
@@ -83,16 +83,16 @@
                                     var driverLicenseDownloadUrl = Url.Action("DownloadDocument", "Account", new { area = "", userId = order.UserId, type = "driverlicense" });
                                     <button type="button"
                                             class="btn-inline doc-open"
-                                            data-doc-title="Řidičský průkaz"
+                                            data-doc-title="Nákupní povolení"
                                             data-doc-kind="@(driverLicenseIsPdf ? "pdf" : "image")"
                                             data-doc-url="@driverLicenseViewUrl"
                                             data-doc-download="@driverLicenseDownloadUrl">
-                                        Zobrazit ŘP
+                                        Zobrazit povolení
                                     </button>
                                 }
                                 else
                                 {
-                                    <span class="panel-subtitle">Řidičský průkaz chybí</span>
+                                    <span class="panel-subtitle">Nákupní povolení chybí</span>
                                 }
                             </td>
                             <td>
@@ -106,7 +106,7 @@
                                     {
                                         <div class="panel-subtitle">
                                             @audit.OccurredAtUtc.ToLocalTime().ToString("g") -
-                                            @audit.ActorRole @audit.ActorName: @audit.Action
+                                            @audit.ActorName: @CatalogPresentation.GetAuditActionLabel(audit.Action)
                                         </div>
                                     }
                                 }

@@ -16,8 +16,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-                               ?? "Host=localhost;Port=5432;Database=weaponshop;Username=weaponshop;Password=weaponshop_dev_password;Include Error Detail=true";
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Chybí connection string 'DefaultConnection'. Nastavte ho přes dotnet user-secrets nebo environment variable ConnectionStrings__DefaultConnection.");
+        }
 
         services.AddDbContext<AppDbContext>(options =>
         {
@@ -35,7 +39,8 @@ public static class DependencyInjection
                 options.User.RequireUniqueEmail = true;
             })
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
 
         services.AddScoped<IWeaponRepository, WeaponRepository>();
         services.AddScoped<IAccessoryRepository, AccessoryRepository>();
@@ -43,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IEmailSender, Services.SmtpEmailSender>();
+        services.AddScoped<IInvoiceDocumentService, Services.InvoiceDocumentService>();
 
         return services;
     }

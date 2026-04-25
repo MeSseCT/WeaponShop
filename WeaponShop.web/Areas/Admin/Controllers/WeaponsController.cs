@@ -28,6 +28,7 @@ public class WeaponsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public IActionResult Create()
     {
         ViewData["FormMode"] = "Create";
@@ -36,13 +37,11 @@ public class WeaponsController : Controller
 
     [ValidateAntiForgeryToken]
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(WeaponInputModel model, CancellationToken cancellationToken)
     {
         ViewData["FormMode"] = "Create";
-        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
-        {
-            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
-        }
+        ValidateImageInputs(model);
 
         if (!ModelState.IsValid)
         {
@@ -50,15 +49,23 @@ public class WeaponsController : Controller
         }
 
         var weapon = MapToEntity(model);
-        if (IsAdminOnly())
-        {
-            weapon.StockQuantity = 0;
-            weapon.IsAvailable = false;
-        }
 
         if (model.ImageFile is not null)
         {
             weapon.ImageFileName = await CatalogImageStorage.SaveAsync(_environment, model.ImageFile, "weapon", cancellationToken);
+        }
+
+        if (model.AdditionalImageFiles.Count > 0)
+        {
+            var sortOrder = 0;
+            foreach (var additionalImage in model.AdditionalImageFiles.Where(file => file is not null && file.Length > 0))
+            {
+                weapon.Images.Add(new WeaponImage
+                {
+                    FileName = await CatalogImageStorage.SaveAsync(_environment, additionalImage, "weapon", cancellationToken),
+                    SortOrder = sortOrder++
+                });
+            }
         }
 
         await _weaponService.AddAsync(weapon, cancellationToken);
@@ -94,10 +101,7 @@ public class WeaponsController : Controller
             return NotFound();
         }
 
-        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
-        {
-            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
-        }
+        ValidateImageInputs(model);
 
         if (!ModelState.IsValid)
         {
@@ -119,6 +123,9 @@ public class WeaponsController : Controller
             existing.Manufacturer = model.Manufacturer;
         }
 
+        existing.StockQuantity = model.StockQuantity;
+        existing.IsAvailable = model.IsAvailable;
+
         if (!IsSkladnikOnly())
         {
             if (model.RemoveImage)
@@ -131,6 +138,37 @@ public class WeaponsController : Controller
             {
                 CatalogImageStorage.DeleteIfExists(_environment, existing.ImageFileName);
                 existing.ImageFileName = await CatalogImageStorage.SaveAsync(_environment, model.ImageFile, "weapon", cancellationToken);
+            }
+
+            var galleryImagesToRemove = model.ExistingGalleryImages
+                .Where(image => image.Remove)
+                .Select(image => image.Id)
+                .ToHashSet();
+
+            if (galleryImagesToRemove.Count > 0)
+            {
+                var removedImages = existing.Images
+                    .Where(image => galleryImagesToRemove.Contains(image.Id))
+                    .ToList();
+
+                foreach (var removedImage in removedImages)
+                {
+                    CatalogImageStorage.DeleteIfExists(_environment, removedImage.FileName);
+                    existing.Images.Remove(removedImage);
+                }
+            }
+
+            var nextSortOrder = existing.Images.Count == 0
+                ? 0
+                : existing.Images.Max(image => image.SortOrder) + 1;
+
+            foreach (var additionalImage in model.AdditionalImageFiles.Where(file => file is not null && file.Length > 0))
+            {
+                existing.Images.Add(new WeaponImage
+                {
+                    FileName = await CatalogImageStorage.SaveAsync(_environment, additionalImage, "weapon", cancellationToken),
+                    SortOrder = nextSortOrder++
+                });
             }
         }
 
@@ -160,6 +198,10 @@ public class WeaponsController : Controller
         if (existing is not null)
         {
             CatalogImageStorage.DeleteIfExists(_environment, existing.ImageFileName);
+            foreach (var galleryImage in existing.Images)
+            {
+                CatalogImageStorage.DeleteIfExists(_environment, galleryImage.FileName);
+            }
         }
 
         await _weaponService.DeleteAsync(id, cancellationToken);
@@ -169,11 +211,6 @@ public class WeaponsController : Controller
     private bool IsSkladnikOnly()
     {
         return User.IsInRole("Skladnik") && !User.IsInRole("Admin");
-    }
-
-    private bool IsAdminOnly()
-    {
-        return User.IsInRole("Admin") && !User.IsInRole("Skladnik");
     }
 
     private static WeaponInputModel MapToInputModel(Weapon weapon)
@@ -189,7 +226,16 @@ public class WeaponsController : Controller
             StockQuantity = weapon.StockQuantity,
             IsAvailable = weapon.IsAvailable,
             CurrentImagePath = CatalogImageStorage.ToPublicPath(weapon.ImageFileName),
-            HasImage = !string.IsNullOrWhiteSpace(weapon.ImageFileName)
+            HasImage = !string.IsNullOrWhiteSpace(weapon.ImageFileName),
+            ExistingGalleryImages = weapon.Images
+                .OrderBy(image => image.SortOrder)
+                .ThenBy(image => image.Id)
+                .Select(image => new WeaponGalleryImageInputModel
+                {
+                    Id = image.Id,
+                    ImagePath = CatalogImageStorage.ToPublicPath(image.FileName) ?? string.Empty
+                })
+                .ToList()
         };
     }
 
@@ -212,5 +258,32 @@ public class WeaponsController : Controller
     {
         model.CurrentImagePath = CatalogImageStorage.ToPublicPath(weapon.ImageFileName);
         model.HasImage = !string.IsNullOrWhiteSpace(weapon.ImageFileName);
+        model.ExistingGalleryImages = weapon.Images
+            .OrderBy(image => image.SortOrder)
+            .ThenBy(image => image.Id)
+            .Select(image => new WeaponGalleryImageInputModel
+            {
+                Id = image.Id,
+                ImagePath = CatalogImageStorage.ToPublicPath(image.FileName) ?? string.Empty,
+                Remove = model.ExistingGalleryImages.FirstOrDefault(item => item.Id == image.Id)?.Remove ?? false
+            })
+            .ToList();
+    }
+
+    private void ValidateImageInputs(WeaponInputModel model)
+    {
+        if (!CatalogImageStorage.IsValidImage(model.ImageFile, out var validationError))
+        {
+            ModelState.AddModelError(nameof(model.ImageFile), validationError!);
+        }
+
+        foreach (var additionalImage in model.AdditionalImageFiles.Where(file => file is not null && file.Length > 0))
+        {
+            if (!CatalogImageStorage.IsValidImage(additionalImage, out validationError))
+            {
+                ModelState.AddModelError(nameof(model.AdditionalImageFiles), validationError!);
+                break;
+            }
+        }
     }
 }

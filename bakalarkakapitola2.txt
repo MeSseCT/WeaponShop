@@ -1,0 +1,472 @@
+Kapitola 2
+
+Návrh systému
+2.1
+
+Ciele a požiadavky na systém
+
+Cieľom navrhovaného systému je vytvorenie viacvrstvovej webovej aplikácie elektronického obchodu
+so zameraním na predaj zbraní v prostredí Českej republiky. Systém musí rešpektovať legislatívne
+obmedzenia vyplývajúce zo zákona o strelných zbraniach a strelive a zároveň poskytovať štandardné
+funkcionality moderného e-commerce riešenia.
+Návrh systému vychádza z požiadavky oddelenia prezentačnej, aplikačnej a dátovej vrstvy, pričom dôraz je kladený na bezpečnosť, rozšíriteľnosť a auditovateľnosť operácií. Aplikácia je navrhnutá
+ako server-renderované riešenie postavené na platforme ASP.NET Core MVC s využitím relačnej
+databázy PostgreSQL.
+
+2.1.1
+
+Funkčné požiadavky
+
+Systém musí spĺňať nasledujúce funkčné požiadavky:
+• evidencia ponúkaných zbraní vrátane ich kategorizácie,
+• zobrazenie detailu produktu verejnému používateľovi,
+• registrácia a autentifikácia používateľov,
+• rozlíšenie používateľských rolí (Administrátor, Zákazník),
+• správa produktov prostredníctvom administrátorského rozhrania,
+• vytvorenie a správa nákupného košíka,
+• vytvorenie objednávky registrovaným používateľom,
+• evidencia položiek objednávky,
+26
+
+• správa stavu objednávky administrátorom.
+Súčasťou funkčných požiadaviek je aj implementácia mechanizmov umožňujúcich aplikáciu legislatívnych obmedzení na proces objednávky, najmä kontrolu kategórie zbrane a obmedzenie dostupnosti určitých položiek podľa oprávnenia používateľa.
+
+2.1.2
+
+Nefunkčné požiadavky
+
+Okrem funkčných požiadaviek musí systém spĺňať aj nefunkčné požiadavky určujúce kvalitatívne
+vlastnosti riešenia.
+Bezpečnosť
+Systém musí zabezpečovať autentifikáciu používateľov a autorizáciu prístupu k jednotlivým operáciám. Zápisové operácie musia byť prístupné výlučne oprávneným rolám. Údaje používateľov musia
+byť spracovávané v súlade so zásadami ochrany osobných údajov.
+Modularita a rozšíriteľnosť
+Architektúra systému musí umožňovať rozširovanie funkcionality bez zásahu do existujúcich vrstiev.
+Oddelenie doménovej logiky od prezentačnej vrstvy predstavuje základný princíp návrhu.
+Udržiavateľnosť
+Kódová základňa musí byť prehľadne štruktúrovaná a rozdelená do samostatných projektov podľa
+zodpovednosti jednotlivých vrstiev systému.
+Auditovateľnosť
+Systém musí umožňovať spätnú kontrolu vytvorených objednávok a zmien v dátach, čo je dôležité
+vzhľadom na regulovaný charakter predaja zbraní.
+
+2.2
+
+Architektonický návrh systému
+
+Navrhovaná aplikácia je realizovaná ako viacvrstvový systém, ktorého cieľom je oddeliť prezentačnú
+logiku, aplikačnú logiku, doménový model a prístup k dátam. Takéto rozdelenie znižuje vzájomnú
+závislosť jednotlivých častí systému a zvyšuje jeho udržiavateľnosť a rozšíriteľnosť.
+Riešenie je implementované ako samostatné projekty v rámci jednej solution, pričom každý
+projekt reprezentuje konkrétnu vrstvu architektúry.
+27
+
+2.2.1
+
+Prezentačná vrstva (WeaponShop.Web)
+
+Prezentačná vrstva je implementovaná pomocou frameworku ASP.NET Core MVC. Zodpovedá za
+spracovanie HTTP požiadaviek, komunikáciu s aplikačnou vrstvou a generovanie HTML odpovedí
+pre klienta.
+Táto vrstva obsahuje:
+• MVC controllery,
+• Razor Views,
+• konfiguráciu autentifikácie a autorizácie,
+• vstupný bod aplikácie.
+Prezentačná vrstva neobsahuje obchodnú logiku. Jej úlohou je delegovať požiadavky do aplikačnej vrstvy.
+
+2.2.2
+
+Aplikačná vrstva (WeaponShop.Application)
+
+Aplikačná vrstva predstavuje sprostredkovateľa medzi prezentačnou vrstvou a doménovým modelom. Obsahuje aplikačné služby, ktoré implementujú konkrétne používateľské scenáre, napríklad
+vytvorenie objednávky alebo správu produktov.
+Táto vrstva:
+• koordinuje operácie nad doménovými entitami,
+• zabezpečuje validáciu vstupov,
+• definuje aplikačné rozhrania.
+Oddelenie aplikačnej vrstvy umožňuje jednoduchšie testovanie obchodnej logiky bez závislosti
+od používateľského rozhrania.
+
+2.2.3
+
+Doménová vrstva (WeaponShop.Domain)
+
+Doménová vrstva obsahuje jadro systému. Definuje doménové entity a ich vlastnosti, ako aj vzťahy
+medzi nimi.
+Medzi hlavné entity patria:
+• Weapon,
+• ApplicationUser,
+• Order,
+28
+
+• OrderItem.
+Doménová vrstva neobsahuje žiadnu technickú infraštruktúru ani závislosť na databázovej technológii. Predstavuje čistý model obchodnej domény.
+
+2.2.4
+
+Infraštruktúrna vrstva (WeaponShop.Infrastructure)
+
+Infraštruktúrna vrstva zabezpečuje prístup k databáze a implementuje perzistenciu dát pomocou
+Entity Framework Core a relačnej databázy PostgreSQL.
+Obsahuje:
+• implementáciu DbContext,
+• konfiguráciu entít,
+• migrácie databázy,
+• implementáciu úložných mechanizmov.
+Táto vrstva je jedinou časťou systému, ktorá komunikuje priamo s databázou.
+
+2.2.5
+
+Tok požiadavky systémom
+
+Pri spracovaní používateľskej požiadavky prebieha komunikácia medzi vrstvami nasledovne:
+1. Používateľ odošle HTTP požiadavku.
+2. Controller v prezentačnej vrstve prijme požiadavku.
+3. Controller zavolá príslušnú aplikačnú službu.
+4. Aplikačná služba vykoná operácie nad doménovými entitami.
+5. Infraštruktúrna vrstva zabezpečí uloženie alebo načítanie dát z databázy.
+6. Výsledok je vrátený späť do prezentačnej vrstvy a následne používateľovi.
+Takto navrhnutá architektúra umožňuje oddelenie zodpovedností jednotlivých vrstiev a znižuje
+riziko vzniku silných závislostí medzi komponentmi systému.
+29
+
+2.2.6
+
+Technologická konfigurácia riešenia
+
+Navrhovaný systém je implementovaný na platforme .NET 8 s využitím frameworku ASP.NET Core
+MVC.
+Prezentačná vrstva je realizovaná pomocou ASP.NET Core MVC, ktorý zabezpečuje spracovanie
+HTTP požiadaviek a generovanie HTML odpovedí prostredníctvom Razor Views.
+Aplikačná vrstva je implementovaná ako samostatný projekt obsahujúci aplikačné služby a rozhrania. Komunikácia medzi vrstvami je realizovaná prostredníctvom dependency injection mechanizmu.
+Pre prístup k dátam je použitý nástroj Entity Framework Core, ktorý zabezpečuje objektovorelačné mapovanie medzi doménovým modelom a relačnou databázou.
+Ako databázový systém je použitý PostgreSQL.
+Autentifikácia a autorizácia používateľov je implementovaná pomocou frameworku ASP.NET
+Core Identity.
+Pre účely vývoja je databázový systém prevádzkovaný v kontajnerizovanom prostredí pomocou
+technológie Docker.
+
+2.2.6.1
+
+Kontajnerizácia pomocou Docker
+
+Pre účely vývoja a testovania systému je využitá technológia Docker. Docker umožňuje kontajnerizáciu aplikácie a jej závislostí, čím zabezpečuje konzistentné prostredie nezávislé od konkrétneho
+operačného systému.
+Použitie Dockeru je vhodné najmä v prostredí, kde vývoj prebieha na rôznych platformách (napr.
+macOS, Windows alebo Linux). Kontajnerizácia databázového systému PostgreSQL zabezpečuje,
+že konfigurácia databázy, verzia servera a sieťové nastavenia sú identické v každom vývojovom
+prostredí.
+Výhody použitia Dockeru v rámci projektu:
+• izolácia databázového systému od hostiteľského prostredia,
+• jednoduché nasadenie a reprodukovateľnosť prostredia,
+• možnosť rýchlej inicializácie databázy pomocou docker-compose,
+• podpora budúceho nasadenia aplikácie v cloudovom prostredí.
+V rámci riešenia je PostgreSQL prevádzkovaný ako samostatný Docker kontajner, pričom aplikačná vrstva sa pripája prostredníctvom konfigurovateľného connection stringu. Takýto prístup
+zvyšuje prenositeľnosť systému a zjednodušuje správu vývojového prostredia.
+30
+
+2.2.7
+
+Zdôvodnenie zvolených technológií
+
+Výber technologickej platformy bol realizovaný s ohľadom na požiadavky na bezpečnosť, modularitu,
+rozšíriteľnosť a dlhodobú udržiavateľnosť systému.
+Platforma .NET 8 a framework ASP.NET Core MVC boli zvolené z dôvodu natívnej podpory
+viacvrstvovej architektúry, integrovanej podpory dependency injection a vysokej úrovne bezpečnostných mechanizmov. Server-renderovaný prístup zároveň umožňuje aplikovať obchodné a legislatívne
+pravidlá priamo na strane servera pred generovaním odpovede.
+Entity Framework Core bol zvolený ako ORM nástroj umožňujúci oddelenie doménového modelu
+od databázovej implementácie. Podpora migrácií a typovo bezpečných dotazov zjednodušuje vývoj
+a znižuje riziko chýb pri práci s databázou.
+Databázový systém PostgreSQL bol vybraný z dôvodu podpory ACID transakcií, referenčnej
+integrity a vysokej spoľahlivosti. Jeho kompatibilita s platformou .NET prostredníctvom poskytovateľa Npgsql umožňuje efektívnu integráciu s ORM nástrojom.
+Framework ASP.NET Core Identity bol zvolený s cieľom minimalizovať riziko bezpečnostných
+chýb pri implementácii autentifikačných mechanizmov. Poskytuje štandardizované riešenie správy
+používateľských účtov, rolí a bezpečnostných politík.
+Technológia Docker bola použitá na zabezpečenie reprodukovateľného vývojového prostredia
+a izolácie databázového systému od hostiteľského operačného systému. Kontajnerizácia zároveň
+uľahčuje budúce nasadenie aplikácie v produkčnom alebo cloudovom prostredí.
+2.2.7.1
+
+Platforma .NET 8 a ASP.NET Core MVC
+
+Ako aplikačný framework bol zvolený ASP.NET Core MVC na platforme .NET 8. Tento framework poskytuje podporu pre tvorbu server-renderovaných webových aplikácií, ktoré sú vhodné pre
+informačné systémy s dôrazom na bezpečnosť a kontrolu nad serverovou logikou.
+Výhodou ASP.NET Core MVC je jasné oddelenie modelu, prezentačnej logiky a riadiacej logiky
+(Model-View-Controller), čo podporuje princípy viacvrstvovej architektúry. Framework zároveň poskytuje integrovanú podporu dependency injection, konfigurácie middleware a bezpečnostných mechanizmov.
+Server-renderovaný prístup bol zvolený zámerne, pretože umožňuje jednoduchšiu kontrolu nad
+spracovaním požiadaviek na strane servera a je vhodný pre aplikáciu, v ktorej je potrebné aplikovať
+legislatívne obmedzenia ešte pred odoslaním odpovede klientovi.
+2.2.7.2
+
+Entity Framework Core
+
+Pre prístup k databáze bol zvolený objektovo-relačný mapovací nástroj Entity Framework Core
+(EF Core). EF Core umožňuje mapovanie doménových entít na relačné tabuľky a podporuje prácu
+s databázou prostredníctvom LINQ dotazov.
+Výhodou EF Core je:
+31
+
+• podpora migrácií databázy,
+• typová bezpečnosť dotazov,
+• automatické generovanie parametrizovaných SQL dotazov,
+• integrácia s ASP.NET Core a dependency injection.
+Použitie ORM nástroja umožňuje oddeliť doménový model od konkrétnej databázovej implementácie a zjednodušuje budúce rozšírenie systému.
+
+2.2.7.3
+
+Databázový systém PostgreSQL
+
+Ako relačný databázový systém bol zvolený PostgreSQL. Ide o open-source databázový systém
+podporujúci transakčné spracovanie, referenčnú integritu a pokročilé dátové typy.
+PostgreSQL bol zvolený z dôvodu:
+• vysokej spoľahlivosti a stability,
+• podpory ACID transakcií,
+• dobrej integrácie s EF Core prostredníctvom poskytovateľa Npgsql,
+• možnosti nasadenia v kontajnerizovanom prostredí (Docker).
+
+2.2.7.4
+
+ASP.NET Core Identity
+
+Autentifikácia a autorizácia používateľov je realizovaná pomocou ASP.NET Core Identity. Tento
+framework poskytuje správu používateľských účtov, hashovanie hesiel, správu rolí a podporu zabezpečenia proti bežným útokom.
+Použitie hotového bezpečnostného frameworku minimalizuje riziko chýb pri implementácii autentifikačných mechanizmov a zabezpečuje dodržiavanie odporúčaných bezpečnostných postupov.
+Systém využíva model riadenia prístupu založený na rolách (RBAC), pričom sú definované
+minimálne roly Admin a Customer.
+
+2.2.8
+
+Diagram vrstiev systému
+
+Na obrázku 2.1 je znázornená architektúra systému rozdelená do štyroch vrstiev.
+32
+
+Presentation Layer
+WeaponShop.Web
+Controllers
+
+Razor Views
+
+Authentication & Authorization
+
+Dependency Injection
+
+Application Layer
+WeaponShop.Application
+
+Infrastructure Layer
+WeaponShop.Infrastructure
+
+AppDbContext
+
+IWeaponService
+
+WeaponRepository
+
+IOrderService
+
+WeaponService
+
+OrderRepository
+
+OrderService
+Entity Framework Core
+
+IWeaponRepository
+IOrderRepository
+
+PostgreSQL
+
+Domain Layer
+WeaponShop.Domain
+
+Weapon
+Order
+OrderItem
+ApplicationUser
+OrderStatus
+
+Obr. 2.1: Viacvrstvová architektúra systému
+
+Jednotlivé vrstvy komunikujú výlučne prostredníctvom definovaných rozhraní, čím je zabezpečené oddelenie zodpovedností a minimalizácia vzájomných závislostí. Prezentačná vrstva nemá
+33
+
+priamy prístup k databáze, ale využíva služby aplikačnej vrstvy. Infraštruktúrna vrstva implementuje rozhrania definované v aplikačnej vrstve a zabezpečuje komunikáciu s databázovým systémom.
+
+2.3
+
+Dátový model systému
+
+Dátový model systému predstavuje formálnu štruktúru údajov, s ktorými aplikácia pracuje. Návrh
+dátového modelu vychádza z požiadaviek na elektronický obchod so zbraňami a zároveň zohľadňuje
+legislatívne obmedzenia vyplývajúce zo zákona o zbraniach.
+Model je implementovaný pomocou Entity Framework Core nad relačnou databázou PostgreSQL.
+
+2.3.1
+
+Entita Weapon
+
+Entita Weapon reprezentuje produkt ponúkaný v elektronickom obchode. Vzhľadom na špecifiká
+domény je produkt modelovaný priamo ako zbraň, nie ako všeobecná entita typu „Product“.
+Základné atribúty entity:
+• Id – jednoznačný identifikátor záznamu,
+• Name – názov zbrane,
+• Description – popis produktu,
+• Price – predajná cena,
+• Category – kategória zbrane (A, B, C, C-I, D),
+• Caliber – kaliber zbrane,
+• Manufacturer – výrobca,
+• StockQuantity – počet kusov na sklade.
+Atribút Category je kľúčový z hľadiska legislatívnej logiky, pretože ovplyvňuje podmienky predaja.
+
+2.3.2
+
+Entita ApplicationUser
+
+Používatelia systému sú reprezentovaní entitou ApplicationUser, ktorá rozširuje štandardnú implementáciu ASP.NET Core Identity.
+Entita obsahuje:
+• identifikačné údaje používateľa,
+• autentifikačné údaje,
+34
+
+• väzbu na používateľské roly (Admin, Customer).
+Používateľ môže vystupovať v systéme ako zákazník alebo administrátor.
+
+2.3.3
+
+Entita Order
+
+Entita Order reprezentuje objednávku vytvorenú zákazníkom. Objednávka vzniká ako výsledok
+nákupného procesu a predstavuje záväzný obchodný vzťah medzi zákazníkom a predajcom.
+Navrhované atribúty entity:
+• Id – identifikátor objednávky,
+• UserId – referencia na používateľa,
+• CreatedAt – dátum vytvorenia objednávky,
+• Status – aktuálny stav objednávky,
+• TotalPrice – celková suma objednávky.
+Stav objednávky môže nadobúdať hodnoty napríklad:
+• Created,
+• AwaitingApproval,
+• Approved,
+• Rejected,
+• Completed.
+
+2.3.4
+
+Entita OrderItem
+
+Entita OrderItem predstavuje jednotlivú položku objednávky. Umožňuje evidovať viacero zbraní v
+rámci jednej objednávky.
+Navrhované atribúty:
+• Id – identifikátor položky,
+• OrderId – referencia na objednávku,
+• WeaponId – referencia na zbraň,
+• Quantity – počet kusov,
+• UnitPrice – cena za kus v čase objednávky.
+Ukladanie ceny v čase objednávky zabezpečuje konzistenciu historických údajov aj v prípade
+neskoršej zmeny ceny produktu.
+35
+
+2.3.5
+
+Vzťahy medzi entitami
+
+Medzi entitami existujú nasledujúce vzťahy:
+• Jeden používateľ môže mať viacero objednávok (1:N).
+• Jedna objednávka obsahuje viacero položiek objednávky (1:N).
+• Jedna položka objednávky sa viaže na jednu zbraň (N:1).
+Takto navrhnutý dátový model umožňuje flexibilnú správu objednávok, historickú evidenciu
+transakcií a zároveň rešpektuje požiadavky na jednoznačnú identifikáciu konkrétnej zbrane v rámci
+obchodného procesu.
+
+2.3.6
+
+Formálne obmedzenia a integritné pravidlá
+
+Formálna definícia vzťahov medzi entitami je realizovaná prostredníctvom primárnych a cudzích
+kľúčov.
+Primárne kľúče:
+• Weapon.Id
+• ApplicationUser.Id
+• Order.Id
+• OrderItem.Id
+Cudzie kľúče:
+• Order.UserId → ApplicationUser.Id
+• OrderItem.OrderId → Order.Id
+• OrderItem.WeaponId → Weapon.Id
+Na úrovni položiek objednávky je definované unikátne obmedzenie nad dvojicou (OrderId, WeaponId), ktoré zabezpečuje, že jedna konkrétna zbraň sa v rámci jednej objednávky nemôže vyskytovať viackrát ako samostatná položka.
+Atribút Category v entite Weapon je implementovaný ako výčtový typ (enum), ktorý nadobúda
+hodnoty A, B, C, C-I alebo D. Podobne atribút Status v entite Order je implementovaný ako enum
+s hodnotami Created, AwaitingApproval, Approved, Rejected a Completed.
+Celková cena objednávky (TotalPrice) je odvodená hodnota vypočítaná ako súčet súčinov Quantity a UnitPrice všetkých položiek objednávky. Táto hodnota je ukladaná z dôvodu optimalizácie
+a zachovania historickej konzistencie údajov.
+Pri zmene stavu objednávky na Completed dochádza k zníženiu skladového množstva príslušnej
+zbrane (StockQuantity). Toto pravidlo je realizované na aplikačnej úrovni.
+36
+
+2.3.7
+
+Aplikačná logika systému
+
+Aplikačná vrstva systému zabezpečuje implementáciu obchodnej logiky a koordináciu medzi prezentačnou vrstvou a dátovou vrstvou. V súlade s princípmi viacvrstvovej architektúry neobsahuje
+prezentačná vrstva priamu prácu s databázou, ale využíva služby definované v aplikačnej vrstve.
+2.3.7.1
+
+Služba OrderService
+
+Obchodná logika objednávok je implementovaná v triede OrderService. Táto služba zodpovedá za:
+• vytvorenie novej objednávky,
+• pridanie položky do objednávky,
+• prepočet celkovej ceny objednávky,
+• zmenu stavu objednávky.
+Pri vytvorení objednávky je inicializovaný dátum vytvorenia a stav objednávky je nastavený
+na hodnotu Created. Celková cena je vypočítavaná dynamicky na základe súčtu cien jednotlivých
+položiek.
+Metóda pre pridanie položky do objednávky kontroluje existenciu objednávky aj zbrane a zabraňuje pridaniu neplatného množstva. V prípade, že objednávka už obsahuje danú zbraň, dochádza k
+aktualizácii množstva namiesto vytvorenia duplicitnej položky.
+2.3.7.2
+
+Výpočet celkovej ceny objednávky
+
+Celková cena objednávky je definovaná ako:
+T otalP rice =
+
+∑︂
+
+(U nitP rice × Quantity)
+
+Tento výpočet je realizovaný na aplikačnej úrovni, čím je zabezpečená konzistencia obchodných
+pravidiel bez závislosti na databázových triggéroch.
+2.3.7.3
+
+Stavový model objednávky
+
+Objednávka môže nadobúdať niekoľko stavov reprezentovaných enumeráciou OrderStatus:
+• Created,
+• AwaitingApproval,
+• Approved,
+• Rejected,
+37
+
+• Completed.
+Tento stavový model umožňuje implementáciu schvaľovacieho procesu, ktorý je dôležitý najmä
+pri predaji regulovaného tovaru, akým sú zbrane.
+
+2.3.8
+
+Bezpečnostný model systému
+
+Bezpečnostný model systému je postavený na platforme ASP.NET Core Identity. Autentifikácia
+používateľov je zabezpečená prostredníctvom Identity frameworku, ktorý poskytuje správu používateľských účtov, hesiel a rolí.
+Systém využíva role-based prístup (RBAC), pričom sú definované minimálne dve roly:
+• Admin – správa produktov a objednávok,
+• Customer – vytváranie objednávok.
+Autorizácia je riešená na úrovni aplikačnej vrstvy a prezentačnej vrstvy prostredníctvom atribútov a kontrol rolí.
+Databázová vrstva je chránená prostredníctvom parametrizovaných dotazov generovaných Entity
+Framework Core, čím je eliminované riziko SQL injection útokov.
+Citlivé údaje používateľov sú ukladané v súlade s princípom minimalizácie údajov.
+
+38
+
+

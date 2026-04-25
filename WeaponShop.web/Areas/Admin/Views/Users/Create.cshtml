@@ -1,0 +1,59 @@
+@model WeaponShop.Web.ViewModels.Admin.StaffUserCreateViewModel
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <h2>Vytvořit interní účet</h2>
+            <p class="panel-subtitle">Administrátor může zakládat účty pro roli Admin, Skladnik a Zbrojir.</p>
+        </div>
+        <a class="btn-soft" asp-action="Index">Zpět na seznam</a>
+    </div>
+
+    <form method="post" class="form-shell">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="FirstName" class="field-label"></label>
+            <input asp-for="FirstName" class="form-control" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LastName" class="field-label"></label>
+            <input asp-for="LastName" class="form-control" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="field-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Role" class="field-label"></label>
+            <select asp-for="Role" class="form-control">
+                <option value="Admin">Admin</option>
+                <option value="Skladnik">Skladnik</option>
+                <option value="Zbrojir">Zbrojir</option>
+            </select>
+            <span asp-validation-for="Role" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="field-label"></label>
+            <input asp-for="Password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="ConfirmPassword" class="field-label"></label>
+            <input asp-for="ConfirmPassword" class="form-control" />
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <div class="filter-actions filter-actions-classic">
+            <button type="submit" class="btn-modern">Vytvořit účet</button>
+        </div>
+    </form>
+</section>

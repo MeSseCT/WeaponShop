@@ -9,6 +9,11 @@
         <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Zpět do katalogu</a>
     </div>
 
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="data-empty">@errorMessage</div>
+    }
+
     @if (Model.Count == 0)
     {
         <div class="data-empty">Zatím nemáte žádné odeslané objednávky.</div>
@@ -31,7 +36,7 @@
                     @foreach (var order in Model)
                     {
                         <tr>
-                            <td>#@order.Id</td>
+                            <td>@order.GetPublicOrderNumber()</td>
                             <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
                             <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
                             <td class="text-end">@order.Items.Count</td>

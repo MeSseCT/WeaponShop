@@ -57,9 +57,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseExceptionHandler("/Error");
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 

@@ -22,19 +22,19 @@ public static class CatalogImageStorage
         var extension = Path.GetExtension(file.FileName);
         if (!AllowedExtensions.Contains(extension))
         {
-            validationError = "Allowed image formats: JPG, JPEG, PNG, WEBP.";
+            validationError = "Povolené formáty obrázků jsou JPG, JPEG, PNG a WEBP.";
             return false;
         }
 
         if (file.Length <= 0)
         {
-            validationError = "Uploaded image is empty.";
+            validationError = "Nahraný obrázek je prázdný.";
             return false;
         }
 
         if (file.Length > MaxImageSizeBytes)
         {
-            validationError = "Image size cannot exceed 5 MB.";
+            validationError = "Velikost obrázku nesmí překročit 5 MB.";
             return false;
         }
 

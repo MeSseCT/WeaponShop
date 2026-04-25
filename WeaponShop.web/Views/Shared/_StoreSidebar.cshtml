@@ -1,4 +1,5 @@
 @using WeaponShop.Application.Services
+@using WeaponShop.Domain
 @inject IAccessoryService AccessoryService
 @inject IWeaponService WeaponService
 @{
@@ -6,24 +7,36 @@
     var currentAccessoryCategory = ViewContext.HttpContext.Request.Query["accessoryCategory"].ToString();
     var currentLegalCategory = ViewContext.HttpContext.Request.Query["legalCategory"].ToString();
 
-    var accessories = (await AccessoryService.GetAllAsync())
-        .Where(item => item.IsAvailable)
-        .ToList();
+    var accessories = new List<Accessory>();
+    var weapons = new List<Weapon>();
+    var accessoryGroups = new List<IGrouping<string, Accessory>>();
+    var weaponGroups = new List<IGrouping<string, Weapon>>();
 
-    var weapons = (await WeaponService.GetAllAsync())
-        .Where(item => item.IsAvailable)
-        .ToList();
+    try
+    {
+        accessories = (await AccessoryService.GetAllAsync())
+            .Where(item => item.IsAvailable)
+            .ToList();
 
-    var accessoryGroups = accessories
-        .GroupBy(item => item.Category)
-        .OrderBy(group => CatalogPresentation.GetAccessoryCategorySortKey(group.Key))
-        .ThenBy(group => CatalogPresentation.GetAccessoryCategoryLabel(group.Key))
-        .ToList();
+        weapons = (await WeaponService.GetAllAsync())
+            .Where(item => item.IsAvailable)
+            .ToList();
 
-    var weaponGroups = weapons
-        .GroupBy(item => item.Category)
-        .OrderBy(group => CatalogPresentation.GetWeaponCategorySortKey(group.Key))
-        .ToList();
+        accessoryGroups = accessories
+            .GroupBy(item => item.Category)
+            .OrderBy(group => CatalogPresentation.GetAccessoryCategorySortKey(group.Key))
+            .ThenBy(group => CatalogPresentation.GetAccessoryCategoryLabel(group.Key))
+            .ToList();
+
+        weaponGroups = weapons
+            .GroupBy(item => item.Category)
+            .OrderBy(group => CatalogPresentation.GetWeaponCategorySortKey(group.Key))
+            .ToList();
+    }
+    catch
+    {
+        // Keep catalog pages renderable even if sidebar data cannot be loaded.
+    }
 }
 
 <div class="store-sidebar-box">
@@ -74,7 +87,7 @@
     </div>
 
     <div class="store-sidebar-note">
-        <strong>Pravidla nákupu</strong>
-        <p>Doplňky jsou veřejně dostupné. Pro zobrazení detailu zbraní je nutné přihlášení, věk 18+ a nahrané doklady.</p>
+        <strong>Nákup zbraní</strong>
+        <p>Doplňky jsou veřejně dostupné. Pro zobrazení zbraní je nutné přihlášení, potvrzení věku 18+ a nahrání dokladů.</p>
     </div>
 </div>

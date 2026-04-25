@@ -17,6 +17,11 @@ public class AccessoryService : IAccessoryService
         return _repository.GetAllAsync(cancellationToken);
     }
 
+    public Task<List<AccessoryNavigationItem>> GetAvailableNavigationItemsAsync(CancellationToken cancellationToken = default)
+    {
+        return _repository.GetAvailableNavigationItemsAsync(cancellationToken);
+    }
+
     public Task<Accessory?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return _repository.GetByIdAsync(id, cancellationToken);

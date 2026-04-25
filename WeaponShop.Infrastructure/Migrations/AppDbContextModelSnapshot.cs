@@ -341,6 +341,11 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("contact_phone");
 
+                    b.Property<string>("OrderNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("order_number");
+
                     b.Property<string>("CustomerNote")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -394,6 +399,9 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnName("customer_user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -501,7 +509,11 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.HasIndex("OrderId", "AccessoryId")
                         .IsUnique();
 
-                    b.ToTable("purchase_request_items", (string)null);
+                    b.ToTable("purchase_request_items", (string)null, t =>
+                        {
+                            t.HasCheckConstraint("CK_purchase_request_items_exactly_one_catalog_item", "\n(\n    (CASE WHEN weapon_id IS NULL THEN 0 ELSE 1 END) +\n    (CASE WHEN accessory_id IS NULL THEN 0 ELSE 1 END)\n) = 1");
+                            t.HasCheckConstraint("CK_purchase_request_items_quantity_positive", "quantity > 0");
+                        });
                 });
 
             modelBuilder.Entity("WeaponShop.Domain.Notification", b =>
@@ -606,6 +618,36 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.ToTable("catalog_accessories", (string)null);
                 });
 
+            modelBuilder.Entity("WeaponShop.Domain.AccessoryImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("accessory_image_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessoryId")
+                        .HasColumnType("integer")
+                        .HasColumnName("accessory_id");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)")
+                        .HasColumnName("image_file_name");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessoryId", "SortOrder");
+
+                    b.ToTable("accessory_images", (string)null);
+                });
+
             modelBuilder.Entity("WeaponShop.Domain.Weapon", b =>
                 {
                     b.Property<int>("Id")
@@ -658,6 +700,36 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("weapons", (string)null);
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.WeaponImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("weapon_image_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)")
+                        .HasColumnName("image_file_name");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<int>("WeaponId")
+                        .HasColumnType("integer")
+                        .HasColumnName("weapon_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WeaponId", "SortOrder");
+
+                    b.ToTable("weapon_images", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -776,9 +848,36 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("WeaponShop.Domain.AccessoryImage", b =>
+                {
+                    b.HasOne("WeaponShop.Domain.Accessory", "Accessory")
+                        .WithMany("Images")
+                        .HasForeignKey("AccessoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Accessory");
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.WeaponImage", b =>
+                {
+                    b.HasOne("WeaponShop.Domain.Weapon", "Weapon")
+                        .WithMany("Images")
+                        .HasForeignKey("WeaponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Weapon");
+                });
+
             modelBuilder.Entity("WeaponShop.Domain.Identity.ApplicationUser", b =>
                 {
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.Accessory", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("WeaponShop.Domain.Order", b =>
@@ -786,6 +885,11 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.Navigation("Items");
                     b.Navigation("Audits");
                     b.Navigation("Notifications");
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.Weapon", b =>
+                {
+                    b.Navigation("Images");
                 });
 #pragma warning restore 612, 618
         }

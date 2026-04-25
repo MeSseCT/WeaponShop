@@ -3,11 +3,20 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Objednávka č. @Model.Id</h2>
+            <h2>Objednávka č. @Model.GetPublicOrderNumber()</h2>
             <p class="panel-subtitle">Přehled stavu a všech aktualizací této objednávky.</p>
         </div>
-        <a class="btn-soft" asp-action="Index">Zpět na objednávky</a>
+        <div class="btn-row">
+            <a class="btn-soft" asp-action="Index">Zpět na objednávky</a>
+            <a class="btn-soft" asp-action="ViewInvoice" asp-route-id="@Model.Id" target="_blank" rel="noopener">Náhled faktury</a>
+            <a class="btn-soft" asp-action="DownloadInvoice" asp-route-id="@Model.Id">Stáhnout PDF</a>
+        </div>
     </div>
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="data-empty">@errorMessage</div>
+    }
 
     <div class="table-wrap" style="margin-bottom: 1.5rem;">
         <table class="data-grid">

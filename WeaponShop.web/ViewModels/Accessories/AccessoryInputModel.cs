@@ -40,8 +40,12 @@ public class AccessoryInputModel
     [Display(Name = "Hlavní obrázek")]
     public IFormFile? ImageFile { get; set; }
 
+    [Display(Name = "Další obrázky")]
+    public List<IFormFile> AdditionalImageFiles { get; set; } = new();
+
     [Display(Name = "Odstranit aktuální obrázek")]
     public bool RemoveImage { get; set; }
     public string? CurrentImagePath { get; set; }
     public bool HasImage { get; set; }
+    public List<AccessoryGalleryImageInputModel> ExistingGalleryImages { get; set; } = new();
 }

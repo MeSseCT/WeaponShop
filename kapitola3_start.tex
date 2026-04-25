@@ -1,0 +1,41 @@
+\chapter{Implementácia systému}
+\label{chap:implementation}
+
+Táto kapitola opisuje praktickú realizáciu navrhnutého systému elektronického obchodu so zbraňami v prostredí platformy .NET. Cieľom implementácie bolo vytvoriť funkčný prototyp webovej aplikácie, ktorý bude rešpektovať špecifiká regulovaného predaja zbraní, podporí správu verejného aj obmedzeného sortimentu a zároveň umožní spracovanie objednávok prostredníctvom viacvrstvovej architektúry.
+
+Pri implementácii bol kladený dôraz najmä na oddelenie zodpovedností medzi jednotlivými vrstvami systému, na bezpečné spracovanie používateľských údajov, na kontrolu prístupu k regulovanému tovaru a na podporu interného workflow objednávky. Výsledná aplikácia preto nepredstavuje iba jednoduchý katalóg produktov, ale systém, ktorý prepája verejný storefront, zákaznícky účet, administratívne rozhranie a interné spracovanie objednávok.
+
+\section{Vývojové prostredie a použité technológie}
+\label{sec:implementation-environment}
+
+Implementácia systému bola realizovaná na platforme .NET 8 s využitím frameworku ASP.NET Core MVC. Zvolený prístup nadväzuje na závery teoretickej časti, podľa ktorých je server-renderované riešenie vhodné pre transakčný charakter elektronického obchodu, pre spracovanie formulárov aj pre implementáciu bezpečnostných a validačných pravidiel na strane servera. Prezentačná vrstva je preto tvorená MVC kontrolérmi a Razor views, ktoré generujú HTML odpoveď priamo na serveri.
+
+Z pohľadu perzistencie dát bola použitá relačná databáza PostgreSQL a ORM nástroj Entity Framework Core. Táto kombinácia umožnila navrhnúť relačný dátový model, pracovať s migráciami databázy a súčasne zachovať objektový model domény v jazyku C\#. Výhodou tohto prístupu je aj dobrá integrácia s ostatnými časťami .NET ekosystému, najmä s autentifikáciou používateľov, dependency injection a konfiguráciou aplikácie.
+
+Na implementáciu autentifikácie a správy používateľských účtov bola použitá knižnica ASP.NET Core Identity. Používateľské účty sú rozšírené o ďalšie údaje potrebné pre overenie zákazníka, napríklad dátum narodenia a súbory s nahranými dokladmi. V rámci aplikácie sú definované roly \texttt{Customer}, \texttt{Admin}, \texttt{Skladnik} a \texttt{Zbrojir}, ktoré riadia prístup k jednotlivým častiam systému a k internému workflow objednávky.
+
+Z hľadiska štruktúry riešenia je systém rozdelený do viacerých projektov riešenia: \texttt{WeaponShop.Domain}, \texttt{WeaponShop.Application}, \texttt{WeaponShop.Infrastructure} a \texttt{WeaponShop.Web}. Toto rozdelenie zodpovedá viacvrstvovej architektúre opísanej v predchádzajúcej kapitole a umožňuje oddeliť biznis pravidlá od prezentačnej a perzistentnej vrstvy. Súčasťou implementácie sú aj databázové migrácie, seed dát a pomocné služby pre odosielanie emailov, lokalizáciu používateľského rozhrania a správu obrázkov produktov.
+
+\section{Implementácia viacvrstvovej architektúry}
+\label{sec:implementation-layered-architecture}
+
+Praktická implementácia systému vychádza z rozdelenia do štyroch základných vrstiev: doménovej, aplikačnej, infraštruktúrnej a prezentačnej. Každá z týchto vrstiev nesie vlastnú zodpovednosť a komunikuje s ostatnými vrstvami prostredníctvom jasne definovaných rozhraní. Takýto prístup znižuje previazanosti medzi časťami systému a uľahčuje budúce rozširovanie aplikácie.
+
+Doménová vrstva obsahuje základné entity systému a ich vzťahy. Medzi najdôležitejšie entity patria \texttt{Weapon}, \texttt{Accessory}, \texttt{Order}, \texttt{OrderItem}, \texttt{OrderAudit}, \texttt{Notification} a rozšírená identitná entita používateľa. Z pohľadu implementácie bolo dôležité, že model objednávky už nie je viazaný iba na zbrane, ale podporuje aj verejne dostupné doplnky. Entita \texttt{OrderItem} preto obsahuje voliteľné väzby na zbraň aj doplnok, čo umožňuje vytvárať zmiešané objednávky a zároveň zachovať spoločnú logiku košíka a checkout procesu.
+
+Aplikačná vrstva implementuje jednotlivé prípady použitia systému. Kľúčovou triedou je \texttt{OrderService}, ktorá zabezpečuje vytvorenie objednávky, pridávanie položiek do košíka, checkout, rezerváciu skladu, prechody stavov objednávky, zapisovanie auditných záznamov a generovanie notifikácií pre používateľa. V tejto vrstve sa sústreďujú aj pravidlá, ktoré odlišujú verejný sortiment od regulovaných zbraní. Pri doplnkoch stačí existencia zákazníckeho účtu, zatiaľ čo pri zbraniach je pred pridaním do objednávky potrebné overiť vek zákazníka, stav profilu a nahrané doklady.
+
+Infraštruktúrna vrstva zabezpečuje komunikáciu s databázou, implementáciu repozitárov a napojenie na technické služby. Aplikácia používa triedu \texttt{AppDbContext}, ktorá mapuje doménové entity na relačnú schému databázy PostgreSQL. V tejto vrstve sa nachádzajú aj implementácie repozitárov pre produkty, objednávky, používateľov a notifikácie, ako aj seed dát, ktorý pripravuje základné role, účty a vzorové položky katalógu.
+
+Prezentačná vrstva je implementovaná v projekte \texttt{WeaponShop.Web}. Obsahuje MVC kontroléry, view modely, Razor views a pomocné triedy pre prezentáciu dát. Verejná časť aplikácie umožňuje prehliadanie katalógu, filtrovanie položiek, zobrazenie detailu produktu, registráciu, správu profilu a prácu s košíkom. Okrem nej systém obsahuje aj interné rozhrania oddelené pomocou MVC \emph{areas}, konkrétne administrátorskú časť, skladové rozhranie a rozhranie pre zbrojníka. Takéto rozdelenie zabezpečuje, že prezentačná vrstva prirodzene kopíruje jednotlivé role a procesy definované v návrhu systému.
+
+\section{Implementácia autentifikácie, autorizácie a používateľských rolí}
+\label{sec:implementation-auth}
+
+Autentifikácia používateľov bola implementovaná pomocou ASP.NET Core Identity s cookie mechanizmom. Aplikácia poskytuje registráciu zákazníckeho účtu, prihlásenie, odhlásenie a správu profilu používateľa. Po registrácii je nový používateľ zaradený do role \texttt{Customer}, ktorá mu umožňuje prístup k zákazníckym častiam aplikácie, najmä ku košíku, objednávkam a správe osobných údajov.
+
+Špecifikom implementácie je rozšírenie používateľského profilu o údaje potrebné pre regulovaný predaj zbraní. Používateľ môže v profile doplniť dátum narodenia a nahrať doklady, ktoré slúžia na overenie oprávnenia pre nákup obmedzeného sortimentu. Aplikácia týmto spôsobom oddeľuje bežný verejný e-shopový scenár od scenára, v ktorom zákazník žiada o sprístupnenie katalógu zbraní. Verejne dostupné doplnky je možné nakupovať bez týchto dodatočných kontrol, zatiaľ čo zbrane sú prístupné až po splnení validačných podmienok.
+
+Autorizácia je v systéme založená na rolách. Rola \texttt{Admin} je určená pre správu katalógu, schvaľovanie objednávok a dohľad nad systémom. Rola \texttt{Skladnik} zabezpečuje skladové operácie a prípravu objednávok na expedíciu alebo osobný odber. Rola \texttt{Zbrojir} predstavuje interný kontrolný krok pri regulovaných objednávkach, kde je potrebné potvrdenie pred ďalším spracovaním. Jednotlivé časti systému sú chránené atribútmi \texttt{Authorize} a zároveň sú rozdelené do samostatných MVC oblastí, čo zvyšuje prehľadnosť implementácie aj bezpečnosť prístupu.
+
+Takto navrhnutý model autentifikácie a autorizácie nepokrýva iba technické prihlásenie do systému, ale priamo podporuje aj obchodné pravidlá riešenej domény. Overovanie zákazníka, oddelenie verejného a regulovaného sortimentu a viacstupňové spracovanie objednávky internými rolami sú preto implementované ako súčasť aplikačnej logiky, nie len ako vizuálne obmedzenie používateľského rozhrania.

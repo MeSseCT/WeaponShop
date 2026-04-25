@@ -31,4 +31,6 @@ public class Accessory
 
     [StringLength(260)]
     public string? ImageFileName { get; set; }
+
+    public List<AccessoryImage> Images { get; set; } = new();
 }

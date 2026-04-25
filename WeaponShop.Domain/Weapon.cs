@@ -16,7 +16,7 @@ public class Weapon
     /// Weapon category (A/B/C/D/E based on local legislation).
     /// </summary>
     [Required]
-    [RegularExpression("^[ABCDE]$", ErrorMessage = "Category must be one of: A, B, C, D, E.")]
+    [RegularExpression("^[ABCDE]$", ErrorMessage = "Kategorie musí být jedna z hodnot A, B, C, D nebo E.")]
     public string Category { get; set; } = string.Empty;
 
     [StringLength(1000)]
@@ -36,4 +36,6 @@ public class Weapon
 
     [StringLength(260)]
     public string? ImageFileName { get; set; }
+
+    public List<WeaponImage> Images { get; set; } = new();
 }

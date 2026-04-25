@@ -5,6 +5,7 @@ namespace WeaponShop.Domain;
 public class Order
 {
     public int Id { get; set; }
+    public string? OrderNumber { get; set; }
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser? User { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -35,4 +36,14 @@ public class Order
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     public ICollection<OrderAudit> Audits { get; set; } = new List<OrderAudit>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+
+    public string GetPublicOrderNumber()
+    {
+        if (!string.IsNullOrWhiteSpace(OrderNumber))
+        {
+            return OrderNumber;
+        }
+
+        return $"WS-{CreatedAt:yyyyMMdd}-{Id:D6}";
+    }
 }

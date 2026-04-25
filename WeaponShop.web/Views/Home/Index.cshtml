@@ -5,11 +5,11 @@
 <section class="hero hero-shell">
     <div class="hero-copy">
         <div class="hero-stack">
-            <p class="hero-kicker">Český e-shop se zbraněmi</p>
-            <h1>Klasický obchod pro zbraně, optiku a doplňky.</h1>
+            <p class="hero-kicker">Obchod se zbraněmi a střeleckými doplňky</p>
+            <h1>Zbraně, optika a vybavení pro střelce.</h1>
             <p>
-                Doplňky a ostatní veřejné položky jsou dostupné okamžitě. Katalog zbraní se odemyká až po přihlášení,
-                potvrzení věku 18+ a nahrání dokladů.
+                Doplňky můžete objednat ihned. Pro zobrazení a nákup zbraní na zbrojní průkaz je nutné přihlášení,
+                potvrzení věku 18+ a nahrání potřebných dokladů.
             </p>
         </div>
 
@@ -20,28 +20,28 @@
 
         <div class="hero-trustbar">
             <div>
-                <strong>Veřejná zóna</strong>
-                <span>Optika, pouzdra a ochranné potřeby</span>
+                <strong>Volně dostupné</strong>
+                <span>Optika, pouzdra, vzduchovky a ochranné potřeby</span>
             </div>
             <div>
-                <strong>Ověřená zóna</strong>
-                <span>Zbraně po validaci profilu a dokladů</span>
+                <strong>Po ověření účtu</strong>
+                <span>Zbraně se zobrazí po kontrole věku a dokladů</span>
             </div>
             <div>
-                <strong>Workflow</strong>
-                <span>Administrátor, sklad a zbrojíř</span>
+                <strong>Osobní odběr</strong>
+                <span>Objednávky se zbraněmi se dokončují podle pravidel obchodu</span>
             </div>
         </div>
     </div>
 
     <aside class="hero-stage">
         <div class="hero-stage-card hero-stage-card-classic">
-            <span class="hero-stage-tag">Nákupní pravidla</span>
-            <h2>Jak funguje obchod</h2>
+            <span class="hero-stage-tag">Nákup zbraní</span>
+            <h2>Pro zobrazení zbraní je potřeba ověřený účet.</h2>
             <ol class="hero-steps">
-                <li>Doplňky jsou veřejně přístupné všem návštěvníkům.</li>
-                <li>Zbraně se zobrazí až po ověření zákaznického profilu.</li>
-                <li>Objednávky dál procházejí schválením, skladem a zbrojířem.</li>
+                <li>Vytvořte si zákaznický účet a vyplňte svůj profil.</li>
+                <li>Potvrďte věk 18+ a nahrajte občanský průkaz nebo nákupní povolení.</li>
+                <li>Po ověření účtu se zpřístupní katalog zbraní a jejich detaily.</li>
             </ol>
         </div>
     </aside>
@@ -49,9 +49,9 @@
 
 <section class="promo-banner panel">
     <div class="promo-banner-copy">
-        <p class="section-kicker">Doporučené kategorie</p>
-        <h2>Optika, pouzdra, ochranné potřeby i zbraně na zbrojní průkaz.</h2>
-        <p class="panel-subtitle">Vzhled storefrontu je teď klidnější, konzervativní a blíž klasickému českému e-shopu.</p>
+        <p class="section-kicker">Oblíbené kategorie</p>
+        <h2>Optika, pouzdra, sebeobrana, vzduchovky i zbraně na zbrojní průkaz.</h2>
+        <p class="panel-subtitle">Vyberte si kategorii, přejděte do detailu produktu a pokračujte standardně do košíku.</p>
         <div class="hero-actions">
             <a class="btn-modern" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Nakoupit doplňky</a>
             <a class="btn-soft" asp-controller="Account" asp-action="Register">Vytvořit zákaznický účet</a>
@@ -76,17 +76,17 @@
 <section class="home-categories">
     <div class="section-header">
         <div>
-            <p class="section-kicker">Mapa obchodu</p>
-            <h2>Kategorie vycházející z reálné databáze</h2>
-            <p class="panel-subtitle">Doplňky jsou veřejné. Zbraně se zobrazují až po splnění podmínek účtu.</p>
+            <p class="section-kicker">Kategorie obchodu</p>
+            <h2>Vyberte sekci, která vás zajímá</h2>
+            <p class="panel-subtitle">Doplňky jsou dostupné ihned. Zbraně se zobrazují až po ověření zákaznického účtu.</p>
         </div>
     </div>
 
     <div class="category-grid">
         <a class="category-tile category-tile-featured" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">
-            <span class="category-eyebrow">Veřejná nabídka</span>
+            <span class="category-eyebrow">Volně dostupné</span>
             <h3>Doplňky</h3>
-            <p>Optika, pouzdra, uložení a ochranné potřeby bez omezení věku.</p>
+            <p>Optika, pouzdra, sebeobranné prostředky a další vybavení dostupné k okamžitému nákupu.</p>
         </a>
         <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Optics">
             <span class="category-eyebrow">Doplňky</span>
@@ -94,14 +94,14 @@
             <p>Kolimátory, zaměřovače a další vybavení pro přesnou střelbu.</p>
         </a>
         <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="B">
-            <span class="category-eyebrow">Ověřená zóna</span>
+            <span class="category-eyebrow">Po ověření účtu</span>
             <h3>Kategorie B</h3>
-            <p>Pistole a další zbraně pro zákazníky s dokončeným ověřením.</p>
+            <p>Krátké a další zbraně dostupné zákazníkům s ověřeným profilem a doklady.</p>
         </a>
         <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="C">
-            <span class="category-eyebrow">Ověřená zóna</span>
+            <span class="category-eyebrow">Po ověření účtu</span>
             <h3>Kategorie C</h3>
-            <p>Dlouhé zbraně a sportovní varianty dostupné po ověření profilu.</p>
+            <p>Dlouhé zbraně a sportovní varianty po přihlášení, potvrzení věku a kontrole dokladů.</p>
         </a>
     </div>
 </section>

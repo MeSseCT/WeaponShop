@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] is string title ? $"{title} | Zbrojnice - interní rozhraní" : "Zbrojnice - interní rozhraní")</title>
+    <link rel="stylesheet" href="~/css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    @{
+        var isAdmin = User.IsInRole("Admin");
+        var isWarehouse = User.IsInRole("Skladnik");
+        var isGunsmith = User.IsInRole("Zbrojir");
+        var hasBackofficeRole = isAdmin || isWarehouse || isGunsmith;
+        var homeArea = isAdmin ? "Admin" : isWarehouse ? "Warehouse" : isGunsmith ? "Gunsmith" : "";
+        var homeController = hasBackofficeRole ? "Orders" : "Home";
+        var homeAction = "Index";
+    }
+
+    <div class="utility-strip">
+        <div class="site-wrap utility-strip-inner">
+            <div class="utility-copy">
+                <span>Interní rozhraní</span>
+                <strong>Zbrojnice</strong>
+            </div>
+            <div class="utility-copy">
+                <a asp-area="" asp-controller="Home" asp-action="Index">Veřejný web</a>
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="utility-link-btn">Odhlásit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <header class="site-header">
+        <div class="site-wrap site-header-top">
+            <a class="brand-mark" asp-area="@homeArea" asp-controller="@homeController" asp-action="@homeAction">
+                <span class="brand-badge">BO</span>
+                <span class="brand-copy">
+                    Interní rozhraní
+                    <small>@User.Identity?.Name</small>
+                </span>
+            </a>
+        </div>
+
+        <div class="category-bar">
+            <div class="site-wrap nav-row">
+                <nav class="main-nav">
+                    @if (hasBackofficeRole)
+                    {
+                        <div class="nav-mega">
+                            <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Home" asp-action="Index">Obchod</a>
+                            <div class="mega-menu">
+                                <div class="mega-col">
+                                    <span class="mega-title">Katalog</span>
+                                    <a asp-area="" asp-controller="Home" asp-action="Index">Domů</a>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index">Všechny produkty</a>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+                                </div>
+                                <div class="mega-col">
+                                    <span class="mega-title">Sekce obchodu</span>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Optics">Optika</a>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Storage">Pouzdra a uložení</a>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="SelfDefense">Sebeobrana</a>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories" asp-route-accessoryCategory="Airguns">Vzduchovky</a>
+                                </div>
+                                <div class="mega-col mega-col-note">
+                                    <span class="mega-title">Kontrola zobrazení</span>
+                                    <p>Otevřete veřejný katalog a zkontrolujte, jak se změny a produkty zobrazují zákazníkům.</p>
+                                    <a class="btn-inline" asp-area="" asp-controller="Weapons" asp-action="Index">Otevřít katalog</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (isAdmin)
+                    {
+                        <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Orders" asp-action="Index">Schvalování</a>
+                        <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Správa zbraní</a>
+                        <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Accessories" asp-action="Index">Správa doplňků</a>
+                        <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Users" asp-action="Index">Interní uživatelé</a>
+                    }
+
+                    @if (isWarehouse)
+                    {
+                        <a class="nav-pill nav-pill-gold" asp-area="Warehouse" asp-controller="Orders" asp-action="Index">Sklad</a>
+                        <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Weapons" asp-action="Index">Sklad zbraní</a>
+                        <a class="nav-pill nav-pill-gold" asp-area="Admin" asp-controller="Accessories" asp-action="Index">Sklad doplňků</a>
+                    }
+
+                    @if (isGunsmith)
+                    {
+                        <a class="nav-pill nav-pill-gold" asp-area="Gunsmith" asp-controller="Orders" asp-action="Index">Zbrojířské kontroly</a>
+                    }
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="site-main">
+        <div class="site-wrap reveal">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-wrap footer-grid">
+            <section class="footer-brand">
+                <h3>Zbrojnice - interní rozhraní</h3>
+                <p>Interní rozhraní pro administraci, sklad a zbrojířské procesy.</p>
+            </section>
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -30,17 +30,29 @@ public class CartController : Controller
             return Challenge();
         }
 
-        var user = await _userManager.GetUserAsync(User);
-        var currentOrder = await _orderService.GetCurrentOrderAsync(userId, cancellationToken);
-
-        var model = new CartIndexViewModel
+        try
         {
-            CurrentOrder = currentOrder,
-            SubmittedOrders = await _orderService.GetSubmittedOrdersAsync(userId, cancellationToken),
-            Checkout = BuildCheckoutModel(currentOrder, user)
-        };
+            var user = await _userManager.GetUserAsync(User);
+            var currentOrder = await _orderService.GetCurrentOrderAsync(userId, cancellationToken);
 
-        return View(model);
+            var model = new CartIndexViewModel
+            {
+                CurrentOrder = currentOrder,
+                SubmittedOrders = await _orderService.GetSubmittedOrdersAsync(userId, cancellationToken),
+                Checkout = BuildCheckoutModel(currentOrder, user)
+            };
+
+            return View(model);
+        }
+        catch (Exception)
+        {
+            TempData["ErrorMessage"] = "Košík se teď nepodařilo načíst. Zkuste stránku obnovit za chvíli.";
+            var fallbackUser = await _userManager.GetUserAsync(User);
+            return View(new CartIndexViewModel
+            {
+                Checkout = BuildCheckoutModel(null, fallbackUser)
+            });
+        }
     }
 
     [ValidateAntiForgeryToken]

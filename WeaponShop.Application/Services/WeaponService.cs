@@ -22,6 +22,11 @@ public class WeaponService : IWeaponService
         return _repository.GetAllAsync(cancellationToken);
     }
 
+    public Task<List<WeaponNavigationItem>> GetAvailableNavigationItemsAsync(CancellationToken cancellationToken = default)
+    {
+        return _repository.GetAvailableNavigationItemsAsync(cancellationToken);
+    }
+
     public Task<Weapon?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return _repository.GetByIdAsync(id, cancellationToken);
@@ -43,4 +48,3 @@ public class WeaponService : IWeaponService
         return _repository.DeleteAsync(id, cancellationToken);
     }
 }
-

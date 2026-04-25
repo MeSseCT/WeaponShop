@@ -36,6 +36,6 @@ public class CheckoutInputModel
     [Required(ErrorMessage = "Vyplňte PSČ.")]
     public string BillingPostalCode { get; set; } = string.Empty;
 
-    public string CustomerNote { get; set; } = string.Empty;
+    public string? CustomerNote { get; set; }
     public bool BillingSameAsShipping { get; set; } = true;
 }

@@ -3,13 +3,15 @@
 <section class="panel">
     <div class="panel-head">
         <div>
-            <h2>Objednávka č. @Model.Id</h2>
+            <h2>Objednávka č. @Model.GetPublicOrderNumber()</h2>
             <p class="panel-subtitle">Pohled zbrojíře na kompletní audit a detail objednávky.</p>
         </div>
         <div class="btn-row">
             <a class="btn-soft" asp-action="Index">Zpět na objednávky</a>
             <a class="btn-soft" asp-action="History">Moje auditní historie</a>
-            <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Word</a>
+            <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Stáhnout DOC</a>
+            <a class="btn-soft" asp-action="ViewInvoice" asp-route-id="@Model.Id" target="_blank" rel="noopener">Náhled faktury</a>
+            <a class="btn-soft" asp-action="DownloadInvoice" asp-route-id="@Model.Id">Stáhnout PDF</a>
         </div>
     </div>
 
@@ -73,6 +75,7 @@
                     <th class="text-end">Množství</th>
                     <th class="text-end">Cena za kus</th>
                     <th class="text-end">Cena celkem</th>
+                    <th class="text-end">Obrázek</th>
                 </tr>
             </thead>
             <tbody>
@@ -83,6 +86,24 @@
                         <td class="text-end">@item.Quantity</td>
                         <td class="text-end">@item.UnitPrice.ToString("C")</td>
                         <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                        <td class="text-end">
+                            @if (item.IsWeapon && item.WeaponId.HasValue)
+                            {
+                                <a class="btn-inline"
+                                   asp-area=""
+                                   asp-controller="Weapons"
+                                   asp-action="Details"
+                                   asp-route-id="@item.WeaponId"
+                                   target="_blank"
+                                   rel="noopener">
+                                    Zobrazit obrázek
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="panel-subtitle">-</span>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -100,12 +121,12 @@
             {
                 <div class="audit-card">
                     <div class="audit-card-head">
-                        <div class="audit-card-title">@audit.Action</div>
+                        <div class="audit-card-title">@CatalogPresentation.GetAuditActionLabel(audit.Action)</div>
                         <span class="badge-cat">@CatalogPresentation.GetStatusLabel(audit.ToStatus)</span>
                     </div>
                     <div class="audit-card-meta">
                         @audit.OccurredAtUtc.ToLocalTime().ToString("g")
-                        • @audit.ActorRole @audit.ActorName
+                        • @audit.ActorName
                         • @CatalogPresentation.GetStatusLabel(audit.FromStatus) → @CatalogPresentation.GetStatusLabel(audit.ToStatus)
                     </div>
                     @if (!string.IsNullOrWhiteSpace(audit.Notes))
