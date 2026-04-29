@@ -154,415 +154,6 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
-            modelBuilder.Entity("WeaponShop.Domain.Identity.ApplicationUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text");
-
-                    b.Property<DateOnly?>("DateOfBirth")
-                        .HasColumnType("date")
-                        .HasColumnName("date_of_birth");
-
-                    b.Property<DateTimeOffset?>("DocumentsUpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("documents_updated_at_utc");
-
-                    b.Property<int>("DocumentsUploadCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("documents_upload_count");
-
-                    b.Property<DateTimeOffset?>("DocumentsUploadWindowStartedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("documents_upload_window_start_utc");
-
-                    b.Property<string>("DriverLicenseFileName")
-                        .HasColumnType("text")
-                        .HasColumnName("driver_license_file_name");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("first_name");
-
-                    b.Property<string>("IdCardFileName")
-                        .HasColumnType("text")
-                        .HasColumnName("id_card_file_name");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("last_name");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex");
-
-                    b.ToTable("users", (string)null);
-                });
-
-            modelBuilder.Entity("WeaponShop.Domain.Order", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("request_id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<DateTime?>("ApprovedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("approved_at_utc");
-
-                    b.Property<DateTime?>("RejectedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("rejected_at_utc");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("request_status");
-
-                    b.Property<DateTime?>("WarehouseCheckedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("warehouse_checked_at_utc");
-
-                    b.Property<DateTime?>("GunsmithCheckedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("gunsmith_checked_at_utc");
-
-                    b.Property<DateTime?>("WarehousePreparedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("warehouse_prepared_at_utc");
-
-                    b.Property<DateTime?>("ShippedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("shipped_at_utc");
-
-                    b.Property<DateTime?>("ReadyForPickupAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("ready_for_pickup_at_utc");
-
-                    b.Property<DateTime?>("PickupHandedOverAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("pickup_handed_over_at_utc");
-
-                    b.Property<DateTime?>("StockReservedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("stock_reserved_at_utc");
-
-                    b.Property<string>("BillingCity")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("billing_city");
-
-                    b.Property<string>("BillingName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("billing_name");
-
-                    b.Property<string>("BillingPostalCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("billing_postal_code");
-
-                    b.Property<string>("BillingStreet")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("billing_street");
-
-                    b.Property<string>("ContactEmail")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("contact_email");
-
-                    b.Property<string>("ContactPhone")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("contact_phone");
-
-                    b.Property<string>("OrderNumber")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("order_number");
-
-                    b.Property<string>("CustomerNote")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("customer_note");
-
-                    b.Property<string>("DeliveryMethod")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("delivery_method");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("payment_method");
-
-                    b.Property<string>("ShippingCity")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("shipping_city");
-
-                    b.Property<string>("ShippingName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("shipping_name");
-
-                    b.Property<string>("ShippingPostalCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("shipping_postal_code");
-
-                    b.Property<string>("ShippingStreet")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("shipping_street");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("total_amount");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("customer_user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderNumber")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("purchase_requests", (string)null);
-                });
-
-            modelBuilder.Entity("WeaponShop.Domain.OrderAudit", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("audit_id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("action_name");
-
-                    b.Property<string>("ActorName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("actor_name");
-
-                    b.Property<string>("ActorRole")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("actor_role");
-
-                    b.Property<string>("ActorUserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("actor_user_id");
-
-                    b.Property<int>("FromStatus")
-                        .HasColumnType("integer")
-                        .HasColumnName("from_status");
-
-                    b.Property<DateTime>("OccurredAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("occurred_at_utc");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("integer")
-                        .HasColumnName("request_id");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text")
-                        .HasColumnName("notes");
-
-                    b.Property<int>("ToStatus")
-                        .HasColumnType("integer")
-                        .HasColumnName("to_status");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId", "OccurredAtUtc");
-
-                    b.ToTable("purchase_request_audits", (string)null);
-                });
-
-            modelBuilder.Entity("WeaponShop.Domain.OrderItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("request_item_id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("integer")
-                        .HasColumnName("request_id");
-
-                    b.Property<int?>("AccessoryId")
-                        .HasColumnType("integer")
-                        .HasColumnName("accessory_id");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer")
-                        .HasColumnName("quantity");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("unit_price");
-
-                    b.Property<int?>("WeaponId")
-                        .HasColumnType("integer")
-                        .HasColumnName("weapon_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccessoryId");
-
-                    b.HasIndex("WeaponId");
-
-                    b.HasIndex("OrderId", "WeaponId")
-                        .IsUnique();
-
-                    b.HasIndex("OrderId", "AccessoryId")
-                        .IsUnique();
-
-                    b.ToTable("purchase_request_items", (string)null, t =>
-                        {
-                            t.HasCheckConstraint("CK_purchase_request_items_exactly_one_catalog_item", "\n(\n    (CASE WHEN weapon_id IS NULL THEN 0 ELSE 1 END) +\n    (CASE WHEN accessory_id IS NULL THEN 0 ELSE 1 END)\n) = 1");
-                            t.HasCheckConstraint("CK_purchase_request_items_quantity_positive", "quantity > 0");
-                        });
-                });
-
-            modelBuilder.Entity("WeaponShop.Domain.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("notification_id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_read");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("message");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("title");
-
-                    b.Property<int?>("OrderId")
-                        .HasColumnType("integer")
-                        .HasColumnName("request_id");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "CreatedAtUtc");
-
-                    b.HasIndex("OrderId", "CreatedAtUtc");
-
-                    b.ToTable("user_notifications", (string)null);
-                });
-
             modelBuilder.Entity("WeaponShop.Domain.Accessory", b =>
                 {
                     b.Property<int>("Id")
@@ -584,12 +175,6 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("accessory_description");
 
-                    b.Property<string>("Manufacturer")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("manufacturer_name");
-
                     b.Property<string>("ImageFileName")
                         .HasMaxLength(260)
                         .HasColumnType("character varying(260)")
@@ -598,6 +183,12 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("boolean")
                         .HasColumnName("is_available");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("manufacturer_name");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -648,6 +239,424 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.ToTable("accessory_images", (string)null);
                 });
 
+            modelBuilder.Entity("WeaponShop.Domain.Identity.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<DateTimeOffset?>("DocumentsUpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("documents_updated_at_utc");
+
+                    b.Property<int>("DocumentsUploadCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("documents_upload_count");
+
+                    b.Property<DateTimeOffset?>("DocumentsUploadWindowStartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("documents_upload_window_start_utc");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("FirearmsLicenseRecorded")
+                        .HasColumnType("boolean")
+                        .HasColumnName("firearms_license_recorded");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("IdCardFileName")
+                        .HasColumnType("text")
+                        .HasColumnName("id_card_file_name");
+
+                    b.Property<bool>("IdCardIssuedInCzechRepublic")
+                        .HasColumnType("boolean")
+                        .HasColumnName("id_card_issued_in_czech_republic");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("last_name");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PurchasePermitFileName")
+                        .HasColumnType("text")
+                        .HasColumnName("purchase_permit_file_name");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("notification_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("message");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "CreatedAtUtc");
+
+                    b.HasIndex("UserId", "CreatedAtUtc");
+
+                    b.ToTable("user_notifications", (string)null);
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("request_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("approved_at_utc");
+
+                    b.Property<string>("BillingCity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("billing_city");
+
+                    b.Property<string>("BillingName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("billing_name");
+
+                    b.Property<string>("BillingPostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("billing_postal_code");
+
+                    b.Property<string>("BillingStreet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("billing_street");
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("contact_email");
+
+                    b.Property<string>("ContactPhone")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("contact_phone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("CustomerNote")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("customer_note");
+
+                    b.Property<string>("DeliveryMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("delivery_method");
+
+                    b.Property<DateTime?>("GunsmithCheckedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("gunsmith_checked_at_utc");
+
+                    b.Property<string>("OrderNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("order_number");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("payment_method");
+
+                    b.Property<DateTime?>("PickupHandedOverAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pickup_handed_over_at_utc");
+
+                    b.Property<DateTime?>("ReadyForPickupAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ready_for_pickup_at_utc");
+
+                    b.Property<DateTime?>("RejectedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejected_at_utc");
+
+                    b.Property<DateTime?>("ShippedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("shipped_at_utc");
+
+                    b.Property<string>("ShippingCity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("shipping_city");
+
+                    b.Property<string>("ShippingName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("shipping_name");
+
+                    b.Property<string>("ShippingPostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("shipping_postal_code");
+
+                    b.Property<string>("ShippingStreet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("shipping_street");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("request_status");
+
+                    b.Property<DateTime?>("StockReservedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("stock_reserved_at_utc");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_amount");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("customer_user_id");
+
+                    b.Property<DateTime?>("WarehouseCheckedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("warehouse_checked_at_utc");
+
+                    b.Property<DateTime?>("WarehousePreparedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("warehouse_prepared_at_utc");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("purchase_requests", (string)null);
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.OrderAudit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("audit_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("action_name");
+
+                    b.Property<string>("ActorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("actor_name");
+
+                    b.Property<string>("ActorRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("actor_role");
+
+                    b.Property<string>("ActorUserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<int>("FromStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("from_status");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at_utc");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("request_id");
+
+                    b.Property<int>("ToStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("to_status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "OccurredAtUtc");
+
+                    b.ToTable("purchase_request_audits", (string)null);
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.OrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("request_item_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AccessoryId")
+                        .HasColumnType("integer")
+                        .HasColumnName("accessory_id");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("request_id");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("unit_price");
+
+                    b.Property<int?>("WeaponId")
+                        .HasColumnType("integer")
+                        .HasColumnName("weapon_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessoryId");
+
+                    b.HasIndex("WeaponId");
+
+                    b.HasIndex("OrderId", "AccessoryId")
+                        .IsUnique();
+
+                    b.HasIndex("OrderId", "WeaponId")
+                        .IsUnique();
+
+                    b.ToTable("purchase_request_items", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_purchase_request_items_exactly_one_catalog_item", "(\n    (CASE WHEN weapon_id IS NULL THEN 0 ELSE 1 END) +\n    (CASE WHEN accessory_id IS NULL THEN 0 ELSE 1 END)\n) = 1");
+
+                            t.HasCheckConstraint("CK_purchase_request_items_quantity_positive", "quantity > 0");
+                        });
+                });
+
             modelBuilder.Entity("WeaponShop.Domain.Weapon", b =>
                 {
                     b.Property<int>("Id")
@@ -656,6 +665,12 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnName("weapon_id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Caliber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("caliber_value");
 
                     b.Property<string>("Category")
                         .IsRequired()
@@ -668,12 +683,6 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("weapon_description");
 
-                    b.Property<string>("Manufacturer")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("manufacturer_name");
-
                     b.Property<string>("ImageFileName")
                         .HasMaxLength(260)
                         .HasColumnType("character varying(260)")
@@ -682,6 +691,12 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("boolean")
                         .HasColumnName("is_available");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("manufacturer_name");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -693,9 +708,21 @@ namespace WeaponShop.Infrastructure.Migrations
                         .HasColumnType("numeric")
                         .HasColumnName("price_amount");
 
+                    b.Property<string>("PrimarySerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("primary_serial_number");
+
                     b.Property<int>("StockQuantity")
                         .HasColumnType("integer")
                         .HasColumnName("stock_quantity");
+
+                    b.Property<string>("TypeDesignation")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("type_designation");
 
                     b.HasKey("Id");
 
@@ -730,6 +757,103 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.HasIndex("WeaponId", "SortOrder");
 
                     b.ToTable("weapon_images", (string)null);
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.WeaponUnit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("weapon_unit_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("PrimarySerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("primary_serial_number");
+
+                    b.Property<int?>("ReservedOrderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("reserved_order_id");
+
+                    b.Property<int?>("SoldOrderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("sold_order_id");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("unit_status");
+
+                    b.Property<int>("WeaponId")
+                        .HasColumnType("integer")
+                        .HasColumnName("weapon_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrimarySerialNumber")
+                        .IsUnique();
+
+                    b.HasIndex("ReservedOrderId");
+
+                    b.HasIndex("SoldOrderId");
+
+                    b.HasIndex("WeaponId", "Status");
+
+                    b.ToTable("weapon_units", (string)null);
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.WeaponUnitPart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("weapon_unit_part_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("PartName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("part_name");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("serial_number");
+
+                    b.Property<int>("SlotNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("slot_number");
+
+                    b.Property<int>("WeaponUnitId")
+                        .HasColumnType("integer")
+                        .HasColumnName("weapon_unit_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SerialNumber")
+                        .IsUnique();
+
+                    b.HasIndex("WeaponUnitId", "SlotNumber")
+                        .IsUnique();
+
+                    b.ToTable("weapon_unit_parts", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -783,6 +907,35 @@ namespace WeaponShop.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("WeaponShop.Domain.AccessoryImage", b =>
+                {
+                    b.HasOne("WeaponShop.Domain.Accessory", "Accessory")
+                        .WithMany("Images")
+                        .HasForeignKey("AccessoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Accessory");
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.Notification", b =>
+                {
+                    b.HasOne("WeaponShop.Domain.Order", "Order")
+                        .WithMany("Notifications")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("WeaponShop.Domain.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("WeaponShop.Domain.Order", b =>
                 {
                     b.HasOne("WeaponShop.Domain.Identity.ApplicationUser", "User")
@@ -807,16 +960,16 @@ namespace WeaponShop.Infrastructure.Migrations
 
             modelBuilder.Entity("WeaponShop.Domain.OrderItem", b =>
                 {
+                    b.HasOne("WeaponShop.Domain.Accessory", "Accessory")
+                        .WithMany()
+                        .HasForeignKey("AccessoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WeaponShop.Domain.Order", "Order")
                         .WithMany("Items")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("WeaponShop.Domain.Accessory", "Accessory")
-                        .WithMany()
-                        .HasForeignKey("AccessoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("WeaponShop.Domain.Weapon", "Weapon")
                         .WithMany()
@@ -828,35 +981,6 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Weapon");
-                });
-
-            modelBuilder.Entity("WeaponShop.Domain.Notification", b =>
-                {
-                    b.HasOne("WeaponShop.Domain.Identity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WeaponShop.Domain.Order", "Order")
-                        .WithMany("Notifications")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("User");
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("WeaponShop.Domain.AccessoryImage", b =>
-                {
-                    b.HasOne("WeaponShop.Domain.Accessory", "Accessory")
-                        .WithMany("Images")
-                        .HasForeignKey("AccessoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Accessory");
                 });
 
             modelBuilder.Entity("WeaponShop.Domain.WeaponImage", b =>
@@ -870,9 +994,40 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.Navigation("Weapon");
                 });
 
-            modelBuilder.Entity("WeaponShop.Domain.Identity.ApplicationUser", b =>
+            modelBuilder.Entity("WeaponShop.Domain.WeaponUnit", b =>
                 {
-                    b.Navigation("Orders");
+                    b.HasOne("WeaponShop.Domain.Order", "ReservedOrder")
+                        .WithMany()
+                        .HasForeignKey("ReservedOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("WeaponShop.Domain.Order", "SoldOrder")
+                        .WithMany()
+                        .HasForeignKey("SoldOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("WeaponShop.Domain.Weapon", "Weapon")
+                        .WithMany("Units")
+                        .HasForeignKey("WeaponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ReservedOrder");
+
+                    b.Navigation("SoldOrder");
+
+                    b.Navigation("Weapon");
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.WeaponUnitPart", b =>
+                {
+                    b.HasOne("WeaponShop.Domain.WeaponUnit", "WeaponUnit")
+                        .WithMany("Parts")
+                        .HasForeignKey("WeaponUnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WeaponUnit");
                 });
 
             modelBuilder.Entity("WeaponShop.Domain.Accessory", b =>
@@ -880,16 +1035,30 @@ namespace WeaponShop.Infrastructure.Migrations
                     b.Navigation("Images");
                 });
 
+            modelBuilder.Entity("WeaponShop.Domain.Identity.ApplicationUser", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
             modelBuilder.Entity("WeaponShop.Domain.Order", b =>
                 {
-                    b.Navigation("Items");
                     b.Navigation("Audits");
+
+                    b.Navigation("Items");
+
                     b.Navigation("Notifications");
                 });
 
             modelBuilder.Entity("WeaponShop.Domain.Weapon", b =>
                 {
                     b.Navigation("Images");
+
+                    b.Navigation("Units");
+                });
+
+            modelBuilder.Entity("WeaponShop.Domain.WeaponUnit", b =>
+                {
+                    b.Navigation("Parts");
                 });
 #pragma warning restore 612, 618
         }

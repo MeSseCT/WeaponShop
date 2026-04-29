@@ -35,7 +35,6 @@
                         <th>Objednávka</th>
                         <th>Zákazník</th>
                         <th>Doklady</th>
-                        <th>Audit</th>
                         <th class="text-end">Položky</th>
                         <th class="text-end">Celkem</th>
                         <th class="text-end">Akce</th>
@@ -76,40 +75,27 @@
                                     <span class="panel-subtitle">Občanský průkaz chybí</span>
                                 }
 
-                                @if (!string.IsNullOrWhiteSpace(order.User?.DriverLicenseFileName))
+                                @if (!string.IsNullOrWhiteSpace(order.User?.PurchasePermitFileName))
                                 {
-                                    var driverLicenseIsPdf = order.User?.DriverLicenseFileName?.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ?? false;
-                                    var driverLicenseViewUrl = Url.Action("ViewDocument", "Account", new { area = "", userId = order.UserId, type = "driverlicense" });
-                                    var driverLicenseDownloadUrl = Url.Action("DownloadDocument", "Account", new { area = "", userId = order.UserId, type = "driverlicense" });
+                                    var purchasePermitIsPdf = order.User?.PurchasePermitFileName?.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ?? false;
+                                    var purchasePermitViewUrl = Url.Action("ViewDocument", "Account", new { area = "", userId = order.UserId, type = "purchasepermit" });
+                                    var purchasePermitDownloadUrl = Url.Action("DownloadDocument", "Account", new { area = "", userId = order.UserId, type = "purchasepermit" });
                                     <button type="button"
                                             class="btn-inline doc-open"
-                                            data-doc-title="Nákupní povolení"
-                                            data-doc-kind="@(driverLicenseIsPdf ? "pdf" : "image")"
-                                            data-doc-url="@driverLicenseViewUrl"
-                                            data-doc-download="@driverLicenseDownloadUrl">
-                                        Zobrazit povolení
+                                            data-doc-title="Potvrzení / nákupní povolení"
+                                            data-doc-kind="@(purchasePermitIsPdf ? "pdf" : "image")"
+                                            data-doc-url="@purchasePermitViewUrl"
+                                            data-doc-download="@purchasePermitDownloadUrl">
+                                        Zobrazit potvrzení
                                     </button>
                                 }
                                 else
                                 {
-                                    <span class="panel-subtitle">Nákupní povolení chybí</span>
+                                    <span class="panel-subtitle">Potvrzení / nákupní povolení chybí</span>
                                 }
-                            </td>
-                            <td>
-                                @if (order.Audits.Count == 0)
-                                {
-                                    <span class="panel-subtitle">Zatím bez auditu</span>
-                                }
-                                else
-                                {
-                                    foreach (var audit in order.Audits.OrderByDescending(a => a.OccurredAtUtc))
-                                    {
-                                        <div class="panel-subtitle">
-                                            @audit.OccurredAtUtc.ToLocalTime().ToString("g") -
-                                            @audit.ActorName: @CatalogPresentation.GetAuditActionLabel(audit.Action)
-                                        </div>
-                                    }
-                                }
+
+                                <div class="panel-subtitle">Doklad vydaný v ČR: @(order.User?.IdCardIssuedInCzechRepublic == true ? "ano" : "ne")</div>
+                                <div class="panel-subtitle">Oprávnění v systému: @(order.User?.FirearmsLicenseRecorded == true ? "ano" : "ne")</div>
                             </td>
                             <td class="text-end">@order.Items.Count</td>
                             <td class="text-end">@order.TotalPrice.ToString("C")</td>
@@ -166,6 +152,7 @@
         const frame = modal.querySelector("[data-doc-frame]");
         const fallback = modal.querySelector("[data-doc-fallback]");
         const download = modal.querySelector("[data-doc-download]");
+        const modalBody = modal.querySelector(".doc-modal-body");
 
         const openModal = (button) => {
             const url = button.dataset.docUrl;
@@ -198,6 +185,10 @@
             modal.classList.add("is-open");
             modal.setAttribute("aria-hidden", "false");
             document.body.style.overflow = "hidden";
+            modal.scrollTop = 0;
+            if (modalBody) {
+                modalBody.scrollTop = 0;
+            }
         };
 
         const closeModal = () => {
@@ -206,6 +197,10 @@
             image.src = "";
             frame.src = "";
             document.body.style.overflow = "";
+            modal.scrollTop = 0;
+            if (modalBody) {
+                modalBody.scrollTop = 0;
+            }
         };
 
         document.querySelectorAll(".doc-open").forEach((button) => {

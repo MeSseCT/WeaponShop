@@ -1,0 +1,90 @@
+@model WeaponUnitInputModel
+
+<section class="form-shell form-shell-wide">
+    <h2>@(Model.IsCreate ? "Přidat kus zbraně" : "Upravit spárovaný kus zbraně")</h2>
+    <p class="auth-sub">@Model.WeaponName • @CatalogPresentation.GetWeaponCategoryLabel(Model.WeaponCategory) • @Model.WeaponTypeDesignation</p>
+
+    <form asp-action="@(Model.IsCreate ? "CreateUnit" : "EditUnit")" asp-route-weaponId="@Model.WeaponId" asp-route-unitId="@Model.UnitId" method="post">
+        <input asp-for="WeaponId" type="hidden" />
+        <input asp-for="UnitId" type="hidden" />
+        <input asp-for="WeaponName" type="hidden" />
+        <input asp-for="WeaponCategory" type="hidden" />
+        <input asp-for="WeaponTypeDesignation" type="hidden" />
+        <input asp-for="IsCreate" type="hidden" />
+        <input asp-for="Part1Name" type="hidden" />
+        <input asp-for="Part2Name" type="hidden" />
+        <input asp-for="Part3Name" type="hidden" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-4">
+            <label asp-for="PrimarySerialNumber" class="field-label"></label>
+            <input asp-for="PrimarySerialNumber" class="form-control" />
+            <span asp-validation-for="PrimarySerialNumber" class="text-danger"></span>
+        </div>
+
+        <div class="grid-two">
+            <div class="panel">
+                <h3>@WeaponShop.Web.ViewModels.Weapons.WeaponUnitInputModel.Part1FixedName</h3>
+                <div class="panel-subtitle">Vyplní se při kontrole zbrojářem nebo při podrobné skladové evidenci.</div>
+                <div>
+                    <label asp-for="Part1SerialNumber" class="field-label"></label>
+                    <input asp-for="Part1SerialNumber" class="form-control" />
+                    <span asp-validation-for="Part1SerialNumber" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>@WeaponShop.Web.ViewModels.Weapons.WeaponUnitInputModel.Part2FixedName</h3>
+                <div class="panel-subtitle">Vyplní se při kontrole zbrojářem nebo při podrobné skladové evidenci.</div>
+                <div>
+                    <label asp-for="Part2SerialNumber" class="field-label"></label>
+                    <input asp-for="Part2SerialNumber" class="form-control" />
+                    <span asp-validation-for="Part2SerialNumber" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-two" style="margin-top: 1rem;">
+            <div class="panel">
+                <h3>@WeaponShop.Web.ViewModels.Weapons.WeaponUnitInputModel.Part3FixedName</h3>
+                <div class="panel-subtitle">Vyplní se při kontrole zbrojářem nebo pri podrobné skladové evidenci.</div>
+                <div>
+                    <label asp-for="Part3SerialNumber" class="field-label"></label>
+                    <input asp-for="Part3SerialNumber" class="form-control" />
+                    <span asp-validation-for="Part3SerialNumber" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Část 4 (volitelné)</h3>
+                <div class="mb-3">
+                    <label asp-for="Part4Name" class="field-label"></label>
+                    <input asp-for="Part4Name" class="form-control" />
+                    <span asp-validation-for="Part4Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Part4SerialNumber" class="field-label"></label>
+                    <input asp-for="Part4SerialNumber" class="form-control" />
+                    <span asp-validation-for="Part4SerialNumber" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Part4Notes" class="field-label"></label>
+                    <textarea asp-for="Part4Notes" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Part4Notes" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4" style="margin-top: 1rem;">
+            <label asp-for="UnitNotes" class="field-label"></label>
+            <textarea asp-for="UnitNotes" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="UnitNotes" class="text-danger"></span>
+        </div>
+
+        <div class="hero-actions">
+            <button class="btn-modern" type="submit">@(Model.IsCreate ? "Uložit kus" : "Uložit změny kusu")</button>
+            <a class="btn-soft" asp-action="Edit" asp-route-id="@Model.WeaponId">Zpět na zbraň</a>
+        </div>
+    </form>
+</section>

@@ -14,16 +14,22 @@
 
     <form method="get" class="form-shell form-shell-wide" style="margin-bottom: 1rem;">
         <input type="hidden" name="userId" value="@Context.Request.Query["userId"]" />
-        <div class="mb-3">
-            <label class="field-label" for="statusFilter">Filtr stavu</label>
-            <select id="statusFilter" name="status" class="form-control">
-                <option value="">Vše</option>
-                @foreach (var status in Enum.GetValues<OrderStatus>())
-                {
-                    var selected = string.Equals(Context.Request.Query["status"], status.ToString(), StringComparison.OrdinalIgnoreCase);
-                    <option value="@status" selected="@(selected ? "selected" : null)">@CatalogPresentation.GetStatusLabel(status)</option>
-                }
-            </select>
+        <div class="grid-two">
+            <div class="mb-3">
+                <label class="field-label" for="statusFilter">Filtr stavu</label>
+                <select id="statusFilter" name="status" class="form-control">
+                    <option value="">Vše</option>
+                    @foreach (var status in Enum.GetValues<OrderStatus>())
+                    {
+                        var selected = string.Equals(Context.Request.Query["status"], status.ToString(), StringComparison.OrdinalIgnoreCase);
+                        <option value="@status" selected="@(selected ? "selected" : null)">@CatalogPresentation.GetStatusLabel(status)</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="field-label" for="historySearchQuery">Hledat (produkt / výrobní nebo sériové číslo)</label>
+                <input id="historySearchQuery" name="q" class="form-control" value="@Context.Request.Query["q"]" />
+            </div>
         </div>
         <button class="btn-modern" type="submit">Použít filtr</button>
     </form>
@@ -87,7 +93,7 @@
                             <td class="text-end">
                                 <div class="btn-row">
                                     <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Zobrazit</a>
-                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout DOC</a>
+                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout RTF</a>
                                     <form asp-area="Admin" asp-action="DeleteHistory" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
                                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />

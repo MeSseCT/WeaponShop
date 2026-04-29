@@ -42,10 +42,7 @@ public class OrdersController : Controller
         {
             var term = q.Trim();
             orders = orders
-                .Where(order =>
-                    order.GetPublicOrderNumber().Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || (order.User?.Email?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                    || $"{order.User?.FirstName} {order.User?.LastName}".Contains(term, StringComparison.OrdinalIgnoreCase))
+                .Where(order => MatchesOrderSearch(order, term))
                 .ToList();
         }
 
@@ -53,7 +50,7 @@ public class OrdersController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> History(string userId, string? status, CancellationToken cancellationToken)
+    public async Task<IActionResult> History(string userId, string? status, string? q, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(userId))
         {
@@ -67,6 +64,15 @@ public class OrdersController : Controller
                 .Where(order => order.Status == parsed)
                 .ToList();
         }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.Trim();
+            orders = orders
+                .Where(order => MatchesOrderSearch(order, term))
+                .ToList();
+        }
+
         return View(orders);
     }
 
@@ -92,7 +98,7 @@ public class OrdersController : Controller
         }
 
         var bytes = OrderWordExport.BuildOrderDocument(order);
-        return File(bytes, "application/msword", $"order-{id}.doc");
+        return File(bytes, "application/rtf", $"order-{id}.rtf");
     }
 
     [HttpGet]
@@ -195,5 +201,28 @@ public class OrdersController : Controller
         actorName = User.Identity?.Name ?? "neznámý uživatel";
         actorRole = User.IsInRole("Admin") ? "Administrátor" : "Neznámá role";
         return !string.IsNullOrWhiteSpace(userId);
+    }
+
+    private static bool MatchesOrderSearch(Order order, string term)
+    {
+        return Contains(order.GetPublicOrderNumber(), term)
+            || Contains(order.User?.Email, term)
+            || Contains($"{order.User?.FirstName} {order.User?.LastName}".Trim(), term)
+            || order.Items.Any(item =>
+                Contains(item.GetDisplayName(), term)
+                || (item.Weapon is not null && (
+                    Contains(item.Weapon.TypeDesignation, term)
+                    || item.Weapon.Units.Any(unit =>
+                        Contains(unit.PrimarySerialNumber, term)
+                        || unit.Parts.Any(part =>
+                            Contains(part.SerialNumber, term)
+                            || Contains(part.PartName, term)))))
+                || (item.Accessory is not null && Contains(item.Accessory.Name, term)));
+    }
+
+    private static bool Contains(string? value, string term)
+    {
+        return !string.IsNullOrWhiteSpace(value)
+            && value.Contains(term, StringComparison.OrdinalIgnoreCase);
     }
 }

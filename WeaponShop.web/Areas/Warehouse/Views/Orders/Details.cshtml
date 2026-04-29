@@ -9,7 +9,7 @@
         <div class="btn-row">
             <a class="btn-soft" asp-action="Index">Zpět na objednávky</a>
             <a class="btn-soft" asp-action="History">Moje auditní historie</a>
-            <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Stáhnout DOC</a>
+            <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Stáhnout RTF</a>
             <a class="btn-soft" asp-action="ViewInvoice" asp-route-id="@Model.Id" target="_blank" rel="noopener">Náhled faktury</a>
             <a class="btn-soft" asp-action="DownloadInvoice" asp-route-id="@Model.Id">Stáhnout PDF</a>
         </div>
@@ -82,7 +82,29 @@
                 @foreach (var item in Model.Items)
                 {
                     <tr>
-                        <td>@item.GetDisplayName()</td>
+                        <td>
+                            <div>@item.GetDisplayName()</div>
+                            @if (item.IsWeapon && item.Weapon is not null)
+                            {
+                                <div class="panel-subtitle">@item.Weapon.TypeDesignation • @item.Weapon.Caliber</div>
+                                var assignedUnits = item.Weapon.Units
+                                    .Where(unit => unit.ReservedOrderId == Model.Id || unit.SoldOrderId == Model.Id)
+                                    .OrderBy(unit => unit.PrimarySerialNumber)
+                                    .ToList();
+
+                                @foreach (var unit in assignedUnits)
+                                {
+                                    <div class="panel-subtitle">
+                                        <strong>V. č. @unit.PrimarySerialNumber</strong>
+                                    </div>
+
+                                    @foreach (var part in unit.Parts.OrderBy(part => part.SlotNumber))
+                                    {
+                                        <div class="panel-subtitle">@part.PartName: @part.SerialNumber</div>
+                                    }
+                                }
+                            }
+                        </td>
                         <td class="text-end">@item.Quantity</td>
                         <td class="text-end">@item.UnitPrice.ToString("C")</td>
                         <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
@@ -109,6 +131,72 @@
             </tbody>
         </table>
     </div>
+
+    @if (Model.Status is OrderStatus.Approved or OrderStatus.AwaitingDispatch or OrderStatus.ReadyForPickup)
+    {
+        <section class="panel" style="margin-bottom: 1.5rem;">
+            <div class="panel-head">
+                <div>
+                    <h3>Párování konkrétních kusů</h3>
+                    <p class="panel-subtitle">Skladník vybírá konkrétní výrobní čísla až po objednání. Zákazník sériová čísla předem nevidí.</p>
+                </div>
+            </div>
+
+            @foreach (var item in Model.Items.Where(item => item.IsWeapon && item.Weapon is not null))
+            {
+                var weapon = item.Weapon!;
+                var selectableUnits = weapon.Units
+                    .Where(unit => unit.Status == WeaponShop.Domain.WeaponUnitStatus.InStock || (unit.Status == WeaponShop.Domain.WeaponUnitStatus.Reserved && unit.ReservedOrderId == Model.Id))
+                    .OrderBy(unit => unit.PrimarySerialNumber)
+                    .ToList();
+                var assignedIds = weapon.Units
+                    .Where(unit => unit.Status == WeaponShop.Domain.WeaponUnitStatus.Reserved && unit.ReservedOrderId == Model.Id)
+                    .Select(unit => unit.Id)
+                    .ToHashSet();
+
+                <form asp-action="AssignUnits" method="post" style="margin-bottom: 1rem;">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="weaponId" value="@weapon.Id" />
+
+                    <div class="panel" style="margin-bottom: 0;">
+                        <h4>@item.GetDisplayName()</h4>
+                        <div class="panel-subtitle">Požadovaný počet kusů: @item.Quantity</div>
+
+                        @if (selectableUnits.Count == 0)
+                        {
+                            <div class="data-empty">Není dostupný žádný naskladněný kus pro spárování.</div>
+                        }
+                        else
+                        {
+                            <div class="grid-two" style="margin-top: 1rem;">
+                                @foreach (var unit in selectableUnits)
+                                {
+                                    <label class="panel" style="display:block;">
+                                        <input type="checkbox" name="selectedUnitIds" value="@unit.Id" @(assignedIds.Contains(unit.Id) ? "checked" : null) />
+                                        <strong style="display:block; margin-top:.4rem;">@unit.PrimarySerialNumber</strong>
+                                        <div class="panel-subtitle">Stav: @unit.Status</div>
+                                        @if (!string.IsNullOrWhiteSpace(unit.Notes))
+                                        {
+                                            <div class="panel-subtitle">@unit.Notes</div>
+                                        }
+                                        @foreach (var part in unit.Parts.OrderBy(part => part.SlotNumber))
+                                        {
+                                            <div class="panel-subtitle">@part.PartName: @part.SerialNumber</div>
+                                        }
+                                    </label>
+                                }
+                            </div>
+
+                            <div class="hero-actions" style="margin-top: 1rem;">
+                                <button type="submit" class="btn-modern">Uložit párování</button>
+                                <span class="panel-subtitle">Vyber přesně @item.Quantity kus(y) pro tuto položku.</span>
+                            </div>
+                        }
+                    </div>
+                </form>
+            }
+        </section>
+    }
 
     <div class="audit-list">
         @if (Model.Audits.Count == 0)

@@ -19,6 +19,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Weapon> Weapons => Set<Weapon>();
     public DbSet<WeaponImage> WeaponImages => Set<WeaponImage>();
+    public DbSet<WeaponUnit> WeaponUnits => Set<WeaponUnit>();
+    public DbSet<WeaponUnitPart> WeaponUnitParts => Set<WeaponUnitPart>();
     public DbSet<Accessory> Accessories => Set<Accessory>();
     public DbSet<AccessoryImage> AccessoryImages => Set<AccessoryImage>();
     public DbSet<Order> Orders => Set<Order>();
@@ -37,7 +39,9 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.Property(u => u.LastName).HasColumnName("last_name");
             builder.Property(u => u.DateOfBirth).HasColumnName("date_of_birth");
             builder.Property(u => u.IdCardFileName).HasColumnName("id_card_file_name");
-            builder.Property(u => u.DriverLicenseFileName).HasColumnName("driver_license_file_name");
+            builder.Property(u => u.IdCardIssuedInCzechRepublic).HasColumnName("id_card_issued_in_czech_republic");
+            builder.Property(u => u.FirearmsLicenseRecorded).HasColumnName("firearms_license_recorded");
+            builder.Property(u => u.PurchasePermitFileName).HasColumnName("purchase_permit_file_name");
             builder.Property(u => u.DocumentsUpdatedAt).HasColumnName("documents_updated_at_utc");
             builder.Property(u => u.DocumentsUploadWindowStartedAtUtc).HasColumnName("documents_upload_window_start_utc");
             builder.Property(u => u.DocumentsUploadCount).HasColumnName("documents_upload_count");
@@ -55,10 +59,13 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.ToTable("weapons");
             builder.Property(w => w.Id).HasColumnName("weapon_id");
             builder.Property(w => w.Name).HasColumnName("weapon_name");
+            builder.Property(w => w.TypeDesignation).HasColumnName("type_designation");
             builder.Property(w => w.Category).HasColumnName("legal_category");
             builder.Property(w => w.Description).HasColumnName("weapon_description");
             builder.Property(w => w.Price).HasColumnName("price_amount");
             builder.Property(w => w.Manufacturer).HasColumnName("manufacturer_name");
+            builder.Property(w => w.Caliber).HasColumnName("caliber_value");
+            builder.Property(w => w.PrimarySerialNumber).HasColumnName("primary_serial_number");
             builder.Property(w => w.StockQuantity).HasColumnName("stock_quantity");
             builder.Property(w => w.IsAvailable).HasColumnName("is_available");
             builder.Property(w => w.ImageFileName).HasColumnName("image_file_name");
@@ -66,6 +73,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.HasMany(w => w.Images)
                 .WithOne(image => image.Weapon)
                 .HasForeignKey(image => image.WeaponId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(w => w.Units)
+                .WithOne(unit => unit.Weapon)
+                .HasForeignKey(unit => unit.WeaponId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -78,6 +90,55 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             builder.Property(image => image.SortOrder).HasColumnName("sort_order");
 
             builder.HasIndex(image => new { image.WeaponId, image.SortOrder });
+        });
+
+        modelBuilder.Entity<WeaponUnit>(builder =>
+        {
+            builder.ToTable("weapon_units");
+            builder.Property(unit => unit.Id).HasColumnName("weapon_unit_id");
+            builder.Property(unit => unit.WeaponId).HasColumnName("weapon_id");
+            builder.Property(unit => unit.PrimarySerialNumber).HasColumnName("primary_serial_number").HasMaxLength(120);
+            builder.Property(unit => unit.Status).HasColumnName("unit_status");
+            builder.Property(unit => unit.ReservedOrderId).HasColumnName("reserved_order_id");
+            builder.Property(unit => unit.SoldOrderId).HasColumnName("sold_order_id");
+            builder.Property(unit => unit.Notes).HasColumnName("notes").HasMaxLength(300);
+
+            builder.HasIndex(unit => unit.PrimarySerialNumber)
+                .IsUnique();
+
+            builder.HasIndex(unit => new { unit.WeaponId, unit.Status });
+
+            builder.HasOne(unit => unit.ReservedOrder)
+                .WithMany()
+                .HasForeignKey(unit => unit.ReservedOrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(unit => unit.SoldOrder)
+                .WithMany()
+                .HasForeignKey(unit => unit.SoldOrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WeaponUnitPart>(builder =>
+        {
+            builder.ToTable("weapon_unit_parts");
+            builder.Property(part => part.Id).HasColumnName("weapon_unit_part_id");
+            builder.Property(part => part.WeaponUnitId).HasColumnName("weapon_unit_id");
+            builder.Property(part => part.SlotNumber).HasColumnName("slot_number");
+            builder.Property(part => part.PartName).HasColumnName("part_name").HasMaxLength(120);
+            builder.Property(part => part.SerialNumber).HasColumnName("serial_number").HasMaxLength(120);
+            builder.Property(part => part.Notes).HasColumnName("notes").HasMaxLength(300);
+
+            builder.HasIndex(part => part.SerialNumber)
+                .IsUnique();
+
+            builder.HasIndex(part => new { part.WeaponUnitId, part.SlotNumber })
+                .IsUnique();
+
+            builder.HasOne(part => part.WeaponUnit)
+                .WithMany(unit => unit.Parts)
+                .HasForeignKey(part => part.WeaponUnitId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Accessory>(builder =>

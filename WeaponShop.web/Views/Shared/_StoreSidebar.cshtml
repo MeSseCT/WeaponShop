@@ -19,7 +19,7 @@
             .ToList();
 
         weapons = (await WeaponService.GetAllAsync())
-            .Where(item => item.IsAvailable)
+            .Where(item => item.IsAvailable && WeaponCategoryPolicy.IsSellableCategory(item.Category))
             .ToList();
 
         accessoryGroups = accessories
@@ -64,7 +64,7 @@
     </div>
 
     <div class="store-sidebar-group">
-        <h3>Zbraně na zbrojní průkaz</h3>
+        <h3>Regulované zbraně</h3>
         <a class="store-sidebar-link @(currentAccess == "restricted" && string.IsNullOrWhiteSpace(currentLegalCategory) ? "is-active" : null)"
            asp-controller="Weapons"
            asp-action="Index"
@@ -88,6 +88,6 @@
 
     <div class="store-sidebar-note">
         <strong>Nákup zbraní</strong>
-        <p>Doplňky jsou veřejně dostupné. Pro zobrazení zbraní je nutné přihlášení, potvrzení věku 18+ a nahrání dokladů.</p>
+        <p>Doplňky jsou veřejně dostupné. U kategorií B, C, C-I a D se podmínky liší podle věku, dokladu totožnosti a potvrzení v profilu.</p>
     </div>
 </div>

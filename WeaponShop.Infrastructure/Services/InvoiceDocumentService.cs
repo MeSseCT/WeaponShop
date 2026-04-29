@@ -61,7 +61,7 @@ public class InvoiceDocumentService : IInvoiceDocumentService
 
                 return new InvoiceLine
                 {
-                    Name = item.GetDisplayName(),
+                    Name = BuildLineName(order, item),
                     Quantity = item.Quantity,
                     UnitGross = item.UnitPrice,
                     LineGross = gross,
@@ -98,6 +98,35 @@ public class InvoiceDocumentService : IInvoiceDocumentService
             TotalNet = lines.Sum(x => x.LineNet),
             TotalVat = lines.Sum(x => x.LineVat)
         };
+    }
+
+    private static string BuildLineName(Order order, OrderItem item)
+    {
+        if (!item.IsWeapon || item.Weapon is null)
+        {
+            return item.GetDisplayName();
+        }
+
+        var assignedUnits = item.Weapon.Units
+            .Where(unit => unit.ReservedOrderId == order.Id || unit.SoldOrderId == order.Id)
+            .OrderBy(unit => unit.PrimarySerialNumber)
+            .ToList();
+
+        if (assignedUnits.Count == 0)
+        {
+            return item.GetDisplayName();
+        }
+
+        var details = assignedUnits
+            .Select(unit =>
+            {
+                var parts = unit.Parts
+                    .OrderBy(part => part.SlotNumber)
+                    .Select(part => $"{part.PartName}: {part.SerialNumber}");
+                return $"V. č. {unit.PrimarySerialNumber}" + (parts.Any() ? $" ({string.Join(", ", parts)})" : string.Empty);
+            });
+
+        return $"{item.GetDisplayName()} | {string.Join(" | ", details)}";
     }
 
     private string BuildHtml(InvoiceModel model)

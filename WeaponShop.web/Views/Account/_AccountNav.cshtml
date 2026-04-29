@@ -1,0 +1,14 @@
+@{
+    var currentSection = ViewData["AccountSection"] as string ?? "profile";
+}
+
+<nav class="account-nav">
+    <a class="account-nav-link @(string.Equals(currentSection, "profile", StringComparison.OrdinalIgnoreCase) ? "account-nav-link-active" : string.Empty)"
+       asp-action="Profile">
+        Účet a přístup
+    </a>
+    <a class="account-nav-link @(string.Equals(currentSection, "documents", StringComparison.OrdinalIgnoreCase) ? "account-nav-link-active" : string.Empty)"
+       asp-action="Documents">
+        Doklady a ověření
+    </a>
+</nav>

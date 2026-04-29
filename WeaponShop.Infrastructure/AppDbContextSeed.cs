@@ -38,169 +38,239 @@ public static class AppDbContextSeed
             new Weapon
             {
                 Name = "Glock 17 Gen5",
+                TypeDesignation = "Samonabíjecí pistole",
                 Category = "B",
                 Description = "Služební a sportovní pistole s polymerovým rámem v ráži 9x19 mm. Vhodná pro každodenní trénink i profesionální použití.",
                 Price = 18990m,
                 Manufacturer = "Glock",
+                Caliber = "9x19 mm",
+                PrimarySerialNumber = "GLK17G5-24001",
                 StockQuantity = 5,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "CZ Shadow 2",
+                TypeDesignation = "Sportovní pistole",
                 Category = "B",
                 Description = "Celokovová sportovní pistole určená pro dynamické disciplíny a přesnou střelbu na střelnici.",
                 Price = 34990m,
                 Manufacturer = "Česká zbrojovka",
+                Caliber = "9x19 mm",
+                PrimarySerialNumber = "CZSH2-24002",
                 StockQuantity = 3,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "CZ P-10 C OR",
+                TypeDesignation = "Kompaktní pistole",
                 Category = "B",
                 Description = "Kompaktní pistole připravená pro montáž kolimátoru. Hodí se pro služební nošení i civilní obranu.",
                 Price = 16990m,
                 Manufacturer = "Česká zbrojovka",
+                Caliber = "9x19 mm",
+                PrimarySerialNumber = "CZP10C-24003",
                 StockQuantity = 4,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Walther PDP Compact",
+                TypeDesignation = "Kompaktní pistole",
                 Category = "B",
                 Description = "Moderní pistole s ergonomickým úchopem, vhodná pro sport, obranu a střelce, kteří chtějí optickou přípravu.",
                 Price = 18490m,
                 Manufacturer = "Walther",
+                Caliber = "9x19 mm",
+                PrimarySerialNumber = "WLPDP-24004",
                 StockQuantity = 0,
                 IsAvailable = false
             },
             new Weapon
             {
                 Name = "Beretta 92X Performance",
+                TypeDesignation = "Celokovová sportovní pistole",
                 Category = "B",
                 Description = "Těžká celokovová pistole zaměřená na sportovní použití a stabilní chování při rychlé střelbě.",
                 Price = 42990m,
                 Manufacturer = "Beretta",
+                Caliber = "9x19 mm",
+                PrimarySerialNumber = "BRT92X-24005",
                 StockQuantity = 2,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Smith & Wesson 686 6\"",
+                TypeDesignation = "Revolver",
                 Category = "B",
                 Description = "Klasický revolver v nerezovém provedení pro sportovní střelbu a sběratelské využití.",
                 Price = 28990m,
                 Manufacturer = "Smith & Wesson",
+                Caliber = ".357 Magnum",
+                PrimarySerialNumber = "SW686-24006",
                 StockQuantity = 1,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Benelli M4 Tactical",
+                TypeDesignation = "Samonabíjecí brokovnice",
                 Category = "B",
                 Description = "Samonabíjecí brokovnice pro sportovní a taktickou střelbu s důrazem na spolehlivost a rychlou obsluhu.",
                 Price = 54990m,
                 Manufacturer = "Benelli",
+                Caliber = "12/76",
+                PrimarySerialNumber = "BNLM4-24007",
                 StockQuantity = 1,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Mossberg 590A1",
+                TypeDesignation = "Pumpovací brokovnice",
                 Category = "C",
                 Description = "Robustní pumpovací brokovnice vhodná pro střelnici, výcvik a profesionální nasazení.",
                 Price = 24500m,
                 Manufacturer = "Mossberg",
+                Caliber = "12/76",
+                PrimarySerialNumber = "MS590-24008",
                 StockQuantity = 0,
                 IsAvailable = false
             },
             new Weapon
             {
                 Name = "Tikka T3x Lite",
+                TypeDesignation = "Opakovací kulovnice",
                 Category = "C",
                 Description = "Lehká kulovnice s přesnou hlavní a kvalitním chodem závěru pro myslivost a přesnou střelbu.",
                 Price = 31990m,
                 Manufacturer = "Tikka",
+                Caliber = ".308 Win",
+                PrimarySerialNumber = "TKT3X-24009",
                 StockQuantity = 3,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Savage Axis II XP",
+                TypeDesignation = "Opakovací kulovnice",
                 Category = "C",
                 Description = "Základní opakovací kulovnice s montovanou optikou pro lov i vstup do světa kulových zbraní.",
                 Price = 22490m,
                 Manufacturer = "Savage Arms",
+                Caliber = ".308 Win",
+                PrimarySerialNumber = "SVGAX2-24010",
                 StockQuantity = 2,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "CZ 457 Synthetic",
+                TypeDesignation = "Malorážka",
                 Category = "C",
                 Description = "Malorážka se syntetickou pažbou, jednoduchou údržbou a širokým využitím pro trénink i sportovní střelbu.",
                 Price = 15990m,
                 Manufacturer = "Česká zbrojovka",
+                Caliber = ".22 LR",
+                PrimarySerialNumber = "CZ457-24011",
                 StockQuantity = 6,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Ruger 10/22 Carbine",
+                TypeDesignation = "Samonabíjecí malorážka",
                 Category = "C",
                 Description = "Oblíbená malorážka s vysokou spolehlivostí a rozsáhlou možností doplňků a úprav.",
                 Price = 12990m,
                 Manufacturer = "Ruger",
+                Caliber = ".22 LR",
+                PrimarySerialNumber = "RGR1022-24012",
                 StockQuantity = 4,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Heckler & Koch MR223 A3",
+                TypeDesignation = "Samonabíjecí puška",
                 Category = "B",
                 Description = "Samonabíjecí puška prémiové třídy vhodná pro sportovní střelbu a náročné uživatele.",
                 Price = 79990m,
                 Manufacturer = "Heckler & Koch",
+                Caliber = "5.56x45 mm",
+                PrimarySerialNumber = "HKMR223-24013",
                 StockQuantity = 0,
                 IsAvailable = false
             },
             new Weapon
             {
                 Name = "Pedersoli 1858 New Army",
+                TypeDesignation = "Černoprachý revolver",
                 Category = "D",
                 Description = "Historicky laděný černoprachý revolver pro sportovní střelbu, reenactment a sběratelské účely.",
                 Price = 17490m,
                 Manufacturer = "Davide Pedersoli",
+                Caliber = ".44",
+                PrimarySerialNumber = "PDR1858-24014",
                 StockQuantity = 2,
                 IsAvailable = true
             },
             new Weapon
             {
                 Name = "Zoraki R1 4,5\"",
-                Category = "E",
-                Description = "Expanzní revolver určený pro signální a obranné použití v souladu s příslušnou kategorií zboží.",
+                TypeDesignation = "Expanzní revolver",
+                Category = "CI",
+                Description = "Expanzní revolver určený pro signální a obranné použití v režimu kategorie C-I.",
                 Price = 9990m,
                 Manufacturer = "Zoraki",
+                Caliber = "9 mm R.K.",
+                PrimarySerialNumber = "ZRKRI-24015",
                 StockQuantity = 5,
                 IsAvailable = true
             }
         };
 
-        var existingKeys = (await context.Weapons
-                .Select(item => new { item.Name, item.Manufacturer })
-                .ToListAsync(cancellationToken))
-            .Select(item => BuildProductKey(item.Name, item.Manufacturer))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingWeapons = await context.Weapons.ToListAsync(cancellationToken);
+        var existingByKey = existingWeapons.ToDictionary(
+            item => BuildProductKey(item.Name, item.Manufacturer),
+            item => item,
+            StringComparer.OrdinalIgnoreCase);
 
-        var weaponsToAdd = demoWeapons
-            .Where(item => !existingKeys.Contains(BuildProductKey(item.Name, item.Manufacturer)))
-            .ToList();
+        var weaponsToAdd = new List<Weapon>();
+        foreach (var demoWeapon in demoWeapons)
+        {
+            var key = BuildProductKey(demoWeapon.Name, demoWeapon.Manufacturer);
+            if (!existingByKey.TryGetValue(key, out var existingWeapon))
+            {
+                weaponsToAdd.Add(demoWeapon);
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(existingWeapon.TypeDesignation))
+            {
+                existingWeapon.TypeDesignation = demoWeapon.TypeDesignation;
+            }
+
+            if (string.IsNullOrWhiteSpace(existingWeapon.Caliber))
+            {
+                existingWeapon.Caliber = demoWeapon.Caliber;
+            }
+
+            if (string.IsNullOrWhiteSpace(existingWeapon.PrimarySerialNumber))
+            {
+                existingWeapon.PrimarySerialNumber = demoWeapon.PrimarySerialNumber;
+            }
+        }
 
         if (weaponsToAdd.Count > 0)
         {
             await context.Weapons.AddRangeAsync(weaponsToAdd, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
+
+        await EnsureWeaponUnitsAsync(context, cancellationToken);
     }
 
     private static async Task SeedAccessoriesAsync(AppDbContext context, CancellationToken cancellationToken)
@@ -448,6 +518,72 @@ public static class AppDbContextSeed
     private static string BuildProductKey(string? name, string? manufacturer)
     {
         return $"{name?.Trim().ToLowerInvariant()}|{manufacturer?.Trim().ToLowerInvariant()}";
+    }
+
+    private static async Task EnsureWeaponUnitsAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        var weapons = await context.Weapons
+            .Include(weapon => weapon.Units)
+            .ThenInclude(unit => unit.Parts)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+
+        foreach (var weapon in weapons)
+        {
+            var targetCount = Math.Max(weapon.StockQuantity, 0);
+            var currentCount = weapon.Units.Count(unit => unit.Status == WeaponUnitStatus.InStock);
+            if (currentCount >= targetCount)
+            {
+                continue;
+            }
+
+            for (var index = currentCount; index < targetCount; index++)
+            {
+                var unitNumber = index + 1;
+                var baseSerial = string.IsNullOrWhiteSpace(weapon.PrimarySerialNumber)
+                    ? $"WS-{weapon.Id:D4}"
+                    : weapon.PrimarySerialNumber.Trim();
+
+                var primarySerial = unitNumber == 1
+                    ? baseSerial
+                    : $"{baseSerial}-{unitNumber:D2}";
+
+                if (weapon.Units.Any(unit => string.Equals(unit.PrimarySerialNumber, primarySerial, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                weapon.Units.Add(new WeaponUnit
+                {
+                    PrimarySerialNumber = primarySerial,
+                    Status = WeaponUnitStatus.InStock,
+                    Parts = new List<WeaponUnitPart>
+                    {
+                        new()
+                        {
+                            SlotNumber = 1,
+                            PartName = "Hlaveň",
+                            SerialNumber = $"{primarySerial}-P1"
+                        },
+                        new()
+                        {
+                            SlotNumber = 2,
+                            PartName = "Závěr",
+                            SerialNumber = $"{primarySerial}-P2"
+                        },
+                        new()
+                        {
+                            SlotNumber = 3,
+                            PartName = "Rám",
+                            SerialNumber = $"{primarySerial}-P3"
+                        }
+                    }
+                });
+            }
+
+            weapon.StockQuantity = weapon.Units.Count(unit => unit.Status == WeaponUnitStatus.InStock);
+            weapon.IsAvailable = weapon.StockQuantity > 0;
+        }
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)

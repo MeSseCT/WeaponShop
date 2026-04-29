@@ -43,9 +43,18 @@
                     <small>@User.Identity?.Name</small>
                 </span>
             </a>
+
+            <button type="button"
+                    class="mobile-nav-toggle"
+                    data-nav-toggle
+                    data-nav-target="backoffice-site-nav"
+                    aria-expanded="false"
+                    aria-controls="backoffice-site-nav">
+                Menu
+            </button>
         </div>
 
-        <div class="category-bar">
+        <div class="category-bar" id="backoffice-site-nav" data-nav-panel>
             <div class="site-wrap nav-row">
                 <nav class="main-nav">
                     @if (hasBackofficeRole)
@@ -58,7 +67,7 @@
                                     <a asp-area="" asp-controller="Home" asp-action="Index">Domů</a>
                                     <a asp-area="" asp-controller="Weapons" asp-action="Index">Všechny produkty</a>
                                     <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
-                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+                                    <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Regulované zbraně</a>
                                 </div>
                                 <div class="mega-col">
                                     <span class="mega-title">Sekce obchodu</span>
@@ -115,6 +124,7 @@
         </div>
     </footer>
 
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

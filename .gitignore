@@ -2,6 +2,9 @@
 bin/
 obj/
 
+# macOS
+.DS_Store
+
 # SQLite DB files
 *.db
 *.db-shm
@@ -20,3 +23,12 @@ Migrations/obj/
 
 # Uploaded verification documents
 UserDocuments/
+
+# Thesis and school materials kept only locally
+/BakalarkaDUR0150Final/
+/BakalarkaDUR0150Final*.zip
+/kapitola*.tex
+/doplnky_teoria_*.tex
+/bakalarkakapitola*.txt
+/testy_funkcnosti_webu.txt
+/Screenshot *.png

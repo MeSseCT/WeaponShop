@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -9,6 +9,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeaponShop.Infrastructure", "WeaponShop.Infrastructure\WeaponShop.Infrastructure.csproj", "{14AC92BD-5B8E-3F1F-B843-7D112DD28D70}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeaponShop.Web", "WeaponShop.web\WeaponShop.Web.csproj", "{74B96F29-B470-7644-13D4-66F400860902}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeaponShop.Tests", "WeaponShop.Tests\WeaponShop.Tests.csproj", "{362E6EE3-37AB-4FCF-8554-F24F18FA1F6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{74B96F29-B470-7644-13D4-66F400860902}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74B96F29-B470-7644-13D4-66F400860902}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74B96F29-B470-7644-13D4-66F400860902}.Release|Any CPU.Build.0 = Release|Any CPU
+		{362E6EE3-37AB-4FCF-8554-F24F18FA1F6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{362E6EE3-37AB-4FCF-8554-F24F18FA1F6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{362E6EE3-37AB-4FCF-8554-F24F18FA1F6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{362E6EE3-37AB-4FCF-8554-F24F18FA1F6D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,13 +1,17 @@
 @model WeaponShop.Web.ViewModels.Weapons.WeaponDetailsViewModel
+@inject IConfiguration Configuration
 
 @{
     ViewData["Title"] = Model.Weapon.Name;
+    var isVatPayer = Configuration.GetValue("Invoice:IsVatPayer", true);
+    var vatRatePercent = Configuration.GetValue("Invoice:VatRatePercent", 21m);
+    var vatAmount = CatalogPresentation.GetVatAmount(Model.Weapon.Price, vatRatePercent, isVatPayer);
 }
 
 <nav class="breadcrumb-bar">
     <a asp-controller="Home" asp-action="Index">Domů</a>
     <span>/</span>
-    <a asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+    <a asp-action="Index" asp-route-access="restricted">Regulované zbraně</a>
     <span>/</span>
     <span>@Model.Weapon.Name</span>
 </nav>
@@ -52,9 +56,14 @@
         <div class="detail-price-row">
             <div class="detail-price">@Model.Weapon.Price.ToString("C")</div>
         </div>
+        <div class="panel-subtitle">@CatalogPresentation.GetVatPriceNote(isVatPayer, vatRatePercent)</div>
+        @if (isVatPayer)
+        {
+            <div class="panel-subtitle">Z toho DPH: @vatAmount.ToString("C")</div>
+        }
         <div class="detail-status-line">
-            <span>Prodej na zbrojní průkaz</span>
-            <span>Pouze po ověření účtu</span>
+            <span>@CatalogPresentation.GetWeaponCategoryLabel(Model.Weapon.Category)</span>
+            <span>@Model.AccessLabel</span>
             <strong class="stock-classic @(Model.Weapon.IsAvailable && Model.Weapon.StockQuantity > 0 ? "stock-classic-in" : "stock-classic-out")">
                 @(Model.Weapon.IsAvailable && Model.Weapon.StockQuantity > 0 ? "zboží je skladem" : "momentálně nedostupné")
             </strong>
@@ -69,11 +78,20 @@
                     <button type="submit" class="btn-modern">Přidat do košíku</button>
                 </form>
             }
+            else if (!string.IsNullOrWhiteSpace(Model.RestrictionMessage))
+            {
+                <a class="btn-soft" asp-controller="Account" asp-action="Documents">Doplnit profil</a>
+            }
             <a class="btn-soft" asp-action="Index" asp-route-access="restricted">Zpět do katalogu</a>
         </div>
 
+        @if (!string.IsNullOrWhiteSpace(Model.RestrictionMessage))
+        {
+            <div class="panel-subtitle">@Model.RestrictionMessage</div>
+        }
+
         <div class="detail-facts">
-            <div><span>SKU:</span><strong>ZBR-@Model.Weapon.Id</strong></div>
+            <div><span>Interní kód:</span><strong>ZBR-@Model.Weapon.Id</strong></div>
             <div><span>Kategorie:</span><strong>@CatalogPresentation.GetWeaponCategoryLabel(Model.Weapon.Category)</strong></div>
             <div><span>Výrobce:</span><strong>@Model.Weapon.Manufacturer</strong></div>
         </div>
@@ -126,6 +144,7 @@
                             <strong>@product.Price.ToString("C")</strong>
                             <span>@(product.StockQuantity ?? 0) ks</span>
                         </div>
+                        <div class="panel-subtitle">včetně DPH</div>
                         <a class="btn-soft full-width" asp-action="Details" asp-route-id="@product.WeaponId">Zobrazit detail</a>
                     </div>
                 </article>

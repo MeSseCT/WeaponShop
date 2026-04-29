@@ -25,7 +25,7 @@
                 </select>
             </div>
             <div class="mb-3">
-                <label class="field-label" for="searchQuery">Hledat (číslo objednávky / e-mail / jméno)</label>
+                <label class="field-label" for="searchQuery">Hledat (objednávka / e-mail / jméno / výrobní nebo sériové číslo)</label>
                 <input id="searchQuery" name="q" class="form-control" value="@Context.Request.Query["q"]" />
             </div>
         </div>
@@ -78,7 +78,7 @@
                             <td class="text-end">
                                 <div class="btn-row">
                                     <a class="btn-inline" asp-area="Admin" asp-action="Details" asp-route-id="@order.Id">Detail</a>
-                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout DOC</a>
+                                    <a class="btn-inline" asp-area="Admin" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout RTF</a>
                                     <form asp-area="Admin" asp-action="DeleteHistory" method="post">
                                         <input type="hidden" name="id" value="@order.Id" />
                                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />

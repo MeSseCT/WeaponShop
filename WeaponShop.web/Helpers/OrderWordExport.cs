@@ -26,6 +26,20 @@ public static class OrderWordExport
             var name = item.GetDisplayName();
             var lineTotal = item.UnitPrice * item.Quantity;
             AppendLine(sb, $"- {name} x {item.Quantity} @ {item.UnitPrice:C} = {lineTotal:C}");
+
+            if (item.IsWeapon && item.Weapon is not null)
+            {
+                foreach (var unit in item.Weapon.Units
+                             .Where(unit => unit.ReservedOrderId == order.Id || unit.SoldOrderId == order.Id)
+                             .OrderBy(unit => unit.PrimarySerialNumber))
+                {
+                    AppendLine(sb, $"  Výrobní číslo: {unit.PrimarySerialNumber}");
+                    foreach (var part in unit.Parts.OrderBy(part => part.SlotNumber))
+                    {
+                        AppendLine(sb, $"    {part.PartName}: {part.SerialNumber}");
+                    }
+                }
+            }
         }
 
         sb.Append(@"\par ");
@@ -43,7 +57,7 @@ public static class OrderWordExport
         }
 
         sb.Append("}");
-        return Encoding.UTF8.GetBytes(sb.ToString());
+        return Encoding.ASCII.GetBytes(sb.ToString());
     }
 
     private static void AppendLine(StringBuilder sb, string text)
@@ -54,10 +68,37 @@ public static class OrderWordExport
 
     private static string Escape(string text)
     {
-        return text
-            .Replace(@"\", @"\\")
-            .Replace("{", @"\{")
-            .Replace("}", @"\}");
+        var sb = new StringBuilder(text.Length);
+        foreach (var character in text)
+        {
+            switch (character)
+            {
+                case '\\':
+                    sb.Append(@"\\");
+                    break;
+                case '{':
+                    sb.Append(@"\{");
+                    break;
+                case '}':
+                    sb.Append(@"\}");
+                    break;
+                default:
+                    if (character <= sbyte.MaxValue)
+                    {
+                        sb.Append(character);
+                    }
+                    else
+                    {
+                        sb.Append(@"\u");
+                        sb.Append((short)character);
+                        sb.Append('?');
+                    }
+
+                    break;
+            }
+        }
+
+        return sb.ToString();
     }
 
     private static string ResolvePaymentLabel(string paymentMethod)

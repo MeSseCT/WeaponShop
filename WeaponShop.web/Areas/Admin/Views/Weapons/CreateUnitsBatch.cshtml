@@ -1,0 +1,33 @@
+@model WeaponUnitsBatchInputModel
+
+<section class="form-shell form-shell-wide">
+    <h2>Naskladnit kusy zbraně</h2>
+    <p class="auth-sub">@Model.WeaponName • @CatalogPresentation.GetWeaponCategoryLabel(Model.WeaponCategory) • @Model.WeaponTypeDesignation</p>
+
+    <form asp-action="CreateUnitsBatch" asp-route-weaponId="@Model.WeaponId" method="post">
+        <input asp-for="WeaponId" type="hidden" />
+        <input asp-for="WeaponName" type="hidden" />
+        <input asp-for="WeaponCategory" type="hidden" />
+        <input asp-for="WeaponTypeDesignation" type="hidden" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-4">
+            <label asp-for="SerialNumbersText" class="field-label"></label>
+            <textarea asp-for="SerialNumbersText" class="form-control" rows="10" placeholder="SN-24001&#10;SN-24002&#10;SN-24003"></textarea>
+            <span asp-validation-for="SerialNumbersText" class="text-danger"></span>
+            <div class="panel-subtitle" style="margin-top: .5rem;">Každý řádek představuje jeden fyzický kus zbraně. Skladník zde zadává pouze hlavní výrobní čísla.</div>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="CommonNotes" class="field-label"></label>
+            <textarea asp-for="CommonNotes" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="CommonNotes" class="text-danger"></span>
+        </div>
+
+        <div class="hero-actions">
+            <button class="btn-modern" type="submit">Naskladnit kusy</button>
+            <a class="btn-soft" asp-action="Edit" asp-route-id="@Model.WeaponId">Zpět na zbraň</a>
+        </div>
+    </form>
+</section>

@@ -53,7 +53,6 @@
                         <th>Položky</th>
                         <th>Stav</th>
                         <th>Kontroly</th>
-                        <th>Audit</th>
                         <th class="text-end">Akce</th>
                     </tr>
                 </thead>
@@ -96,26 +95,10 @@
                                     <div class="panel-subtitle">Předáno zákazníkovi: @order.PickupHandedOverAtUtc.Value.ToLocalTime().ToString("g")</div>
                                 }
                             </td>
-                            <td>
-                                @if (order.Audits.Count == 0)
-                                {
-                                    <span class="panel-subtitle">Zatím bez auditu</span>
-                                }
-                                else
-                                {
-                                    foreach (var audit in order.Audits.OrderByDescending(a => a.OccurredAtUtc))
-                                    {
-                                        <div class="panel-subtitle">
-                                            @audit.OccurredAtUtc.ToLocalTime().ToString("g") -
-                                            @audit.ActorName: @CatalogPresentation.GetAuditActionLabel(audit.Action)
-                                        </div>
-                                    }
-                                }
-                            </td>
                             <td class="text-end">
                                 <div class="btn-row">
                                     <a class="btn-inline" asp-action="Details" asp-route-id="@order.Id">Detail</a>
-                                    <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout DOC</a>
+                                    <a class="btn-inline" asp-action="DownloadWord" asp-route-id="@order.Id">Stáhnout RTF</a>
                                     @if (order.Status == OrderStatus.Approved)
                                     {
                                         @if (order.Items.Any(item => item.IsWeapon))

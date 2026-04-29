@@ -1,4 +1,12 @@
 @model Order
+@inject IConfiguration Configuration
+
+@{
+    var isVatPayer = Configuration.GetValue("Invoice:IsVatPayer", true);
+    var vatRatePercent = Configuration.GetValue("Invoice:VatRatePercent", 21m);
+    var totalNet = CatalogPresentation.GetNetAmount(Model.TotalPrice, vatRatePercent, isVatPayer);
+    var totalVat = CatalogPresentation.GetVatAmount(Model.TotalPrice, vatRatePercent, isVatPayer);
+}
 
 <section class="panel">
     <div class="panel-head">
@@ -30,6 +38,12 @@
                 <tr>
                     <th>Celkem</th>
                     <td>@Model.TotalPrice.ToString("C")</td>
+                    <th>DPH</th>
+                    <td>@(isVatPayer ? $"{totalVat.ToString("C")} ({vatRatePercent:0.#} %)" : "Neplátce DPH")</td>
+                </tr>
+                <tr>
+                    <th>Základ daně</th>
+                    <td>@totalNet.ToString("C")</td>
                     <th>Položky</th>
                     <td>@Model.Items.Count</td>
                 </tr>
@@ -84,6 +98,10 @@
                 }
             </tbody>
         </table>
+    </div>
+
+    <div class="panel-subtitle" style="margin-bottom: 1.5rem;">
+        @CatalogPresentation.GetVatPriceNote(isVatPayer, vatRatePercent)
     </div>
 
     <div class="panel-head">

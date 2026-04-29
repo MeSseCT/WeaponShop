@@ -171,7 +171,7 @@ public class OrderService : IOrderService
             throw new KeyNotFoundException($"Objednávka s ID {orderId} nebyla nalezena.");
         }
 
-        return await AddWeaponItemInternalAsync(order, weaponId, quantity, cancellationToken);
+        return await AddWeaponItemInternalAsync(order, weaponId, quantity, order.UserId, cancellationToken);
     }
 
     public async Task<Order> AddItemToCurrentOrderAsync(
@@ -185,12 +185,10 @@ public class OrderService : IOrderService
             throw new ArgumentException("ID uživatele je povinné.", nameof(userId));
         }
 
-        await EnsureUserCanPurchaseRestrictedItemsAsync(userId, cancellationToken);
-
         var currentOrder = await _orderRepository.GetCurrentByUserIdAsync(userId, cancellationToken)
             ?? await CreateOrderAsync(userId, cancellationToken);
 
-        return await AddWeaponItemInternalAsync(currentOrder, weaponId, quantity, cancellationToken);
+        return await AddWeaponItemInternalAsync(currentOrder, weaponId, quantity, userId, cancellationToken);
     }
 
     public async Task<Order> AddAccessoryItemToCurrentOrderAsync(
@@ -290,13 +288,20 @@ public class OrderService : IOrderService
             throw new InvalidOperationException("Prázdnou objednávku nelze odeslat.");
         }
 
-        var containsRestrictedItems = OrderContainsRestrictedItems(currentOrder);
-        if (containsRestrictedItems)
+        var containsWeaponItems = OrderContainsWeaponItems(currentOrder);
+        var requiresManualApproval = OrderRequiresManualApproval(currentOrder);
+        if (containsWeaponItems)
         {
-            await EnsureUserCanPurchaseRestrictedItemsAsync(userId, cancellationToken);
+            foreach (var category in currentOrder.Items
+                         .Where(item => item.IsWeapon)
+                         .Select(item => item.GetCategoryCode())
+                         .Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                await EnsureUserCanPurchaseWeaponCategoryAsync(userId, category, cancellationToken);
+            }
         }
 
-        ValidateCheckoutDetails(checkoutDetails, containsRestrictedItems);
+        ValidateCheckoutDetails(checkoutDetails, containsWeaponItems);
         ApplyCheckoutDetails(currentOrder, checkoutDetails, user);
 
         var now = DateTime.UtcNow;
@@ -304,8 +309,8 @@ public class OrderService : IOrderService
         await ReserveStockIfNeededAsync(currentOrder, now, cancellationToken);
 
         var fromStatus = currentOrder.Status;
-        currentOrder.Status = containsRestrictedItems ? OrderStatus.AwaitingApproval : OrderStatus.Approved;
-        if (!containsRestrictedItems)
+        currentOrder.Status = requiresManualApproval ? OrderStatus.AwaitingApproval : OrderStatus.Approved;
+        if (!requiresManualApproval)
         {
             currentOrder.ApprovedAtUtc = now;
         }
@@ -315,7 +320,7 @@ public class OrderService : IOrderService
             OrderId = currentOrder.Id,
             FromStatus = fromStatus,
             ToStatus = currentOrder.Status,
-            Action = containsRestrictedItems
+            Action = requiresManualApproval
                 ? "Objednávka odeslána ke schválení"
                 : "Veřejná objednávka byla automaticky potvrzena",
             ActorUserId = userId,
@@ -325,7 +330,7 @@ public class OrderService : IOrderService
             Notes = currentOrder.CustomerNote
         }, cancellationToken);
 
-        var (title, message) = BuildCheckoutNotification(currentOrder, containsRestrictedItems, now);
+        var (title, message) = BuildCheckoutNotification(currentOrder, requiresManualApproval, now);
         await _notificationRepository.AddAsync(new Notification
         {
             UserId = currentOrder.UserId,
@@ -337,7 +342,7 @@ public class OrderService : IOrderService
         }, cancellationToken);
 
         await _orderRepository.SaveChangesAsync(cancellationToken);
-        await SendCheckoutEmailsAsync(currentOrder, containsRestrictedItems, now, cancellationToken);
+        await SendCheckoutEmailsAsync(currentOrder, requiresManualApproval, now, cancellationToken);
         return currentOrder;
     }
 
@@ -360,6 +365,98 @@ public class OrderService : IOrderService
         CancellationToken cancellationToken = default)
     {
         return ChangeStatusAsync(orderId, OrderStatus.Rejected, actorUserId, actorName, actorRole, reason, cancellationToken);
+    }
+
+    public async Task<Order> AssignWeaponUnitsAsync(
+        int orderId,
+        int weaponId,
+        IReadOnlyCollection<int> unitIds,
+        string actorUserId,
+        string? actorName,
+        string? actorRole,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
+        if (order is null)
+        {
+            throw new KeyNotFoundException($"Objednávka s ID {orderId} nebyla nalezena.");
+        }
+
+        if (order.Status is not (OrderStatus.Approved or OrderStatus.AwaitingGunsmith or OrderStatus.AwaitingDispatch or OrderStatus.ReadyForPickup))
+        {
+            throw new InvalidOperationException("Kusy lze párovat pouze u schválené nebo právě zpracovávané objednávky.");
+        }
+
+        var item = order.Items.SingleOrDefault(orderItem => orderItem.WeaponId == weaponId);
+        if (item is null || item.Weapon is null)
+        {
+            throw new InvalidOperationException("Vybraná zbraň v objednávce neexistuje.");
+        }
+
+        var normalizedUnitIds = unitIds
+            .Distinct()
+            .ToList();
+
+        if (normalizedUnitIds.Count != item.Quantity)
+        {
+            throw new InvalidOperationException($"Je nutné spárovat přesně {item.Quantity} kus(y) zbraně.");
+        }
+
+        var selectedUnits = item.Weapon.Units
+            .Where(unit => normalizedUnitIds.Contains(unit.Id))
+            .ToList();
+
+        if (selectedUnits.Count != normalizedUnitIds.Count)
+        {
+            throw new InvalidOperationException("Některý vybraný kus zbraně nebyl nalezen.");
+        }
+
+        foreach (var unit in selectedUnits)
+        {
+            if (unit.Status == WeaponUnitStatus.Sold)
+            {
+                throw new InvalidOperationException($"Kus {unit.PrimarySerialNumber} je již prodaný.");
+            }
+
+            if (unit.Status == WeaponUnitStatus.Reserved && unit.ReservedOrderId != order.Id)
+            {
+                throw new InvalidOperationException($"Kus {unit.PrimarySerialNumber} je již spárovaný s jinou objednávkou.");
+            }
+        }
+
+        var previouslyAssigned = item.Weapon.Units
+            .Where(unit => unit.Status == WeaponUnitStatus.Reserved && unit.ReservedOrderId == order.Id)
+            .ToList();
+
+        foreach (var unit in previouslyAssigned.Where(unit => normalizedUnitIds.Contains(unit.Id) == false))
+        {
+            unit.Status = WeaponUnitStatus.InStock;
+            unit.ReservedOrderId = null;
+        }
+
+        foreach (var unit in selectedUnits)
+        {
+            unit.Status = WeaponUnitStatus.Reserved;
+            unit.ReservedOrderId = order.Id;
+        }
+
+        var now = DateTime.UtcNow;
+        var resolvedActorName = await ResolveActorNameAsync(actorUserId, actorName, cancellationToken);
+        await _orderRepository.AddAuditAsync(new OrderAudit
+        {
+            OrderId = order.Id,
+            FromStatus = order.Status,
+            ToStatus = order.Status,
+            Action = "Sklad spároval konkrétní výrobní čísla k objednávce",
+            ActorUserId = actorUserId,
+            ActorName = resolvedActorName,
+            ActorRole = actorRole ?? string.Empty,
+            OccurredAtUtc = now,
+            Notes = string.Join(", ", selectedUnits.OrderBy(unit => unit.PrimarySerialNumber).Select(unit => unit.PrimarySerialNumber))
+        }, cancellationToken);
+
+        await _orderRepository.SaveChangesAsync(cancellationToken);
+        return order;
     }
 
     public Task<Order> MarkWarehouseCheckedAsync(
@@ -442,7 +539,7 @@ public class OrderService : IOrderService
 
         var now = DateTime.UtcNow;
         var fromStatus = order.Status;
-        var containsRestrictedItems = OrderContainsRestrictedItems(order);
+        var requiresManualApproval = OrderRequiresManualApproval(order);
 
         if (string.IsNullOrWhiteSpace(actorUserId))
         {
@@ -476,11 +573,12 @@ public class OrderService : IOrderService
                     throw new InvalidOperationException("Objednávka musí být nejprve schválena administrátorem, než ji sklad předá zbrojíři.");
                 }
 
-                if (!containsRestrictedItems)
+                if (!requiresManualApproval)
                 {
                     throw new InvalidOperationException("Veřejné objednávky se zbrojíři nepředávají.");
                 }
 
+                EnsureWeaponUnitsAssigned(order);
                 order.WarehouseCheckedAtUtc = now;
                 order.Status = OrderStatus.AwaitingGunsmith;
                 break;
@@ -494,23 +592,23 @@ public class OrderService : IOrderService
                 order.Status = OrderStatus.AwaitingDispatch;
                 break;
             case OrderStatus.Shipped:
-                if (order.Status != OrderStatus.AwaitingDispatch && !(order.Status == OrderStatus.Approved && !containsRestrictedItems))
+                if (order.Status != OrderStatus.AwaitingDispatch && !(order.Status == OrderStatus.Approved && !requiresManualApproval))
                 {
                     throw new InvalidOperationException("Objednávka musí být připravena skladem, než může být odeslána.");
                 }
 
-                await ReserveStockIfNeededAsync(order, now, cancellationToken);
+                EnsureWeaponUnitsAssigned(order);
                 order.WarehousePreparedAtUtc ??= now;
                 order.ShippedAtUtc = now;
                 order.Status = OrderStatus.Shipped;
                 break;
             case OrderStatus.ReadyForPickup:
-                if (order.Status != OrderStatus.AwaitingDispatch && !(order.Status == OrderStatus.Approved && !containsRestrictedItems))
+                if (order.Status != OrderStatus.AwaitingDispatch && !(order.Status == OrderStatus.Approved && !requiresManualApproval))
                 {
                     throw new InvalidOperationException("Objednávka musí být připravena skladem, než bude nachystána k vyzvednutí.");
                 }
 
-                await ReserveStockIfNeededAsync(order, now, cancellationToken);
+                EnsureWeaponUnitsAssigned(order);
                 order.WarehousePreparedAtUtc ??= now;
                 order.ReadyForPickupAtUtc = now;
                 order.Status = OrderStatus.ReadyForPickup;
@@ -521,6 +619,7 @@ public class OrderService : IOrderService
                     throw new InvalidOperationException("Objednávka musí být připravena k vyzvednutí, než bude předána zákazníkovi.");
                 }
 
+                FinalizeReservedWeaponUnits(order);
                 order.PickupHandedOverAtUtc = now;
                 order.Status = OrderStatus.Completed;
                 break;
@@ -532,7 +631,7 @@ public class OrderService : IOrderService
         order.OrderNumber ??= GeneratePublicOrderNumber(now);
 
         var resolvedActorName = await ResolveActorNameAsync(actorUserId, actorName, cancellationToken);
-        var action = ResolveAuditAction(status, actorRole, containsRestrictedItems);
+        var action = ResolveAuditAction(status, actorRole, requiresManualApproval);
         await _orderRepository.AddAuditAsync(new OrderAudit
         {
             OrderId = order.Id,
@@ -554,7 +653,7 @@ public class OrderService : IOrderService
             or OrderStatus.ReadyForPickup
             or OrderStatus.Completed)
         {
-            var (title, message) = BuildCustomerNotification(order, now, notes, containsRestrictedItems);
+            var (title, message) = BuildCustomerNotification(order, now, notes, requiresManualApproval);
             await _notificationRepository.AddAsync(new Notification
             {
                 UserId = order.UserId,
@@ -576,7 +675,7 @@ public class OrderService : IOrderService
             or OrderStatus.ReadyForPickup
             or OrderStatus.Completed)
         {
-            await SendStatusEmailsAsync(order, now, notes, containsRestrictedItems, cancellationToken);
+            await SendStatusEmailsAsync(order, now, notes, requiresManualApproval, cancellationToken);
         }
 
         return order;
@@ -603,6 +702,7 @@ public class OrderService : IOrderService
         Order order,
         int weaponId,
         int quantity,
+        string? userId,
         CancellationToken cancellationToken)
     {
         if (quantity <= 0)
@@ -614,6 +714,20 @@ public class OrderService : IOrderService
         if (weapon is null)
         {
             throw new KeyNotFoundException($"Zbraň s ID {weaponId} nebyla nalezena.");
+        }
+
+        if (!WeaponCategoryPolicy.IsSellableCategory(weapon.Category))
+        {
+            throw new InvalidOperationException("Kategorie A a A-I jsou zakázané a aplikace je neprodává.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            await EnsureUserCanPurchaseWeaponCategoryAsync(userId, weapon.Category, cancellationToken);
+        }
+        else if (!string.IsNullOrWhiteSpace(order.UserId))
+        {
+            await EnsureUserCanPurchaseWeaponCategoryAsync(order.UserId, weapon.Category, cancellationToken);
         }
 
         if (!weapon.IsAvailable || weapon.StockQuantity <= 0)
@@ -707,11 +821,11 @@ public class OrderService : IOrderService
         return order;
     }
 
-    private static string ResolveAuditAction(OrderStatus status, string? actorRole, bool containsRestrictedItems)
+    private static string ResolveAuditAction(OrderStatus status, string? actorRole, bool requiresManualApproval)
     {
         return status switch
         {
-            OrderStatus.Approved => containsRestrictedItems
+            OrderStatus.Approved => requiresManualApproval
                 ? "Administrátor schválil objednávku"
                 : "Veřejná objednávka byla potvrzena",
             OrderStatus.Rejected => actorRole switch
@@ -792,11 +906,11 @@ public class OrderService : IOrderService
         return $"WS-{now:yyyyMMdd}-{Guid.NewGuid():N}"[..20].ToUpperInvariant();
     }
 
-    private static (string Title, string Message) BuildCheckoutNotification(Order order, bool containsRestrictedItems, DateTime now)
+    private static (string Title, string Message) BuildCheckoutNotification(Order order, bool requiresManualApproval, DateTime now)
     {
         var localTime = now.ToLocalTime();
         var orderNumber = order.GetPublicOrderNumber();
-        return containsRestrictedItems
+        return requiresManualApproval
             ? ($"Objednávka č. {orderNumber} čeká na schválení",
                 $"Objednávka č. {orderNumber} byla přijata dne {localTime:dd. MM. yyyy HH:mm} a čeká na ověření kontrolovaného zboží.")
             : ($"Objednávka č. {orderNumber} byla přijata",
@@ -807,14 +921,14 @@ public class OrderService : IOrderService
         Order order,
         DateTime now,
         string? notes,
-        bool containsRestrictedItems)
+        bool requiresManualApproval)
     {
         var localTime = now.ToLocalTime();
         var reason = string.IsNullOrWhiteSpace(notes) ? "" : $" Důvod: {notes}";
         var orderNumber = order.GetPublicOrderNumber();
         return order.Status switch
         {
-            OrderStatus.Approved when containsRestrictedItems => ($"Objednávka č. {orderNumber} byla schválena",
+            OrderStatus.Approved when requiresManualApproval => ($"Objednávka č. {orderNumber} byla schválena",
                 $"Administrátor potvrdil doklady a objednávka č. {orderNumber} byla předána skladu ({localTime:dd. MM. yyyy HH:mm})."),
             OrderStatus.Approved => ($"Objednávka č. {orderNumber} byla potvrzena",
                 $"Sklad může zahájit zpracování objednávky č. {orderNumber} ({localTime:dd. MM. yyyy HH:mm})."),
@@ -838,7 +952,7 @@ public class OrderService : IOrderService
 
     private async Task SendCheckoutEmailsAsync(
         Order order,
-        bool containsRestrictedItems,
+        bool requiresManualApproval,
         DateTime now,
         CancellationToken cancellationToken)
     {
@@ -850,7 +964,7 @@ public class OrderService : IOrderService
             attachInvoice: false,
             cancellationToken: cancellationToken);
 
-        if (!containsRestrictedItems)
+        if (!requiresManualApproval)
         {
             return;
         }
@@ -868,10 +982,10 @@ public class OrderService : IOrderService
         Order order,
         DateTime now,
         string? notes,
-        bool containsRestrictedItems,
+        bool requiresManualApproval,
         CancellationToken cancellationToken)
     {
-        var statusEmail = BuildStatusEmail(order, now, notes, containsRestrictedItems);
+        var statusEmail = BuildStatusEmail(order, now, notes, requiresManualApproval);
         if (statusEmail.HasValue)
         {
             await SendCustomerEmailAsync(
@@ -914,7 +1028,7 @@ public class OrderService : IOrderService
         Order order,
         DateTime now,
         string? notes,
-        bool containsRestrictedItems)
+        bool requiresManualApproval)
     {
         var localTime = now.ToLocalTime();
         var reason = string.IsNullOrWhiteSpace(notes) ? string.Empty : $" Důvod: {notes}";
@@ -923,7 +1037,7 @@ public class OrderService : IOrderService
         return order.Status switch
         {
             OrderStatus.Approved => ($"Objednávka č. {orderNumber} byla schválena",
-                containsRestrictedItems
+                requiresManualApproval
                     ? $"Objednávka č. {orderNumber} byla dne {localTime:dd. MM. yyyy HH:mm} schválena po kontrole zákaznického profilu a dokladů."
                     : $"Objednávka č. {orderNumber} byla dne {localTime:dd. MM. yyyy HH:mm} schválena a předána k dalšímu zpracování."),
             OrderStatus.Rejected when IsDocumentCompletionRequest(notes) => ($"Je potřeba doplnit doklady k objednávce č. {orderNumber}",
@@ -1156,10 +1270,7 @@ public class OrderService : IOrderService
                 }
 
                 weapon.StockQuantity -= item.Quantity;
-                if (weapon.StockQuantity <= 0)
-                {
-                    weapon.IsAvailable = false;
-                }
+                weapon.IsAvailable = weapon.StockQuantity > 0;
 
                 continue;
             }
@@ -1214,7 +1325,13 @@ public class OrderService : IOrderService
             {
                 var weapon = weapons.Single(w => w.Id == item.WeaponId.Value);
                 weapon.StockQuantity += item.Quantity;
-                weapon.IsAvailable = true;
+                weapon.IsAvailable = weapon.StockQuantity > 0;
+
+                foreach (var unit in weapon.Units.Where(unit => unit.Status == WeaponUnitStatus.Reserved && unit.ReservedOrderId == order.Id))
+                {
+                    unit.Status = WeaponUnitStatus.InStock;
+                    unit.ReservedOrderId = null;
+                }
                 continue;
             }
 
@@ -1227,6 +1344,31 @@ public class OrderService : IOrderService
         }
 
         order.StockReservedAtUtc = null;
+    }
+
+    private static void FinalizeReservedWeaponUnits(Order order)
+    {
+        foreach (var item in order.Items.Where(item => item.Weapon is not null))
+        {
+            foreach (var unit in item.Weapon!.Units.Where(unit => unit.Status == WeaponUnitStatus.Reserved && unit.ReservedOrderId == order.Id))
+            {
+                unit.Status = WeaponUnitStatus.Sold;
+                unit.SoldOrderId = order.Id;
+                unit.ReservedOrderId = null;
+            }
+        }
+    }
+
+    private static void EnsureWeaponUnitsAssigned(Order order)
+    {
+        foreach (var item in order.Items.Where(item => item.IsWeapon && item.Weapon is not null))
+        {
+            var assignedCount = item.Weapon!.Units.Count(unit => unit.Status == WeaponUnitStatus.Reserved && unit.ReservedOrderId == order.Id);
+            if (assignedCount != item.Quantity)
+            {
+                throw new InvalidOperationException($"Objednávka {order.GetPublicOrderNumber()} nemá pro položku {item.GetDisplayName()} spárovaný správný počet konkrétních kusů.");
+            }
+        }
     }
 
     private static void RecalculateTotalPrice(Order order)
@@ -1245,35 +1387,30 @@ public class OrderService : IOrderService
         return user;
     }
 
-    private async Task EnsureUserCanPurchaseRestrictedItemsAsync(string userId, CancellationToken cancellationToken)
+    private async Task EnsureUserCanPurchaseWeaponCategoryAsync(
+        string userId,
+        string category,
+        CancellationToken cancellationToken)
     {
         var user = await EnsureUserExistsAsync(userId, cancellationToken);
-
-        if (!user.DateOfBirth.HasValue)
+        var access = WeaponCategoryPolicy.EvaluateAccess(user, category, isStaff: false);
+        if (!access.CanAddToCart)
         {
-            throw new InvalidOperationException("Než přidáte zboží do košíku, doplňte datum narození.");
-        }
-
-        if (!IsAdult(user.DateOfBirth.Value))
-        {
-            throw new InvalidOperationException("Pro nákup zbraní musíte být starší 18 let.");
-        }
-
-        var hasRequiredDocument = !string.IsNullOrWhiteSpace(user.IdCardFileName)
-            || !string.IsNullOrWhiteSpace(user.DriverLicenseFileName);
-
-        if (!hasRequiredDocument)
-        {
-            throw new InvalidOperationException("Před přidáním zbraní do košíku nahrajte občanský průkaz nebo nákupní povolení.");
+            throw new InvalidOperationException(access.RestrictionMessage);
         }
     }
 
-    private static bool OrderContainsRestrictedItems(Order order)
+    private static bool OrderContainsWeaponItems(Order order)
     {
         return order.Items.Any(item => item.IsWeapon);
     }
 
-    private static void ValidateCheckoutDetails(CheckoutDetails checkoutDetails, bool containsRestrictedItems)
+    private static bool OrderRequiresManualApproval(Order order)
+    {
+        return order.Items.Any(item => item.IsWeapon && WeaponCategoryPolicy.RequiresManualApproval(item.GetCategoryCode()));
+    }
+
+    private static void ValidateCheckoutDetails(CheckoutDetails checkoutDetails, bool containsWeaponItems)
     {
         if (string.IsNullOrWhiteSpace(checkoutDetails.ContactEmail) || !checkoutDetails.ContactEmail.Contains('@'))
         {
@@ -1297,7 +1434,7 @@ public class OrderService : IOrderService
             throw new InvalidOperationException("Vyberte způsob platby.");
         }
 
-        if (containsRestrictedItems && deliveryMethod != DeliveryPickup)
+        if (containsWeaponItems && deliveryMethod != DeliveryPickup)
         {
             throw new InvalidOperationException("Objednávky se zbraněmi lze dokončit pouze s osobním odběrem.");
         }
@@ -1371,19 +1508,6 @@ public class OrderService : IOrderService
         {
             order.ShippingPostalCode = "000 00";
         }
-    }
-
-    private static bool IsAdult(DateOnly dateOfBirth)
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var age = today.Year - dateOfBirth.Year;
-
-        if (today < dateOfBirth.AddYears(age))
-        {
-            age--;
-        }
-
-        return age >= 18;
     }
 
     private static string Normalize(string? value)

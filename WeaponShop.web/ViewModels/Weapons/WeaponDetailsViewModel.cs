@@ -9,5 +9,7 @@ public class WeaponDetailsViewModel
     public IReadOnlyList<string> ImagePaths { get; set; } = Array.Empty<string>();
     public bool CanAddToCart { get; set; }
     public bool CanViewRestrictedCatalog { get; set; }
+    public string AccessLabel { get; set; } = string.Empty;
+    public string RestrictionMessage { get; set; } = string.Empty;
     public IReadOnlyList<StoreCatalogItemViewModel> RelatedProducts { get; set; } = Array.Empty<StoreCatalogItemViewModel>();
 }

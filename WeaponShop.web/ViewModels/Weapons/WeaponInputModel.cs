@@ -12,8 +12,13 @@ public class WeaponInputModel
     [Display(Name = "Název")]
     public string Name { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Typ je povinný.")]
+    [StringLength(120)]
+    [Display(Name = "Typ / model")]
+    public string TypeDesignation { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "Kategorie je povinná.")]
-    [RegularExpression("^[ABCDE]$", ErrorMessage = "Kategorie musí být A, B, C, D nebo E.")]
+    [RegularExpression("^(B|C|CI|D)$", ErrorMessage = "Kategorie musí být B, C, C-I nebo D.")]
     [Display(Name = "Kategorie zbraně")]
     public string Category { get; set; } = string.Empty;
 
@@ -25,7 +30,6 @@ public class WeaponInputModel
     [Display(Name = "Cena")]
     public decimal Price { get; set; }
 
-    [Range(0, 10, ErrorMessage = "Skladové množství musí být mezi 0 a 10.")]
     [Display(Name = "Skladové množství")]
     public int StockQuantity { get; set; }
 
@@ -36,6 +40,11 @@ public class WeaponInputModel
     [StringLength(100)]
     [Display(Name = "Výrobce")]
     public string Manufacturer { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Kalibr je povinný.")]
+    [StringLength(50)]
+    [Display(Name = "Kalibr")]
+    public string Caliber { get; set; } = string.Empty;
 
     [Display(Name = "Hlavní obrázek")]
     public IFormFile? ImageFile { get; set; }
@@ -48,4 +57,6 @@ public class WeaponInputModel
     public string? CurrentImagePath { get; set; }
     public bool HasImage { get; set; }
     public List<WeaponGalleryImageInputModel> ExistingGalleryImages { get; set; } = new();
+    public List<WeaponRelatedOrderViewModel> RelatedOrders { get; set; } = new();
+    public List<WeaponUnitRowViewModel> Units { get; set; } = new();
 }

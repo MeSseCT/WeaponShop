@@ -1,4 +1,10 @@
 @model WeaponShop.Web.ViewModels.Cart.CartIndexViewModel
+@inject IConfiguration Configuration
+
+@{
+    var isVatPayer = Configuration.GetValue("Invoice:IsVatPayer", true);
+    var vatRatePercent = Configuration.GetValue("Invoice:VatRatePercent", 21m);
+}
 
 <section class="panel">
     <div class="panel-head">
@@ -73,12 +79,25 @@
         </div>
 
         <div class="panel-head" style="margin-top: 1rem;">
+            @{
+                var totalNet = CatalogPresentation.GetNetAmount(Model.CurrentOrder.TotalPrice, vatRatePercent, isVatPayer);
+                var totalVat = CatalogPresentation.GetVatAmount(Model.CurrentOrder.TotalPrice, vatRatePercent, isVatPayer);
+            }
             <p class="panel-subtitle">
                 Celkem: <strong>@Model.CurrentOrder.TotalPrice.ToString("C")</strong>
             </p>
-            @if (Model.ContainsRestrictedItems)
+            <div class="panel-subtitle">
+                @(isVatPayer
+                    ? $"Základ: {totalNet.ToString("C")} • DPH ({vatRatePercent:0.#} %): {totalVat.ToString("C")} • Cena s DPH"
+                    : "Dodavatel vystupuje jako neplátce DPH.")
+            </div>
+            @if (Model.RequiresManualApproval)
             {
-                <div class="panel-subtitle">Objednávka obsahuje zbraně, proto bude po odeslání čekat na schválení a je dostupná pouze s osobním odběrem.</div>
+                <div class="panel-subtitle">Objednávka obsahuje zbraně kategorií B, C nebo C-I, proto bude po odeslání čekat na schválení a je dostupná pouze s osobním odběrem.</div>
+            }
+            else if (Model.ContainsWeaponItems)
+            {
+                <div class="panel-subtitle">Objednávka obsahuje pouze zbraně kategorie D, proto se po ověření věku 18+ automaticky potvrdí. Doručení zůstává jen formou osobního odběru.</div>
             }
         </div>
     }
@@ -90,8 +109,9 @@
         <div class="panel-head">
             <div>
                 <h2>Checkout</h2>
-                <p class="panel-subtitle">Vyplňte doručení, platbu a kontaktní údaje pro dokončení objednávky.</p>
-            </div>
+            <p class="panel-subtitle">Vyplňte doručení, platbu a kontaktní údaje pro dokončení objednávky.</p>
+            <p class="panel-subtitle">@(isVatPayer ? $"Ceny v košíku jsou konečné a zahrnují DPH ({vatRatePercent:0.#} %)." : "Dodavatel vystupuje jako neplátce DPH.")</p>
+        </div>
         </div>
 
         <form asp-controller="Cart" asp-action="Checkout" method="post" class="form-shell form-shell-wide">
@@ -114,7 +134,7 @@
                     <label asp-for="Checkout.DeliveryMethod" class="field-label">Způsob doručení</label>
                     <select asp-for="Checkout.DeliveryMethod" class="form-control">
                         <option value="pickup">Osobní odběr</option>
-                        @if (!Model.ContainsRestrictedItems)
+                        @if (!Model.ContainsWeaponItems)
                         {
                             <option value="shipping">Doručení na adresu</option>
                         }
@@ -126,7 +146,7 @@
                     <label asp-for="Checkout.PaymentMethod" class="field-label">Způsob platby</label>
                     <select asp-for="Checkout.PaymentMethod" class="form-control">
                         <option value="bank-transfer">Bankovní převod</option>
-                        @if (!Model.ContainsRestrictedItems)
+                        @if (!Model.ContainsWeaponItems)
                         {
                             <option value="cash-on-delivery">Dobírka</option>
                         }

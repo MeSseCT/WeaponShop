@@ -9,7 +9,9 @@ public class ApplicationUser : IdentityUser
     public string LastName { get; set; } = string.Empty;
     public DateOnly? DateOfBirth { get; set; }
     public string? IdCardFileName { get; set; }
-    public string? DriverLicenseFileName { get; set; }
+    public bool IdCardIssuedInCzechRepublic { get; set; }
+    public bool FirearmsLicenseRecorded { get; set; }
+    public string? PurchasePermitFileName { get; set; }
     public DateTimeOffset? DocumentsUpdatedAt { get; set; }
     public DateTimeOffset? DocumentsUploadWindowStartedAtUtc { get; set; }
     public int DocumentsUploadCount { get; set; }

@@ -1,7 +1,11 @@
 @model WeaponShop.Web.ViewModels.Weapons.AccessoryDetailsViewModel
+@inject IConfiguration Configuration
 
 @{
     ViewData["Title"] = Model.Accessory.Name;
+    var isVatPayer = Configuration.GetValue("Invoice:IsVatPayer", true);
+    var vatRatePercent = Configuration.GetValue("Invoice:VatRatePercent", 21m);
+    var vatAmount = CatalogPresentation.GetVatAmount(Model.Accessory.Price, vatRatePercent, isVatPayer);
 }
 
 <nav class="breadcrumb-bar">
@@ -51,6 +55,11 @@
         <div class="detail-price-row">
             <div class="detail-price">@Model.Accessory.Price.ToString("C")</div>
         </div>
+        <div class="panel-subtitle">@CatalogPresentation.GetVatPriceNote(isVatPayer, vatRatePercent)</div>
+        @if (isVatPayer)
+        {
+            <div class="panel-subtitle">Z toho DPH: @vatAmount.ToString("C")</div>
+        }
         <div class="detail-status-line">
             <span>Volně prodejné zboží</span>
             <span>Bez ověření věku</span>
@@ -72,7 +81,7 @@
         </div>
 
         <div class="detail-facts">
-            <div><span>SKU:</span><strong>DOP-@Model.Accessory.Id</strong></div>
+            <div><span>Interní kód:</span><strong>DOP-@Model.Accessory.Id</strong></div>
             <div><span>Kategorie:</span><strong>@CatalogPresentation.GetAccessoryCategoryLabel(Model.Accessory.Category)</strong></div>
             <div><span>Výrobce:</span><strong>@Model.Accessory.Manufacturer</strong></div>
         </div>
@@ -125,6 +134,7 @@
                             <strong>@product.Price.ToString("C")</strong>
                             <span>@(product.StockQuantity ?? 0) ks</span>
                         </div>
+                        <div class="panel-subtitle">včetně DPH</div>
                         <a class="btn-soft full-width" asp-action="AccessoryDetails" asp-route-id="@product.AccessoryId">Zobrazit detail</a>
                     </div>
                 </article>

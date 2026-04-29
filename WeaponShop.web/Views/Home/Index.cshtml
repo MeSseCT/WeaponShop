@@ -1,3 +1,5 @@
+@model WeaponShop.Web.ViewModels.Home.HomePageViewModel
+
 @{
     ViewData["Title"] = "Úvod";
 }
@@ -8,8 +10,13 @@
             <p class="hero-kicker">Obchod se zbraněmi a střeleckými doplňky</p>
             <h1>Zbraně, optika a vybavení pro střelce.</h1>
             <p>
-                Doplňky můžete objednat ihned. Pro zobrazení a nákup zbraní na zbrojní průkaz je nutné přihlášení,
-                potvrzení věku 18+ a nahrání potřebných dokladů.
+                E-shop propojuje veřejně dostupné střelecké doplňky s kontrolovaným prodejem zbraní podle kategorií B, C, C-I a D.
+                Zákazník na jednom místě prochází katalog, košík, objednávky i ověření profilu, zatímco interní role
+                zajišťují schválení dokladů, skladové kroky a finální předání objednávky.
+            </p>
+            <p>
+                Aplikace je postavená jako kompletní obchodní workflow pre zákaznickou i interní časť systému.
+                Vedle prezentace produktů pokrývá i objednávkový proces, validaci dokladů, audit stavů a generovanie faktúry.
             </p>
         </div>
 
@@ -25,7 +32,7 @@
             </div>
             <div>
                 <strong>Po ověření účtu</strong>
-                <span>Zbraně se zobrazí po kontrole věku a dokladů</span>
+                <span>Kategorie B, C, C-I a D mají odlišné podmínky podle věku a dokladů</span>
             </div>
             <div>
                 <strong>Osobní odběr</strong>
@@ -34,23 +41,41 @@
         </div>
     </div>
 
-    <aside class="hero-stage">
-        <div class="hero-stage-card hero-stage-card-classic">
-            <span class="hero-stage-tag">Nákup zbraní</span>
-            <h2>Pro zobrazení zbraní je potřeba ověřený účet.</h2>
-            <ol class="hero-steps">
-                <li>Vytvořte si zákaznický účet a vyplňte svůj profil.</li>
-                <li>Potvrďte věk 18+ a nahrajte občanský průkaz nebo nákupní povolení.</li>
-                <li>Po ověření účtu se zpřístupní katalog zbraní a jejich detaily.</li>
-            </ol>
-        </div>
-    </aside>
+    @if (Model.RecommendedProduct is not null)
+    {
+        <aside class="hero-stage">
+            <article class="hero-stage-card hero-stage-card-classic hero-featured-product">
+                <div class="hero-featured-copy">
+                    <span class="hero-stage-tag">Doporučujeme</span>
+                    <span class="badge-chip @Model.RecommendedProduct.BadgeClass">@Model.RecommendedProduct.Badge</span>
+                    <h2>@Model.RecommendedProduct.Name</h2>
+                    <p class="hero-featured-meta">@Model.RecommendedProduct.Manufacturer • @Model.RecommendedProduct.CategoryDisplay</p>
+                    <p class="hero-featured-summary">@Model.RecommendedProduct.Summary</p>
+                    <div class="hero-featured-price">@Model.RecommendedProduct.Price.ToString("C")</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.RecommendedProduct.AccessHint))
+                    {
+                        <p class="panel-subtitle">@Model.RecommendedProduct.AccessHint</p>
+                    }
+                    <a class="btn-modern"
+                       asp-controller="@Model.RecommendedProduct.ActionController"
+                       asp-action="@Model.RecommendedProduct.ActionName"
+                       asp-route-id="@Model.RecommendedProduct.ActionRouteId"
+                       asp-route-access="@Model.RecommendedProduct.AccessRoute">
+                        @Model.RecommendedProduct.ActionLabel
+                    </a>
+                </div>
+                <div class="hero-featured-visual">
+                    <img src="@Model.RecommendedProduct.ImagePath" alt="@Model.RecommendedProduct.Name" />
+                </div>
+            </article>
+        </aside>
+    }
 </section>
 
 <section class="promo-banner panel">
     <div class="promo-banner-copy">
         <p class="section-kicker">Oblíbené kategorie</p>
-        <h2>Optika, pouzdra, sebeobrana, vzduchovky i zbraně na zbrojní průkaz.</h2>
+        <h2>Optika, pouzdra, sebeobrana, vzduchovky i regulované zbraně.</h2>
         <p class="panel-subtitle">Vyberte si kategorii, přejděte do detailu produktu a pokračujte standardně do košíku.</p>
         <div class="hero-actions">
             <a class="btn-modern" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Nakoupit doplňky</a>
@@ -78,11 +103,11 @@
         <div>
             <p class="section-kicker">Kategorie obchodu</p>
             <h2>Vyberte sekci, která vás zajímá</h2>
-            <p class="panel-subtitle">Doplňky jsou dostupné ihned. Zbraně se zobrazují až po ověření zákaznického účtu.</p>
+            <p class="panel-subtitle">Doplňky jsou dostupné ihned. U zbraní se podmínky řídí kategoriemi B, C, C-I a D.</p>
         </div>
     </div>
 
-    <div class="category-grid">
+        <div class="category-grid">
         <a class="category-tile category-tile-featured" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">
             <span class="category-eyebrow">Volně dostupné</span>
             <h3>Doplňky</h3>
@@ -96,12 +121,22 @@
         <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="B">
             <span class="category-eyebrow">Po ověření účtu</span>
             <h3>Kategorie B</h3>
-            <p>Krátké a další zbraně dostupné zákazníkům s ověřeným profilem a doklady.</p>
+            <p>Vyžaduje věk 18+, doklad totožnosti a potvrzení nebo nákupní povolení.</p>
         </a>
         <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="C">
             <span class="category-eyebrow">Po ověření účtu</span>
             <h3>Kategorie C</h3>
-            <p>Dlouhé zbraně a sportovní varianty po přihlášení, potvrzení věku a kontrole dokladů.</p>
+            <p>Vyžaduje věk 18+, doklad totožnosti a oprávnění evidované v systému.</p>
+        </a>
+        <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="CI">
+            <span class="category-eyebrow">Po ověření účtu</span>
+            <h3>Kategorie C-I</h3>
+            <p>Vyžaduje věk 18+ a občanský průkaz vydaný v České republice.</p>
+        </a>
+        <a class="category-tile" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="D">
+            <span class="category-eyebrow">Od 18 let</span>
+            <h3>Kategorie D</h3>
+            <p>Vyžaduje pouze věk 18+, bez dalších nahraných dokladů.</p>
         </a>
     </div>
 </section>

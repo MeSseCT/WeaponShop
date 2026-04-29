@@ -1,5 +1,9 @@
 @model WeaponInputModel
 
+@{
+    var orderDetailsArea = User.IsInRole("Admin") ? "Admin" : "Warehouse";
+}
+
 <section class="form-shell form-shell-wide">
     <h2>Upravit zbraň</h2>
     <p class="auth-sub">Úprava detailů produktu včetně popisu, ceny, galerie obrázků a dostupnosti.</p>
@@ -14,3 +18,132 @@
         </div>
     </form>
 </section>
+
+<section class="panel" style="margin-top: 1rem;">
+    <div class="panel-head">
+        <div>
+            <h3>Evidované kusy zbraně</h3>
+            <p class="panel-subtitle">Každý kus má vlastní výrobní číslo a 3 povinné části plus 1 volitelnou část pro dohledatelnost.</p>
+        </div>
+        <div class="btn-row">
+            <a class="btn-modern" asp-action="CreateUnitsBatch" asp-route-weaponId="@Model.Id">Naskladnit kusy</a>
+        </div>
+    </div>
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="data-empty">@statusMessage</div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="data-empty">@errorMessage</div>
+    }
+
+    @if (Model.Units.Count == 0)
+    {
+        <div class="data-empty">Pro tuto zbraň zatím nejsou evidovány žádné konkrétní kusy.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Výrobní číslo</th>
+                        <th>Části</th>
+                        <th>Stav</th>
+                        <th>Poznámka</th>
+                        <th class="text-end">Akce</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var unit in Model.Units)
+                    {
+                        <tr>
+                            <td>
+                                <div>@unit.PrimarySerialNumber</div>
+                                @if (!string.IsNullOrWhiteSpace(unit.ReservedOrderNumber))
+                                {
+                                    <div class="panel-subtitle">Rezervace: @unit.ReservedOrderNumber</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(unit.SoldOrderNumber))
+                                {
+                                    <div class="panel-subtitle">Prodáno v objednávce: @unit.SoldOrderNumber</div>
+                                }
+                            </td>
+                            <td>
+                                @foreach (var partSummary in unit.PartSummaries)
+                                {
+                                    <div class="panel-subtitle">@partSummary</div>
+                                }
+                            </td>
+                            <td>@unit.Status</td>
+                            <td>@(string.IsNullOrWhiteSpace(unit.Notes) ? "-" : unit.Notes)</td>
+                            <td class="text-end">
+                                <div class="btn-row">
+                                    @if (unit.Status == WeaponShop.Domain.WeaponUnitStatus.InStock)
+                                    {
+                                        <a class="btn-inline" asp-action="EditUnit" asp-route-weaponId="@Model.Id" asp-route-unitId="@unit.UnitId">Upravit kus</a>
+                                        <form asp-action="DeleteUnit" method="post">
+                                            <input type="hidden" name="weaponId" value="@Model.Id" />
+                                            <input type="hidden" name="unitId" value="@unit.UnitId" />
+                                            <button type="submit" class="btn-inline btn-inline-danger">Smazat kus</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="panel-subtitle">Uzamčeno workflow</span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@if (Model.RelatedOrders.Count > 0)
+{
+    <section class="panel" style="margin-top: 1rem;">
+        <div class="panel-head">
+            <div>
+                <h3>Související objednávky</h3>
+                <p class="panel-subtitle">Poslední objednávky obsahující tuto zbraň. Slouží pro dohledání kupujícího a interní kontrolu.</p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="data-grid">
+                <thead>
+                    <tr>
+                        <th>Objednávka</th>
+                        <th>Zákazník</th>
+                        <th>Vytvořeno</th>
+                        <th>Stav</th>
+                        <th class="text-end">Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.RelatedOrders)
+                    {
+                        <tr>
+                            <td>@order.OrderNumber</td>
+                            <td>
+                                <div>@order.CustomerName</div>
+                                <div class="panel-subtitle">@order.CustomerEmail</div>
+                            </td>
+                            <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td><span class="badge-cat">@CatalogPresentation.GetStatusLabel(order.Status)</span></td>
+                            <td class="text-end">
+                                <a class="btn-inline" asp-area="@orderDetailsArea" asp-controller="Orders" asp-action="Details" asp-route-id="@order.OrderId">Zobrazit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

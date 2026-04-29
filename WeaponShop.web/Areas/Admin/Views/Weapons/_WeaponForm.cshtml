@@ -2,8 +2,7 @@
 @{
     var isCreate = (ViewData["FormMode"] as string) == "Create";
     var isSkladnikOnly = User.IsInRole("Skladnik") && !User.IsInRole("Admin");
-    var showCatalogFields = !isSkladnikOnly || isCreate;
-    var showInventoryFields = true;
+    var showCatalogFields = !isSkladnikOnly;
 }
 
 @if (showCatalogFields)
@@ -16,7 +15,13 @@
 
     <div class="mb-3">
         <label asp-for="Category" class="field-label"></label>
-        <input asp-for="Category" class="form-control" />
+        <select asp-for="Category" class="form-control">
+            <option value="">Vyberte kategorii</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="CI">C-I</option>
+            <option value="D">D</option>
+        </select>
         <span asp-validation-for="Category" class="text-danger"></span>
     </div>
 
@@ -102,28 +107,34 @@ else
     }
 }
 
-@if (showInventoryFields)
-{
-    <div class="mb-3">
-        <label asp-for="StockQuantity" class="field-label">Skladové množství (0-10)</label>
-        <input asp-for="StockQuantity" type="number" min="0" max="10" class="form-control" />
-        <span asp-validation-for="StockQuantity" class="text-danger"></span>
-    </div>
+<div class="account-divider"></div>
 
-    <div class="mb-4">
-        <label asp-for="IsAvailable" class="field-label">Viditelnost pro zákazníky</label>
-        <div class="form-check">
-            <input asp-for="IsAvailable" class="form-check-input" />
-            <label asp-for="IsAvailable" class="form-check-label">Ano, zobrazit v katalogu</label>
-        </div>
-        <span asp-validation-for="IsAvailable" class="text-danger"></span>
-    </div>
-}
-else if (!isCreate)
+<div class="mb-3">
+    <label asp-for="TypeDesignation" class="field-label"></label>
+    <input asp-for="TypeDesignation" class="form-control" />
+    <span asp-validation-for="TypeDesignation" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Caliber" class="field-label"></label>
+    <input asp-for="Caliber" class="form-control" />
+    <span asp-validation-for="Caliber" class="text-danger"></span>
+</div>
+
+@if (!isCreate)
 {
     <div class="mb-4">
-        <label class="field-label">Sklad</label>
-        <div class="panel-subtitle">Počet kusů: @Model.StockQuantity</div>
-        <div class="panel-subtitle">Dostupnost: @(Model.IsAvailable ? "Dostupné" : "Skryté")</div>
+        <label class="field-label">Sklad a dohledatelnost</label>
+        <div class="panel-subtitle">Počet dostupných kusů: @Model.StockQuantity</div>
+        <div class="panel-subtitle">Konkrétní výrobní čísla a části spravuje skladník nebo administrátor níže v evidenci kusů.</div>
     </div>
 }
+
+<div class="mb-4">
+    <label asp-for="IsAvailable" class="field-label">Viditelnost pro zákazníky</label>
+    <div class="form-check">
+        <input asp-for="IsAvailable" class="form-check-input" />
+        <label asp-for="IsAvailable" class="form-check-label">Ano, zobrazit v katalogu při dostupnosti kusů</label>
+    </div>
+    <span asp-validation-for="IsAvailable" class="text-danger"></span>
+</div>

@@ -1,4 +1,5 @@
 @model WeaponShop.Web.ViewModels.Weapons.StoreCatalogViewModel
+@inject IConfiguration Configuration
 
 @{
     ViewData["Title"] = "Katalog";
@@ -9,9 +10,10 @@
     {
         "accessories" or "public" => "Doplňky",
         "restricted" when !string.IsNullOrWhiteSpace(Model.LegalCategoryFilter) => CatalogPresentation.GetWeaponCategoryLabel(Model.LegalCategoryFilter),
-        "restricted" => "Zbraně na zbrojní průkaz",
+        "restricted" => "Regulované zbraně",
         _ => "Katalog produktů"
     };
+    var isVatPayer = Configuration.GetValue("Invoice:IsVatPayer", true);
 }
 
 <section class="store-layout">
@@ -32,6 +34,7 @@
             <div>
                 <h1 class="catalog-title">@pageTitle</h1>
                 <p class="catalog-copy">Zobrazuji 1 - @totalVisibleItems z @totalVisibleItems výsledků.</p>
+                <p class="panel-subtitle">@(isVatPayer ? "Všechny ceny jsou uvedeny včetně DPH." : "Dodavatel vystupuje jako neplátce DPH.")</p>
             </div>
         </section>
 
@@ -105,8 +108,8 @@
         @if (!Model.CanViewRestrictedCatalog)
         {
             <div class="notice-banner">
-                <strong>Detaily zbraní jsou zatím uzamčené.</strong>
-                <span>Otevřete profil a dokončete ověření 18+ pro odemčení kontrolovaných položek.</span>
+                <strong>Kontrolovaný katalog je zatím uzamčený.</strong>
+                <span>Pro zobrazení zbraní musíte mít v účtu dosažený věk alespoň 18 let. Další podmínky se liší podle kategorie B, C, C-I a D.</span>
                 <a class="btn-inline" asp-controller="Account" asp-action="Profile">Otevřít profil</a>
             </div>
         }
@@ -150,6 +153,7 @@
                                         </span>
                                         <strong>@product.Price.ToString("C")</strong>
                                     </div>
+                                    <div class="panel-subtitle">@(isVatPayer ? "včetně DPH" : "neplátce DPH")</div>
                                     <div class="product-actions product-actions-split">
                                         <a class="btn-soft full-width" asp-action="AccessoryDetails" asp-route-id="@product.AccessoryId">Zobrazit detail</a>
                                         @if (User.IsInRole("Customer") && product.IsAvailable && product.AccessoryId.HasValue)
@@ -175,7 +179,7 @@
                 <div class="section-header">
                     <div>
                         <h2>Zbraně s kontrolovaným přístupem</h2>
-                        <p class="panel-subtitle">Produkty dostupné po ověření zákaznického účtu.</p>
+                        <p class="panel-subtitle">Podmínky přístupu se řídí kategoriemi B, C, C-I a D.</p>
                     </div>
                 </div>
 
@@ -210,9 +214,19 @@
                                             </span>
                                             <strong>@product.Price.ToString("C")</strong>
                                         </div>
+                                        <div class="panel-subtitle">@(isVatPayer ? "včetně DPH" : "neplátce DPH")</div>
+                                        <div class="panel-subtitle">@product.AccessLabel</div>
                                         <div class="product-actions product-actions-split">
-                                            <a class="btn-soft full-width" asp-action="Details" asp-route-id="@product.WeaponId">Zobrazit detail</a>
-                                            @if (User.IsInRole("Customer") && product.IsAvailable && product.WeaponId.HasValue)
+                                            @if (product.CanViewDetails)
+                                            {
+                                                <a class="btn-soft full-width" asp-action="Details" asp-route-id="@product.WeaponId">Zobrazit detail</a>
+                                            }
+                                            else
+                                            {
+                                                <a class="btn-soft full-width" asp-controller="Account" asp-action="Documents">Doplnit profil</a>
+                                            }
+
+                                            @if (User.IsInRole("Customer") && product.IsAvailable && product.WeaponId.HasValue && product.CanAddToCart)
                                             {
                                                 <form asp-controller="Cart" asp-action="Add" method="post" class="full-width">
                                                     <input type="hidden" name="weaponId" value="@product.WeaponId" />
@@ -221,6 +235,10 @@
                                                 </form>
                                             }
                                         </div>
+                                        @if (!string.IsNullOrWhiteSpace(product.RestrictionMessage))
+                                        {
+                                            <div class="panel-subtitle">@product.RestrictionMessage</div>
+                                        }
                                     </div>
                                 </article>
                             }
@@ -246,7 +264,7 @@
                                     </div>
                                     <h3 class="product-title">@product.Name</h3>
                                     <p class="product-meta">@product.Manufacturer</p>
-                                    <p class="product-copy">Pouze náhled. Detail produktu i nákupní akce se zobrazí až po splnění podmínek profilu.</p>
+                                    <p class="product-copy">Pouze náhled. Základní odemknutí katalogu vyžaduje věk 18+, konkrétní nákupní podmínky se řídí kategorií.</p>
                                     <div class="product-actions">
                                         <a class="btn-soft full-width" asp-controller="Account" asp-action="Profile">Odemknout katalog</a>
                                     </div>

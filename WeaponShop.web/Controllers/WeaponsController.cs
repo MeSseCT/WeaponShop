@@ -39,15 +39,23 @@ public class WeaponsController : Controller
             var user = User.Identity?.IsAuthenticated == true
                 ? await _userManager.GetUserAsync(User)
                 : null;
+            var isStaff = User.IsInRole("Admin") || User.IsInRole("Skladnik") || User.IsInRole("Zbrojir");
+            var isCustomer = User.IsInRole("Customer");
 
-            var isAdultConfirmed = user?.DateOfBirth is { } dateOfBirth && IsAdult(dateOfBirth);
-            var hasVerificationDocuments = user is not null && HasRequiredDocuments(user);
-            var canViewRestrictedCatalog = CanViewRestrictedCatalog(user);
+            var isAdultConfirmed = WeaponCategoryPolicy.HasRequiredAge(user);
+            var hasVerificationDocuments = user is not null
+                && (!string.IsNullOrWhiteSpace(user.IdCardFileName)
+                    || !string.IsNullOrWhiteSpace(user.PurchasePermitFileName)
+                    || user.FirearmsLicenseRecorded);
+            var canViewRestrictedCatalog = WeaponCategoryPolicy.CanBrowseRestrictedCatalog(user, isStaff);
 
             var allAccessoryProducts = (await _accessoryService.GetAllAsync(cancellationToken))
                 .Select(MapAccessory)
                 .ToList();
-            var allRestrictedProducts = (await _weaponService.GetAllAsync(cancellationToken)).Select(MapWeapon).ToList();
+            var allRestrictedProducts = (await _weaponService.GetAllAsync(cancellationToken))
+                .Where(weapon => WeaponCategoryPolicy.IsSellableCategory(weapon.Category))
+                .Select(weapon => MapWeapon(weapon, user, isStaff, isCustomer))
+                .ToList();
 
             var accessoryProducts = ApplyAccessoryFilters(
                     allAccessoryProducts,
@@ -131,17 +139,21 @@ public class WeaponsController : Controller
             var user = User.Identity?.IsAuthenticated == true
                 ? await _userManager.GetUserAsync(User)
                 : null;
+            var isStaff = User.IsInRole("Admin") || User.IsInRole("Skladnik") || User.IsInRole("Zbrojir");
+            var access = WeaponCategoryPolicy.EvaluateAccess(user, weapon.Category, isStaff);
 
-            if (!CanViewRestrictedCatalog(user))
+            if (!access.CanViewDetails)
             {
-                TempData["ErrorMessage"] = "Kategorie zbraní se odemkne až po přihlášení, potvrzení věku 18+ a nahrání dokladů.";
+                TempData["ErrorMessage"] = access.RestrictionMessage;
                 return RedirectToAction(nameof(Index), new { access = "restricted" });
             }
 
             var relatedProducts = (await _weaponService.GetAllAsync(cancellationToken))
-                .Where(candidate => candidate.Id != weapon.Id && candidate.Category == weapon.Category)
+                .Where(candidate => candidate.Id != weapon.Id
+                    && candidate.Category == weapon.Category
+                    && WeaponCategoryPolicy.IsSellableCategory(candidate.Category))
                 .Take(3)
-                .Select(MapWeapon)
+                .Select(candidate => MapWeapon(candidate, user, isStaff, User.IsInRole("Customer")))
                 .ToList();
 
             var imagePaths = ResolveWeaponImagePaths(weapon);
@@ -151,8 +163,10 @@ public class WeaponsController : Controller
                 Weapon = weapon,
                 ImagePaths = imagePaths,
                 ImagePath = imagePaths.First(),
-                CanAddToCart = User.IsInRole("Customer") && weapon.IsAvailable && weapon.StockQuantity > 0,
-                CanViewRestrictedCatalog = true,
+                CanAddToCart = User.IsInRole("Customer") && weapon.IsAvailable && weapon.StockQuantity > 0 && access.CanAddToCart,
+                CanViewRestrictedCatalog = WeaponCategoryPolicy.CanBrowseRestrictedCatalog(user, isStaff),
+                AccessLabel = access.AccessLabel,
+                RestrictionMessage = access.RestrictionMessage,
                 RelatedProducts = relatedProducts
             };
 
@@ -199,38 +213,6 @@ public class WeaponsController : Controller
             TempData["ErrorMessage"] = "Detail doplňku se teď nepodařilo načíst.";
             return RedirectToAction(nameof(Index), new { access = "accessories" });
         }
-    }
-
-    private bool CanViewRestrictedCatalog(ApplicationUser? user)
-    {
-        if (User.IsInRole("Admin") || User.IsInRole("Skladnik") || User.IsInRole("Zbrojir"))
-        {
-            return true;
-        }
-
-        return user is not null
-            && user.DateOfBirth is { } dateOfBirth
-            && IsAdult(dateOfBirth)
-            && HasRequiredDocuments(user);
-    }
-
-    private static bool HasRequiredDocuments(ApplicationUser user)
-    {
-        return !string.IsNullOrWhiteSpace(user.IdCardFileName)
-            || !string.IsNullOrWhiteSpace(user.DriverLicenseFileName);
-    }
-
-    private static bool IsAdult(DateOnly dateOfBirth)
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var age = today.Year - dateOfBirth.Year;
-
-        if (today < dateOfBirth.AddYears(age))
-        {
-            age--;
-        }
-
-        return age >= 18;
     }
 
     private static IEnumerable<StoreCatalogItemViewModel> ApplyAccessoryFilters(
@@ -313,8 +295,14 @@ public class WeaponsController : Controller
         };
     }
 
-    private static StoreCatalogItemViewModel MapWeapon(Weapon weapon)
+    private static StoreCatalogItemViewModel MapWeapon(
+        Weapon weapon,
+        ApplicationUser? user,
+        bool isStaff,
+        bool isCustomer)
     {
+        var access = WeaponCategoryPolicy.EvaluateAccess(user, weapon.Category, isStaff);
+
         return new StoreCatalogItemViewModel
         {
             WeaponId = weapon.Id,
@@ -330,9 +318,12 @@ public class WeaponsController : Controller
             StockQuantity = weapon.StockQuantity,
             IsAvailable = weapon.IsAvailable && weapon.StockQuantity > 0,
             IsRestricted = true,
-            AccessLabel = CatalogPresentation.GetWeaponAccessLabel(),
+            AccessLabel = CatalogPresentation.GetWeaponAccessLabel(weapon.Category),
+            RestrictionMessage = access.RestrictionMessage,
             ImagePath = ResolveWeaponImagePath(weapon),
-            AccentClass = "accent-restricted"
+            AccentClass = "accent-restricted",
+            CanViewDetails = access.CanViewDetails,
+            CanAddToCart = isCustomer && weapon.IsAvailable && weapon.StockQuantity > 0 && access.CanAddToCart
         };
     }
 
@@ -400,7 +391,9 @@ public class WeaponsController : Controller
             IsRestricted = false,
             AccessLabel = CatalogPresentation.GetAccessoryAccessLabel(),
             ImagePath = ResolveAccessoryImagePath(accessory),
-            AccentClass = "accent-public"
+            AccentClass = "accent-public",
+            CanViewDetails = true,
+            CanAddToCart = accessory.IsAvailable && accessory.StockQuantity > 0
         };
     }
 

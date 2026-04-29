@@ -15,7 +15,10 @@ public class StoreCatalogItemViewModel
     public bool IsAvailable { get; set; }
     public bool IsRestricted { get; set; }
     public string AccessLabel { get; set; } = string.Empty;
+    public string RestrictionMessage { get; set; } = string.Empty;
     public string ImagePath { get; set; } = string.Empty;
     public string AccentClass { get; set; } = "accent-default";
+    public bool CanViewDetails { get; set; }
+    public bool CanAddToCart { get; set; }
     public bool HasDetailPage => WeaponId.HasValue || AccessoryId.HasValue;
 }

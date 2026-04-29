@@ -1,0 +1,164 @@
+@model WeaponShop.Web.ViewModels.Account.DocumentsViewModel
+
+@{
+    ViewData["Title"] = "Doklady a ověření";
+    ViewData["AccountSection"] = "documents";
+}
+
+<section class="panel account-panel">
+    <div class="panel-head">
+        <div>
+            <h2>Doklady a ověření</h2>
+            <p class="panel-subtitle">Nahrajte doklad totožnosti, případné potvrzení / nákupní povolení a doplňte údaje potřebné pro kategorie B, C, C-I a D.</p>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_AccountNav")
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="data-empty account-feedback">@statusMessage</div>
+    }
+
+    <div class="account-layout">
+        <section class="account-card">
+            <div class="account-card-head">
+                <div>
+                    <p class="section-kicker">Stav profilu</p>
+                    <h3>Přehled ověření</h3>
+                </div>
+            </div>
+
+            <div class="account-status-stack">
+                <div class="account-status-tile">
+                    <strong>Zákazník</strong>
+                    <span>@Model.FullName</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>E-mail</strong>
+                    <span>@Model.Email</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Datum narození</strong>
+                    <span>@(Model.DateOfBirth?.ToString("d") ?? "Nezadáno")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Věk 18+</strong>
+                    <span>@(Model.IsAdult ? "Splněno" : "Není splněno")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Občanský průkaz</strong>
+                    <span>@(Model.HasIdCard ? "Nahrán" : "Chybí")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Doklad z ČR</strong>
+                    <span>@(Model.IdCardIssuedInCzechRepublic ? "Ano" : "Ne / neuvedeno")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Oprávnění v systému</strong>
+                    <span>@(Model.FirearmsLicenseRecorded ? "Evidováno" : "Neevidováno")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Potvrzení / povolení</strong>
+                    <span>@(Model.HasPurchasePermit ? "Nahráno" : "Nenahráno")</span>
+                </div>
+            </div>
+
+            <div class="notice-banner account-notice @(Model.IsProfileReadyForReview ? string.Empty : "notice-danger")">
+                @if (Model.IsProfileReadyForReview)
+                {
+                    <strong>Základní podmínka 18+ je splněna.</strong>
+                    <span>Kategorie D je dostupná po dosažení věku 18 let, ostatní kategorie vyžadují další údaje uvedené níže.</span>
+                }
+                else
+                {
+                    <strong>Profil zatím nesplňuje ani základní podmínku.</strong>
+                    <span>Pro regulovaný sortiment je nutné mít v účtu dosažený věk alespoň 18 let.</span>
+                }
+            </div>
+
+            <div class="account-status-stack">
+                <div class="account-status-tile">
+                    <strong>Kategorie D</strong>
+                    <span>Vyžaduje pouze věk 18+</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Kategorie C-I</strong>
+                    <span>18+ a doklad totožnosti vydaný v ČR</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Kategorie C</strong>
+                    <span>18+, doklad totožnosti a oprávnění evidované v systému</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Kategorie B</strong>
+                    <span>18+, doklad totožnosti a potvrzení / nákupní povolení</span>
+                </div>
+            </div>
+
+            <p class="panel-subtitle">
+                Poslední aktualizace dokladů: @(Model.DocumentsUpdatedAt?.ToLocalTime().ToString("g") ?? "Zatím bez nahrání")
+            </p>
+
+            <a class="btn-inline" asp-action="Profile">Zpět na účet</a>
+        </section>
+
+        <section class="account-card account-card-upload">
+            <div class="account-card-head">
+                <div>
+                    <p class="section-kicker">Nahrání souborů</p>
+                    <h3>Aktualizace dokladů</h3>
+                </div>
+            </div>
+
+            <form asp-action="Documents" method="post" enctype="multipart/form-data" class="form-shell form-shell-wide">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="IdCardFile" class="field-label">Občanský průkaz (PDF/JPG/PNG, max. 5 MB)</label>
+                    <input asp-for="IdCardFile" type="file" class="form-control" />
+                    <span asp-validation-for="IdCardFile" class="text-danger"></span>
+                    @if (Model.HasIdCard)
+                    {
+                        <div class="form-check" style="margin-top: .75rem;">
+                            <input asp-for="RemoveIdCard" class="form-check-input" />
+                            <label asp-for="RemoveIdCard" class="form-check-label">Odstranit aktuálně uložený občanský průkaz</label>
+                        </div>
+                    }
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="PurchasePermitFile" class="field-label">Potvrzení / nákupní povolení (PDF/JPG/PNG, max. 5 MB)</label>
+                    <input asp-for="PurchasePermitFile" type="file" class="form-control" />
+                    <span asp-validation-for="PurchasePermitFile" class="text-danger"></span>
+                    @if (Model.HasPurchasePermit)
+                    {
+                        <div class="form-check" style="margin-top: .75rem;">
+                            <input asp-for="RemovePurchasePermit" class="form-check-input" />
+                            <label asp-for="RemovePurchasePermit" class="form-check-label">Odstranit aktuálně uložené potvrzení / povolení</label>
+                        </div>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input asp-for="IdCardIssuedInCzechRepublic" class="form-check-input" />
+                        <label asp-for="IdCardIssuedInCzechRepublic" class="form-check-label">Nahraný doklad totožnosti je vydaný v České republice</label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input asp-for="FirearmsLicenseRecorded" class="form-check-input" />
+                        <label asp-for="FirearmsLicenseRecorded" class="form-check-label">Po zadání dokladu je u účtu evidováno oprávnění v systému pro kategorii C</label>
+                    </div>
+                </div>
+
+                <div class="account-actions">
+                    <button class="btn-modern" type="submit">Uložit doklady a stav profilu</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</section>

@@ -1,10 +1,16 @@
 @model IReadOnlyList<Order>
+@inject IConfiguration Configuration
+
+@{
+    var isVatPayer = Configuration.GetValue("Invoice:IsVatPayer", true);
+}
 
 <section class="panel">
     <div class="panel-head">
         <div>
             <h2>Moje objednávky</h2>
             <p class="panel-subtitle">Přehled všech odeslaných objednávek a jejich aktuálního stavu.</p>
+            <p class="panel-subtitle">@(isVatPayer ? "Celkové ceny jsou uvedeny včetně DPH." : "Dodavatel vystupuje jako neplátce DPH.")</p>
         </div>
         <a class="btn-soft" asp-controller="Weapons" asp-action="Index">Zpět do katalogu</a>
     </div>

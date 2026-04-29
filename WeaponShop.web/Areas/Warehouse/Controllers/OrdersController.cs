@@ -66,7 +66,7 @@ public class OrdersController : Controller
         }
 
         var bytes = OrderWordExport.BuildOrderDocument(order);
-        return File(bytes, "application/msword", $"order-{id}.doc");
+        return File(bytes, "application/rtf", $"order-{id}.rtf");
     }
 
     [HttpGet]
@@ -93,6 +93,28 @@ public class OrdersController : Controller
 
         var invoice = _invoiceDocumentService.BuildInvoice(order);
         return File(invoice.PdfContent, "application/pdf", invoice.PdfFileName);
+    }
+
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> AssignUnits(int id, int weaponId, int[] selectedUnitIds, CancellationToken cancellationToken)
+    {
+        if (!TryGetActor(out var actorUserId, out var actorName, out var actorRole))
+        {
+            return Challenge();
+        }
+
+        try
+        {
+            await _orderService.AssignWeaponUnitsAsync(id, weaponId, selectedUnitIds, actorUserId, actorName, actorRole, cancellationToken);
+            TempData["StatusMessage"] = $"Objednávka č. {id} byla spárována s konkrétními výrobními čísly.";
+        }
+        catch (Exception exception)
+        {
+            TempData["ErrorMessage"] = exception.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     [ValidateAntiForgeryToken]

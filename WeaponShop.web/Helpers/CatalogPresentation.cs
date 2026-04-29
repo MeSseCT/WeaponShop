@@ -1,9 +1,38 @@
+using WeaponShop.Application.Services;
 using WeaponShop.Domain;
 
 namespace WeaponShop.Web.Helpers;
 
 public static class CatalogPresentation
 {
+    public static decimal GetVatAmount(decimal grossPrice, decimal vatRatePercent, bool isVatPayer)
+    {
+        if (!isVatPayer || vatRatePercent <= 0)
+        {
+            return 0m;
+        }
+
+        var netPrice = grossPrice / (1m + (vatRatePercent / 100m));
+        return Math.Round(grossPrice - netPrice, 2);
+    }
+
+    public static decimal GetNetAmount(decimal grossPrice, decimal vatRatePercent, bool isVatPayer)
+    {
+        if (!isVatPayer || vatRatePercent <= 0)
+        {
+            return grossPrice;
+        }
+
+        return Math.Round(grossPrice / (1m + (vatRatePercent / 100m)), 2);
+    }
+
+    public static string GetVatPriceNote(bool isVatPayer, decimal vatRatePercent)
+    {
+        return isVatPayer
+            ? $"Cena je uvedena včetně DPH ({vatRatePercent:0.#} %)."
+            : "Dodavatel vystupuje jako neplátce DPH.";
+    }
+
     public static string GetAccessoryCategoryLabel(string? category)
     {
         return Normalize(category) switch
@@ -32,33 +61,24 @@ public static class CatalogPresentation
 
     public static string GetWeaponCategoryLabel(string? category)
     {
-        var code = string.IsNullOrWhiteSpace(category)
-            ? "?"
-            : category.Trim().ToUpperInvariant();
-
-        return $"Kategorie {code}";
+        return $"Kategorie {WeaponCategoryPolicy.ToDisplayCode(category)}";
     }
 
     public static int GetWeaponCategorySortKey(string? category)
     {
-        var code = string.IsNullOrWhiteSpace(category)
-            ? 'Z'
-            : char.ToUpperInvariant(category.Trim()[0]);
-
-        return code switch
+        return WeaponCategoryPolicy.NormalizeCategoryCode(category) switch
         {
-            'A' => 10,
-            'B' => 20,
-            'C' => 30,
-            'D' => 40,
-            'E' => 50,
+            "B" => 20,
+            "C" => 30,
+            "CI" => 35,
+            "D" => 40,
             _ => 100
         };
     }
 
-    public static string GetWeaponAccessLabel()
+    public static string GetWeaponAccessLabel(string? category)
     {
-        return "Pouze po přihlášení, ověření věku 18+ a nahrání dokladů";
+        return WeaponCategoryPolicy.GetAccessLabel(category);
     }
 
     public static string GetAccessoryAccessLabel()

@@ -9,7 +9,7 @@
         <div class="btn-row">
             <a class="btn-soft" asp-action="Index">Zpět na objednávky</a>
             <a class="btn-soft" asp-action="History">Moje auditní historie</a>
-            <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Stáhnout DOC</a>
+            <a class="btn-soft" asp-action="DownloadWord" asp-route-id="@Model.Id">Stáhnout RTF</a>
             <a class="btn-soft" asp-action="ViewInvoice" asp-route-id="@Model.Id" target="_blank" rel="noopener">Náhled faktury</a>
             <a class="btn-soft" asp-action="DownloadInvoice" asp-route-id="@Model.Id">Stáhnout PDF</a>
         </div>
@@ -82,7 +82,42 @@
                 @foreach (var item in Model.Items)
                 {
                     <tr>
-                        <td>@item.GetDisplayName()</td>
+                        <td>
+                            <div>@item.GetDisplayName()</div>
+                            @if (item.IsWeapon && item.Weapon is not null)
+                            {
+                                <div class="panel-subtitle">@item.Weapon.TypeDesignation • @item.Weapon.Caliber</div>
+                                var assignedUnits = item.Weapon.Units
+                                    .Where(unit => unit.ReservedOrderId == Model.Id || unit.SoldOrderId == Model.Id)
+                                    .OrderBy(unit => unit.PrimarySerialNumber)
+                                    .ToList();
+
+                                @foreach (var unit in assignedUnits)
+                                {
+                                    <div class="panel-subtitle">
+                                        <strong>V. č. @unit.PrimarySerialNumber</strong>
+                                    </div>
+
+                                    @foreach (var part in unit.Parts.OrderBy(part => part.SlotNumber))
+                                    {
+                                        <div class="panel-subtitle">@part.PartName: @part.SerialNumber</div>
+                                    }
+
+                                    @if (unit.Status == WeaponShop.Domain.WeaponUnitStatus.Reserved)
+                                    {
+                                        <div>
+                                            <a class="btn-inline"
+                                               asp-action="EditAssignedUnit"
+                                               asp-route-id="@Model.Id"
+                                               asp-route-weaponId="@item.Weapon.Id"
+                                               asp-route-unitId="@unit.Id">
+                                                Upravit párovaný kus
+                                            </a>
+                                        </div>
+                                    }
+                                }
+                            }
+                        </td>
                         <td class="text-end">@item.Quantity</td>
                         <td class="text-end">@item.UnitPrice.ToString("C")</td>
                         <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>

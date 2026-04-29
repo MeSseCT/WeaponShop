@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using WeaponShop.Application.Interfaces;
+using WeaponShop.Application.Services;
 using WeaponShop.Domain.Identity;
 using WeaponShop.Web.ViewModels.Account;
 
@@ -155,13 +156,6 @@ public class AccountController : Controller
 
     [Authorize(Roles = "Customer")]
     [HttpGet]
-    public IActionResult Documents()
-    {
-        return RedirectToAction(nameof(Profile));
-    }
-
-    [Authorize(Roles = "Customer")]
-    [HttpGet]
     public async Task<IActionResult> Profile()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -184,6 +178,10 @@ public class AccountController : Controller
             return Challenge();
         }
 
+        model.FirstName = model.FirstName.Trim();
+        model.LastName = model.LastName.Trim();
+        model.Email = model.Email.Trim();
+
         var dateOfBirth = model.DateOfBirth;
         if (!dateOfBirth.HasValue)
         {
@@ -194,15 +192,52 @@ public class AccountController : Controller
             ModelState.AddModelError(nameof(model.DateOfBirth), "Musíte být starší 18 let.");
         }
 
+        var wantsPasswordChange = !string.IsNullOrWhiteSpace(model.CurrentPassword)
+            || !string.IsNullOrWhiteSpace(model.NewPassword)
+            || !string.IsNullOrWhiteSpace(model.ConfirmNewPassword);
+
+        if (wantsPasswordChange)
+        {
+            if (string.IsNullOrWhiteSpace(model.CurrentPassword))
+            {
+                ModelState.AddModelError(nameof(model.CurrentPassword), "Pro změnu hesla zadejte současné heslo.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.NewPassword))
+            {
+                ModelState.AddModelError(nameof(model.NewPassword), "Zadejte nové heslo.");
+            }
+        }
+
+        if (!string.Equals(model.Email, user.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser is not null && !string.Equals(existingUser.Id, user.Id, StringComparison.Ordinal))
+            {
+                ModelState.AddModelError(nameof(model.Email), "Účet s tímto e-mailem už existuje.");
+            }
+        }
+
+        if (wantsPasswordChange
+            && !string.IsNullOrWhiteSpace(model.CurrentPassword)
+            && !await _userManager.CheckPasswordAsync(user, model.CurrentPassword))
+        {
+            ModelState.AddModelError(nameof(model.CurrentPassword), "Současné heslo není správné.");
+        }
+
         if (!ModelState.IsValid)
         {
-            model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
-            model.HasDriverLicense = !string.IsNullOrWhiteSpace(user.DriverLicenseFileName);
-            model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
+            PopulateProfileSummary(model, user);
             return View(model);
         }
 
+        user.FirstName = model.FirstName;
+        user.LastName = model.LastName;
         user.DateOfBirth = dateOfBirth ?? throw new InvalidOperationException("Datum narození je povinné.");
+        user.Email = model.Email;
+        user.UserName = model.Email;
+        user.NormalizedEmail = _userManager.NormalizeEmail(user.Email);
+        user.NormalizedUserName = _userManager.NormalizeName(user.UserName);
         var updateResult = await _userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
@@ -211,14 +246,51 @@ public class AccountController : Controller
                 ModelState.AddModelError(string.Empty, error.Description);
             }
 
-            model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
-            model.HasDriverLicense = !string.IsNullOrWhiteSpace(user.DriverLicenseFileName);
-            model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
+            PopulateProfileSummary(model, user);
             return View(model);
         }
 
-        TempData["StatusMessage"] = "Profil byl aktualizován.";
+        if (wantsPasswordChange)
+        {
+            var passwordResult = await _userManager.ChangePasswordAsync(
+                user,
+                model.CurrentPassword!,
+                model.NewPassword!);
+
+            if (!passwordResult.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty, "Údaje účtu byly uloženy, ale heslo se nepodařilo změnit.");
+                foreach (var error in passwordResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                model.CurrentPassword = null;
+                model.NewPassword = null;
+                model.ConfirmNewPassword = null;
+                PopulateProfileSummary(model, user);
+                return View(model);
+            }
+        }
+
+        await RefreshSignInAsync(user);
+        TempData["StatusMessage"] = wantsPasswordChange
+            ? "Účet i heslo byly aktualizovány."
+            : "Účet byl aktualizován.";
         return RedirectToAction(nameof(Profile));
+    }
+
+    [Authorize(Roles = "Customer")]
+    [HttpGet]
+    public async Task<IActionResult> Documents()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Challenge();
+        }
+
+        return View(BuildDocumentsViewModel(user));
     }
 
     [Authorize(Roles = "Customer")]
@@ -233,39 +305,57 @@ public class AccountController : Controller
         }
 
         var originalIdCardFileName = user.IdCardFileName;
-        var originalDriverLicenseFileName = user.DriverLicenseFileName;
+        var originalPurchasePermitFileName = user.PurchasePermitFileName;
+        var originalIdCardIssuedInCzechRepublic = user.IdCardIssuedInCzechRepublic;
+        var originalFirearmsLicenseRecorded = user.FirearmsLicenseRecorded;
         var originalDocumentsUpdatedAt = user.DocumentsUpdatedAt;
         var originalUploadWindowStartedAtUtc = user.DocumentsUploadWindowStartedAtUtc;
         var originalUploadCount = user.DocumentsUploadCount;
         var savedDocuments = new List<SavedDocument>();
 
-        if (model.IdCardFile is null && model.DriverLicenseFile is null)
-        {
-            ModelState.AddModelError(string.Empty, "Nahrajte alespoň jeden doklad.");
-        }
-
         if (model.IdCardFile is not null && !TryValidateDocument(model.IdCardFile))
         {
-            return View("Profile", BuildProfileViewModel(user));
+            return View("Documents", BuildDocumentsViewModel(user));
         }
 
-        if (model.DriverLicenseFile is not null && !TryValidateDocument(model.DriverLicenseFile))
+        if (model.PurchasePermitFile is not null && !TryValidateDocument(model.PurchasePermitFile))
         {
-            return View("Profile", BuildProfileViewModel(user));
+            return View("Documents", BuildDocumentsViewModel(user));
+        }
+
+        var willHaveIdCard = model.IdCardFile is not null || (!model.RemoveIdCard && !string.IsNullOrWhiteSpace(user.IdCardFileName));
+        var effectiveIdCardIssuedInCzechRepublic = willHaveIdCard && model.IdCardIssuedInCzechRepublic;
+        var effectiveFirearmsLicenseRecorded = willHaveIdCard && model.FirearmsLicenseRecorded;
+
+        if (effectiveIdCardIssuedInCzechRepublic && !willHaveIdCard)
+        {
+            ModelState.AddModelError(string.Empty, "Nejprve nahrajte doklad totožnosti a až poté označte, že byl vydán v České republice.");
+        }
+
+        if (effectiveFirearmsLicenseRecorded && !willHaveIdCard)
+        {
+            ModelState.AddModelError(string.Empty, "Evidence oprávnění v systému předpokládá nahraný doklad totožnosti.");
         }
 
         if (!ModelState.IsValid)
         {
-            return View("Profile", BuildProfileViewModel(user));
+            PopulateDocumentsSummary(model, user);
+            return View("Documents", model);
         }
 
-        if (!TryReserveDocumentUploadSlot(user))
+        var uploadsNewDocument = model.IdCardFile is not null || model.PurchasePermitFile is not null;
+        if (uploadsNewDocument && !TryReserveDocumentUploadSlot(user))
         {
-            return View("Profile", BuildProfileViewModel(user));
+            return View("Documents", BuildDocumentsViewModel(user));
         }
 
         try
         {
+            if (model.RemoveIdCard && model.IdCardFile is null)
+            {
+                user.IdCardFileName = null;
+            }
+
             if (model.IdCardFile is not null)
             {
                 var idCardDocument = await SaveDocumentAsync(user.Id, model.IdCardFile, "idcard", cancellationToken);
@@ -273,13 +363,28 @@ public class AccountController : Controller
                 user.IdCardFileName = idCardDocument.FileName;
             }
 
-            if (model.DriverLicenseFile is not null)
+            if (model.RemovePurchasePermit && model.PurchasePermitFile is null)
             {
-                var driverLicenseDocument = await SaveDocumentAsync(user.Id, model.DriverLicenseFile, "driverlicense", cancellationToken);
-                savedDocuments.Add(driverLicenseDocument);
-                user.DriverLicenseFileName = driverLicenseDocument.FileName;
+                user.PurchasePermitFileName = null;
             }
 
+            if (model.PurchasePermitFile is not null)
+            {
+                var purchasePermitDocument = await SaveDocumentAsync(user.Id, model.PurchasePermitFile, "purchasepermit", cancellationToken);
+                savedDocuments.Add(purchasePermitDocument);
+                user.PurchasePermitFileName = purchasePermitDocument.FileName;
+            }
+
+            if (string.IsNullOrWhiteSpace(user.IdCardFileName))
+            {
+                user.IdCardIssuedInCzechRepublic = false;
+                user.FirearmsLicenseRecorded = false;
+            }
+            else
+            {
+                user.IdCardIssuedInCzechRepublic = effectiveIdCardIssuedInCzechRepublic;
+                user.FirearmsLicenseRecorded = effectiveFirearmsLicenseRecorded;
+            }
             user.DocumentsUpdatedAt = DateTimeOffset.UtcNow;
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
@@ -288,7 +393,9 @@ public class AccountController : Controller
                 RestoreDocumentState(
                     user,
                     originalIdCardFileName,
-                    originalDriverLicenseFileName,
+                    originalPurchasePermitFileName,
+                    originalIdCardIssuedInCzechRepublic,
+                    originalFirearmsLicenseRecorded,
                     originalDocumentsUpdatedAt,
                     originalUploadWindowStartedAtUtc,
                     originalUploadCount);
@@ -298,11 +405,11 @@ public class AccountController : Controller
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
 
-                return View("Profile", BuildProfileViewModel(user));
+                return View("Documents", BuildDocumentsViewModel(user));
             }
 
             DeleteStoredDocument(user.Id, originalIdCardFileName, user.IdCardFileName);
-            DeleteStoredDocument(user.Id, originalDriverLicenseFileName, user.DriverLicenseFileName);
+            DeleteStoredDocument(user.Id, originalPurchasePermitFileName, user.PurchasePermitFileName);
         }
         catch (OperationCanceledException)
         {
@@ -310,7 +417,9 @@ public class AccountController : Controller
             RestoreDocumentState(
                 user,
                 originalIdCardFileName,
-                originalDriverLicenseFileName,
+                originalPurchasePermitFileName,
+                originalIdCardIssuedInCzechRepublic,
+                originalFirearmsLicenseRecorded,
                 originalDocumentsUpdatedAt,
                 originalUploadWindowStartedAtUtc,
                 originalUploadCount);
@@ -322,27 +431,76 @@ public class AccountController : Controller
             RestoreDocumentState(
                 user,
                 originalIdCardFileName,
-                originalDriverLicenseFileName,
+                originalPurchasePermitFileName,
+                originalIdCardIssuedInCzechRepublic,
+                originalFirearmsLicenseRecorded,
                 originalDocumentsUpdatedAt,
                 originalUploadWindowStartedAtUtc,
                 originalUploadCount);
             ModelState.AddModelError(string.Empty, "Doklady se nepodařilo uložit. Zkuste to prosím znovu.");
-            return View("Profile", BuildProfileViewModel(user));
+            return View("Documents", BuildDocumentsViewModel(user));
         }
 
-        TempData["StatusMessage"] = "Doklady byly úspěšně nahrány.";
-        return RedirectToAction(nameof(Profile));
+        TempData["StatusMessage"] = uploadsNewDocument
+            ? "Doklady a nastavení profilu byly úspěšně uloženy."
+            : "Nastavení profilu bylo úspěšně uloženo.";
+        return RedirectToAction(nameof(Documents));
     }
 
-    private static ProfileViewModel BuildProfileViewModel(ApplicationUser user)
+    private ProfileViewModel BuildProfileViewModel(ApplicationUser user)
     {
-        return new ProfileViewModel
+        var model = new ProfileViewModel
         {
-            DateOfBirth = user.DateOfBirth,
-            HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName),
-            HasDriverLicense = !string.IsNullOrWhiteSpace(user.DriverLicenseFileName),
-            DocumentsUpdatedAt = user.DocumentsUpdatedAt
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email ?? string.Empty,
+            DateOfBirth = user.DateOfBirth
         };
+
+        PopulateProfileSummary(model, user);
+        return model;
+    }
+
+    private DocumentsViewModel BuildDocumentsViewModel(ApplicationUser user)
+    {
+        var model = new DocumentsViewModel();
+        PopulateDocumentsSummary(model, user);
+        return model;
+    }
+
+    private void PopulateProfileSummary(ProfileViewModel model, ApplicationUser user)
+    {
+        model.HasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
+        model.HasPurchasePermit = !string.IsNullOrWhiteSpace(user.PurchasePermitFileName);
+        model.IdCardIssuedInCzechRepublic = user.IdCardIssuedInCzechRepublic;
+        model.FirearmsLicenseRecorded = user.FirearmsLicenseRecorded;
+        model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
+    }
+
+    private void PopulateDocumentsSummary(DocumentsViewModel model, ApplicationUser user)
+    {
+        var hasIdCard = !string.IsNullOrWhiteSpace(user.IdCardFileName);
+        var hasPurchasePermit = !string.IsNullOrWhiteSpace(user.PurchasePermitFileName);
+        var isAdult = WeaponCategoryPolicy.HasRequiredAge(user);
+
+        model.FullName = string.Join(" ", new[] { user.FirstName, user.LastName }.Where(part => !string.IsNullOrWhiteSpace(part)));
+        model.Email = user.Email ?? string.Empty;
+        model.DateOfBirth = user.DateOfBirth;
+        model.HasIdCard = hasIdCard;
+        model.HasPurchasePermit = hasPurchasePermit;
+        model.RemoveIdCard = false;
+        model.RemovePurchasePermit = false;
+        model.IdCardIssuedInCzechRepublic = user.IdCardIssuedInCzechRepublic;
+        model.FirearmsLicenseRecorded = user.FirearmsLicenseRecorded;
+        model.DocumentsUpdatedAt = user.DocumentsUpdatedAt;
+        model.IsAdult = isAdult;
+        model.IsProfileReadyForReview = WeaponCategoryPolicy.CanBrowseRestrictedCatalog(user, isStaff: false);
+    }
+
+    private async Task RefreshSignInAsync(ApplicationUser user)
+    {
+        var principal = await _claimsPrincipalFactory.CreateAsync(user);
+        await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal);
     }
 
     [Authorize]
@@ -463,7 +621,8 @@ public class AccountController : Controller
         var fileName = type.ToLowerInvariant() switch
         {
             "idcard" => targetUser.IdCardFileName,
-            "driverlicense" => targetUser.DriverLicenseFileName,
+            "purchasepermit" => targetUser.PurchasePermitFileName,
+            "driverlicense" => targetUser.PurchasePermitFileName,
             _ => null
         };
 
@@ -609,13 +768,17 @@ public class AccountController : Controller
     private void RestoreDocumentState(
         ApplicationUser user,
         string? idCardFileName,
-        string? driverLicenseFileName,
+        string? purchasePermitFileName,
+        bool idCardIssuedInCzechRepublic,
+        bool firearmsLicenseRecorded,
         DateTimeOffset? documentsUpdatedAt,
         DateTimeOffset? documentsUploadWindowStartedAtUtc,
         int documentsUploadCount)
     {
         user.IdCardFileName = idCardFileName;
-        user.DriverLicenseFileName = driverLicenseFileName;
+        user.PurchasePermitFileName = purchasePermitFileName;
+        user.IdCardIssuedInCzechRepublic = idCardIssuedInCzechRepublic;
+        user.FirearmsLicenseRecorded = firearmsLicenseRecorded;
         user.DocumentsUpdatedAt = documentsUpdatedAt;
         user.DocumentsUploadWindowStartedAtUtc = documentsUploadWindowStartedAtUtc;
         user.DocumentsUploadCount = documentsUploadCount;

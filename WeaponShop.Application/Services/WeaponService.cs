@@ -32,6 +32,11 @@ public class WeaponService : IWeaponService
         return _repository.GetByIdAsync(id, cancellationToken);
     }
 
+    public Task<WeaponUnit?> GetUnitByIdAsync(int weaponId, int unitId, CancellationToken cancellationToken = default)
+    {
+        return _repository.GetUnitByIdAsync(weaponId, unitId, cancellationToken);
+    }
+
     public Task AddAsync(Weapon weapon, CancellationToken cancellationToken = default)
     {
         // Here is a good place for future business validation.
@@ -41,6 +46,21 @@ public class WeaponService : IWeaponService
     public Task UpdateAsync(Weapon weapon, CancellationToken cancellationToken = default)
     {
         return _repository.UpdateAsync(weapon, cancellationToken);
+    }
+
+    public Task AddUnitAsync(int weaponId, WeaponUnit unit, CancellationToken cancellationToken = default)
+    {
+        return _repository.AddUnitAsync(weaponId, unit, cancellationToken);
+    }
+
+    public Task UpdateUnitAsync(int weaponId, WeaponUnit unit, CancellationToken cancellationToken = default)
+    {
+        return _repository.UpdateUnitAsync(weaponId, unit, cancellationToken);
+    }
+
+    public Task DeleteUnitAsync(int weaponId, int unitId, CancellationToken cancellationToken = default)
+    {
+        return _repository.DeleteUnitAsync(weaponId, unitId, cancellationToken);
     }
 
     public Task DeleteAsync(int id, CancellationToken cancellationToken = default)

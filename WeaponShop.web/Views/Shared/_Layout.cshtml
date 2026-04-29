@@ -4,6 +4,8 @@
 @inject IWeaponService WeaponService
 @inject IOrderService OrderService
 @{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var isCustomer = User.IsInRole("Customer");
     var availableAccessories = new List<AccessoryNavigationItem>();
     var accessoryCategories = new List<string>();
     var opticsProducts = new List<AccessoryNavigationItem>();
@@ -47,7 +49,9 @@
             .Take(6)
             .ToList();
 
-        availableWeapons = await WeaponService.GetAvailableNavigationItemsAsync();
+        availableWeapons = (await WeaponService.GetAvailableNavigationItemsAsync())
+            .Where(item => WeaponCategoryPolicy.IsSellableCategory(item.Category))
+            .ToList();
 
         weaponCategories = availableWeapons
             .Select(item => item.Category)
@@ -96,9 +100,17 @@
                 <strong>776 111 44</strong>
             </div>
             <div class="utility-copy">
-                @if (User.Identity?.IsAuthenticated == true)
+                @if (isAuthenticated)
                 {
-                    <a asp-area="" asp-controller="Account" asp-action="Profile">Můj účet</a>
+                    @if (isCustomer)
+                    {
+                        <a asp-area="" asp-controller="Account" asp-action="Profile">Můj účet</a>
+                    }
+                    else
+                    {
+                        <strong>@User.Identity?.Name</strong>
+                    }
+
                     <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="utility-link-btn">Odhlásit</button>
@@ -131,14 +143,24 @@
             </form>
 
             <div class="header-actions">
-                @if (User.Identity?.IsAuthenticated == true)
+                @if (isAuthenticated)
                 {
-                    <a class="header-action-card" asp-area="" asp-controller="Account" asp-action="Profile">
-                        <strong>Účet</strong>
-                        <span>@User.Identity.Name</span>
-                    </a>
+                    @if (isCustomer)
+                    {
+                        <a class="header-action-card" asp-area="" asp-controller="Account" asp-action="Profile">
+                            <strong>Účet</strong>
+                            <span>@User.Identity?.Name</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="header-action-card">
+                            <strong>Účet</strong>
+                            <span>@User.Identity?.Name</span>
+                        </div>
+                    }
 
-                    @if (User.IsInRole("Customer"))
+                    @if (isCustomer)
                     {
                         <a class="header-action-card" asp-area="" asp-controller="Cart" asp-action="Index">
                             <strong>Košík</strong>
@@ -148,16 +170,25 @@
                 }
                 else
                 {
-                    <a class="nav-pill nav-pill-dark" asp-area="" asp-controller="Account" asp-action="Login">Přihlášení</a>
+                    <a class="nav-pill nav-pill-header-accent" asp-area="" asp-controller="Account" asp-action="Login">Přihlášení</a>
                     <a class="cart-card" asp-area="" asp-controller="Cart" asp-action="Index">
                         <span class="cart-total">0 Kč</span>
                         <span class="cart-label">Košík</span>
                     </a>
                 }
             </div>
+
+            <button type="button"
+                    class="mobile-nav-toggle"
+                    data-nav-toggle
+                    data-nav-target="public-site-nav"
+                    aria-expanded="false"
+                    aria-controls="public-site-nav">
+                Menu
+            </button>
         </div>
 
-        <div class="category-bar">
+        <div class="category-bar" id="public-site-nav" data-nav-panel>
             <div class="site-wrap nav-row">
             <nav class="main-nav">
                 @if (User.IsInRole("Admin"))
@@ -170,7 +201,7 @@
                                 <a asp-area="" asp-controller="Home" asp-action="Index">Domů</a>
                                 <a asp-area="" asp-controller="Weapons" asp-action="Index">Všechny produkty</a>
                                 <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Všechny doplňky</a>
-                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Regulované zbraně</a>
                             </div>
                             <div class="mega-col">
                                 <span class="mega-title">Sekce obchodu</span>
@@ -194,11 +225,11 @@
                 else
                 {
                     <div class="nav-mega">
-                        <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+                        <a class="nav-pill nav-pill-gold" asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Regulované zbraně</a>
                         <div class="mega-menu">
                             <div class="mega-col">
                                 <span class="mega-title">Kategorie zbraní</span>
-                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Všechny zbraně</a>
+                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Všechny regulované zbraně</a>
                                 @foreach (var category in weaponCategories)
                                 {
                                     <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="@category">@CatalogPresentation.GetWeaponCategoryLabel(category)</a>
@@ -213,7 +244,7 @@
                             </div>
                             <div class="mega-col mega-col-note">
                                 <span class="mega-title">Podmínky nákupu</span>
-                                <p>Pro zobrazení a nákup zbraní se přihlaste, potvrďte věk 18+ a nahrajte potřebné doklady.</p>
+                                <p>Podmínky se liší podle kategorií B, C, C-I a D. Po přihlášení doplňte věk a potřebné doklady.</p>
                                 <a class="btn-inline" asp-area="" asp-controller="Account" asp-action="Profile">Dokončit profil</a>
                             </div>
                         </div>
@@ -319,7 +350,7 @@
                             </div>
                             <div class="mega-col">
                                 <span class="mega-title">Kontrolovaný katalog</span>
-                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Všechny zbraně na ZP</a>
+                                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Všechny regulované zbraně</a>
                                 @foreach (var category in weaponCategories)
                                 {
                                     <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted" asp-route-legalCategory="@category">@CatalogPresentation.GetWeaponCategoryLabel(category)</a>
@@ -327,7 +358,7 @@
                             </div>
                             <div class="mega-col mega-col-note">
                                 <span class="mega-title">Celý obchod</span>
-                                <p>Přehled všech doplňků i zbraní na zbrojní průkaz na jednom místě.</p>
+                                <p>Přehled všech doplňků i regulovaných zbraní na jednom místě.</p>
                                 <a class="btn-inline" asp-area="" asp-controller="Weapons" asp-action="Index">Otevřít celý katalog</a>
                             </div>
                         </div>
@@ -366,7 +397,7 @@
             <section>
                 <h3>Katalog</h3>
                 <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="accessories">Doplňky</a>
-                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
+                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Regulované zbraně</a>
                 <a asp-area="" asp-controller="Weapons" asp-action="Index">Všechny produkty</a>
             </section>
 
@@ -374,22 +405,28 @@
                 <h3>Účet</h3>
                 <a asp-area="" asp-controller="Account" asp-action="Register">Registrace</a>
                 <a asp-area="" asp-controller="Account" asp-action="Login">Přihlášení</a>
-                <a asp-area="" asp-controller="Account" asp-action="Profile">Ověření profilu</a>
+                @if (!isAuthenticated || isCustomer)
+                {
+                    <a asp-area="" asp-controller="Account" asp-action="Profile">Ověření profilu</a>
+                }
             </section>
 
             <section>
                 <h3>Podmínky nákupu</h3>
-                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Zbraně na ZP</a>
-                <a asp-area="" asp-controller="Account" asp-action="Profile">Ověření profilu</a>
-                <a asp-area="" asp-controller="Account" asp-action="Documents">Nahrání dokladů</a>
+                <a asp-area="" asp-controller="Weapons" asp-action="Index" asp-route-access="restricted">Regulované zbraně</a>
+                @if (!isAuthenticated || isCustomer)
+                {
+                    <a asp-area="" asp-controller="Account" asp-action="Profile">Ověření profilu</a>
+                    <a asp-area="" asp-controller="Account" asp-action="Documents">Nahrání dokladů</a>
+                }
             </section>
         </div>
     </footer>
 
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @if (IsSectionDefined("Scripts"))
     {
         @RenderSection("Scripts", required: false)
     }
-    
 </body>
 </html>

@@ -1,62 +1,138 @@
 @model WeaponShop.Web.ViewModels.Account.ProfileViewModel
 
-<section class="panel">
+@{
+    ViewData["Title"] = "Můj účet";
+    ViewData["AccountSection"] = "profile";
+    var hasVerificationData = Model.HasIdCard || Model.HasPurchasePermit || Model.IdCardIssuedInCzechRepublic || Model.FirearmsLicenseRecorded;
+}
+
+<section class="panel account-panel">
     <div class="panel-head">
         <div>
-            <h2>Profil</h2>
-            <p class="panel-subtitle">Doplňte datum narození tak, aby odpovídalo občanskému průkazu nebo nákupnímu povolení.</p>
+            <h2>Můj účet</h2>
+            <p class="panel-subtitle">Upravte své osobní údaje, přihlašovací e-mail a heslo. Ověřovací doklady mají samostatnou sekci.</p>
         </div>
     </div>
+
+    @await Html.PartialAsync("_AccountNav")
 
     @if (TempData["StatusMessage"] is string statusMessage)
     {
-        <div class="data-empty">@statusMessage</div>
+        <div class="data-empty account-feedback">@statusMessage</div>
     }
 
-    <form asp-action="Profile" method="post" class="form-shell">
-        @Html.AntiForgeryToken()
-        <div class="form-group">
-            <label asp-for="DateOfBirth" class="field-label"></label>
-            <input asp-for="DateOfBirth" type="date" class="form-control" />
-            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
-        </div>
-        <button class="btn-modern" type="submit">Uložit změny</button>
-    </form>
-</section>
+    <div class="account-layout">
+        <section class="account-card">
+            <div class="account-card-head">
+                <div>
+                    <p class="section-kicker">Nastavení účtu</p>
+                    <h3>Osobní a přístupové údaje</h3>
+                </div>
+            </div>
 
-<section class="panel" style="margin-top: 1.2rem;">
-    <div class="panel-head">
-        <div>
-            <h2>Ověřovací doklady</h2>
-            <p class="panel-subtitle">Nahrajte občanský průkaz nebo nákupní povolení pro ruční kontrolu administrátorem.</p>
-        </div>
+            <form asp-action="Profile" method="post" class="form-shell form-shell-wide">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="grid-two">
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="field-label"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="LastName" class="field-label"></label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="grid-two">
+                    <div class="form-group">
+                        <label asp-for="Email" class="field-label"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="DateOfBirth" class="field-label"></label>
+                        <input asp-for="DateOfBirth" type="date" class="form-control" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="account-divider"></div>
+
+                <div class="account-card-head">
+                    <div>
+                        <p class="section-kicker">Změna hesla</p>
+                        <h3>Aktualizace přihlášení</h3>
+                    </div>
+                    <p class="panel-subtitle">Vyplňte jen v případě, že chcete změnit heslo.</p>
+                </div>
+
+                <div class="grid-two">
+                    <div class="form-group">
+                        <label asp-for="CurrentPassword" class="field-label"></label>
+                        <input asp-for="CurrentPassword" type="password" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="NewPassword" class="field-label"></label>
+                        <input asp-for="NewPassword" type="password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="NewPassword" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ConfirmNewPassword" class="field-label"></label>
+                    <input asp-for="ConfirmNewPassword" type="password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmNewPassword" class="text-danger"></span>
+                </div>
+
+                <div class="account-actions">
+                    <button class="btn-modern" type="submit">Uložit účet</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="account-card account-card-highlight">
+            <div class="account-card-head">
+                <div>
+                    <p class="section-kicker">Ověření profilu</p>
+                    <h3>Doklady a stav účtu</h3>
+                </div>
+            </div>
+
+            <div class="account-status-stack">
+                <div class="account-status-tile">
+                    <strong>Občanský průkaz</strong>
+                    <span>@(Model.HasIdCard ? "Nahrán" : "Chybí")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Doklad z ČR</strong>
+                    <span>@(Model.IdCardIssuedInCzechRepublic ? "Ano" : "Ne / neuvedeno")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Oprávnění v systému</strong>
+                    <span>@(Model.FirearmsLicenseRecorded ? "Evidováno" : "Neevidováno")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Potvrzení / povolení</strong>
+                    <span>@(Model.HasPurchasePermit ? "Nahráno" : "Chybí")</span>
+                </div>
+                <div class="account-status-tile">
+                    <strong>Poslední aktualizace</strong>
+                    <span>@(Model.DocumentsUpdatedAt?.ToLocalTime().ToString("g") ?? "Zatím bez nahrání")</span>
+                </div>
+            </div>
+
+            <p class="panel-subtitle">
+                @(hasVerificationData
+                    ? "Doklady už jsou u účtu uložené. Na samostatné stránce můžete doplnit i stav oprávnění pro jednotlivé kategorie."
+                    : "Na samostatné stránce doplňte doklad totožnosti, potvrzení a stav oprávnění podle kategorie zbraně.")
+            </p>
+
+            <a class="btn-soft" asp-action="Documents">Otevřít doklady a ověření</a>
+        </aside>
     </div>
-
-    <div class="panel" style="margin-bottom: 1rem;">
-        <p class="panel-subtitle">Občanský průkaz nahrán: @(Model.HasIdCard ? "Ano" : "Ne")</p>
-        <p class="panel-subtitle">Nákupní povolení nahráno: @(Model.HasDriverLicense ? "Ano" : "Ne")</p>
-        @if (Model.DocumentsUpdatedAt.HasValue)
-        {
-            <p class="panel-subtitle">Poslední aktualizace: @Model.DocumentsUpdatedAt.Value.ToLocalTime().ToString("g")</p>
-        }
-    </div>
-
-    <form asp-action="Documents" method="post" enctype="multipart/form-data" class="form-shell form-shell-wide">
-        @Html.AntiForgeryToken()
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-        <div class="mb-3">
-            <label asp-for="IdCardFile" class="field-label">Občanský průkaz (PDF/JPG/PNG, max. 5 MB)</label>
-            <input asp-for="IdCardFile" type="file" class="form-control" />
-            <span asp-validation-for="IdCardFile" class="text-danger"></span>
-        </div>
-
-        <div class="mb-4">
-            <label asp-for="DriverLicenseFile" class="field-label">Nákupní povolení (PDF/JPG/PNG, max. 5 MB)</label>
-            <input asp-for="DriverLicenseFile" type="file" class="form-control" />
-            <span asp-validation-for="DriverLicenseFile" class="text-danger"></span>
-        </div>
-
-        <button class="btn-modern" type="submit">Nahrát doklady</button>
-    </form>
 </section>

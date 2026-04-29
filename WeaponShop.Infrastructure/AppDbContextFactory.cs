@@ -6,6 +6,9 @@ namespace WeaponShop.Infrastructure;
 
 public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
+    private const string DefaultConnectionString =
+        "Host=localhost;Port=5432;Database=weaponshop;Username=weaponshop;Password=weaponshop_dev_password;Include Error Detail=true";
+
     public AppDbContext CreateDbContext(string[] args)
     {
         var configuration = new ConfigurationBuilder()
@@ -13,16 +16,14 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
             .AddEnvironmentVariables()
             .Build();
 
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new InvalidOperationException(
-                "Chybí connection string 'DefaultConnection'. Nastavte ho přes dotnet user-secrets nebo environment variable ConnectionStrings__DefaultConnection.");
-        }
+        var connectionString =
+            configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ConnectionStrings:DefaultConnection"]
+            ?? configuration["ConnectionStrings__DefaultConnection"]
+            ?? DefaultConnectionString;
 
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
         optionsBuilder.UseNpgsql(connectionString);
-
         return new AppDbContext(optionsBuilder.Options);
     }
 }
