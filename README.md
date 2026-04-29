@@ -2,7 +2,6 @@
 
 WeaponShop je webová aplikácia pre evidenciu a predaj zbraní a doplnkov postavená na ASP.NET Core MVC a princípoch Clean Architecture.
 
-Repozitár obsahuje iba aplikáciu. Bakalárske `.tex`, pracovné `.txt`, exporty a podobné školské materiály sú z gitu vynechané.
 
 ## Použité technológie
 
