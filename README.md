@@ -5,7 +5,7 @@ WeaponShop je webová aplikácia pre evidenciu a predaj zbraní a doplnkov posta
 
 ## Použité technológie
 
-- .NET 8 SDK (`8.0.416` podľa `global.json`)
+- .NET 8 SDK 
 - ASP.NET Core MVC
 - Entity Framework Core 8
 - PostgreSQL 16
