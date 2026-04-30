@@ -24,26 +24,26 @@ WeaponShop je webová aplikácia pre evidenciu a predaj zbraní a doplnkov posta
 
 ## Požiadavky
 
-Pred spustením maj nainštalované:
+Pred spustením projektu je potrebné mať nainštalované:
 
 - .NET 8 SDK
 - PostgreSQL 16
 
 Voliteľné:
 
-- Docker + Docker Compose, ak chceš databázu spustiť cez kontajner
+- Docker + Docker Compose, ak má byť databáza spustená cez kontajner
 
-NuGet balíčky sa neinštalujú ručne. Stačí spustiť `dotnet restore`.
+NuGet balíčky sa neinštalujú ručne. Na ich obnovenie slúži príkaz `dotnet restore`.
 
 ## Rýchly štart
 
-### 1. Obnov závislosti
+### 1. Obnovenie závislostí
 
 ```bash
 dotnet restore
 ```
 
-### 2. Spusti PostgreSQL
+### 2. Spustenie PostgreSQL
 
 Možnosť A: cez Docker Compose
 
@@ -61,17 +61,17 @@ Predvolená databáza z `docker-compose.yml`:
 
 Možnosť B: vlastná lokálna PostgreSQL inštancia
 
-Vytvor databázu a používateľa podľa vlastného nastavenia a potom nastav connection string v ďalšom kroku.
+V tomto prípade je potrebné vytvoriť databázu a používateľa podľa zvoleného nastavenia a následne doplniť connection string v ďalšom kroku.
 
-### 3. Nastav lokálne secrets
+### 3. Nastavenie lokálnych secrets
 
-Najjednoduchšia cesta je interaktívny skript:
+Najjednoduchší postup predstavuje interaktívny skript:
 
 ```bash
 ./scripts/setup-local-secrets.sh
 ```
 
-Alebo nastav hodnoty ručne:
+Alternatívou je ručné nastavenie hodnôt:
 
 ```bash
 cd WeaponShop.web
@@ -83,7 +83,7 @@ dotnet user-secrets set "Email:Smtp:User" "CHANGE_ME"
 dotnet user-secrets set "Email:Smtp:Password" "CHANGE_ME"
 ```
 
-Alternatívne môžeš použiť environment variables:
+Alternatívne je možné použiť environment variables:
 
 ```bash
 export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=weaponshop;Username=weaponshop;Password=weaponshop_dev_password;Include Error Detail=true"
@@ -97,12 +97,12 @@ export Email__Smtp__Password="CHANGE_ME"
 Poznámky:
 
 - `ConnectionStrings:DefaultConnection` je povinný.
-- Seed heslá sú potrebné, ak chceš pri štarte vytvoriť predvolených používateľov.
+- Seed heslá sú potrebné, ak sa majú pri štarte vytvoriť predvolení používatelia.
 - SMTP údaje sú voliteľné. Bez nich nebude fungovať odosielanie e-mailov.
-- Ak nechceš pri lokálnom vývoji riešiť e-mailové notifikácie, nechaj `Email:Smtp:Host` nenastavený. V takom prípade sa odoslanie e-mailu bezpečne preskočí.
+- Ak sa pri lokálnom vývoji nemajú používať e-mailové notifikácie, odporúča sa ponechať `Email:Smtp:Host` nenastavený. V takom prípade sa odoslanie e-mailu bezpečne preskočí.
 - Ak je SMTP host nastavený, ale server je nedostupný alebo reaguje pomaly, databázová zmena sa uloží, ale odpoveď requestu sa môže oneskoriť kvôli pokusu o odoslanie e-mailu. Po obnovení stránky už budú zmeny v košíku, objednávke alebo stave objednávky viditeľné, aj keď sa e-mail nakoniec neodošle.
 
-### 4. Spusti aplikáciu
+### 4. Spustenie aplikácie
 
 ```bash
 dotnet run --project WeaponShop.web/WeaponShop.Web.csproj
@@ -114,7 +114,7 @@ Pri štarte sa aplikácia pokúsi automaticky:
 - aplikovať EF Core migrácie
 - naplniť seed dáta
 
-Ak databáza nie je dostupná, web sa spustí aj bez automatickej migrácie a seedu.
+Ak databáza nie je dostupná, webová aplikácia sa spustí aj bez automatickej migrácie a seedu.
 
 ## Testy
 
