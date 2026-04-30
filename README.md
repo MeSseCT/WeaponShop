@@ -99,6 +99,8 @@ Poznámky:
 - `ConnectionStrings:DefaultConnection` je povinný.
 - Seed heslá sú potrebné, ak chceš pri štarte vytvoriť predvolených používateľov.
 - SMTP údaje sú voliteľné. Bez nich nebude fungovať odosielanie e-mailov.
+- Ak nechceš pri lokálnom vývoji riešiť e-mailové notifikácie, nechaj `Email:Smtp:Host` nenastavený. V takom prípade sa odoslanie e-mailu bezpečne preskočí.
+- Ak je SMTP host nastavený, ale server je nedostupný alebo reaguje pomaly, databázová zmena sa uloží, ale odpoveď requestu sa môže oneskoriť kvôli pokusu o odoslanie e-mailu. Po obnovení stránky už budú zmeny v košíku, objednávke alebo stave objednávky viditeľné, aj keď sa e-mail nakoniec neodošle.
 
 ### 4. Spusti aplikáciu
 
